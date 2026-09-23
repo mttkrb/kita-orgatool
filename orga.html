@@ -1,0 +1,2877 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orga-Bereich</title>
+<link rel="manifest" href="manifest-orga.json">
+<meta name="theme-color" content="#3F5540">
+<link rel="icon" href="icons/orga-192.png">
+<link rel="apple-touch-icon" href="icons/orga-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Orga">
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=fraunces:600,700|work-sans:400,500,600" rel="stylesheet">
+<!--
+================================================================
+  SQL — einmalig im Supabase SQL-Editor ausführen.
+================================================================
+
+-- 1. Vorlagen für wiederkehrende Veranstaltungen
+create table if not exists templates (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text,
+  categories jsonb not null default '[]',
+  tasks jsonb not null default '[]',
+  fields jsonb not null default '[]',
+  checklist jsonb not null default '[]',
+  created_at timestamptz not null default now()
+);
+
+-- 2. Veranstaltungen
+create table if not exists events (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  title text not null,
+  event_date text, event_time text, place text, intro text,
+  categories jsonb not null default '[]',
+  tasks jsonb not null default '[]',
+  fields jsonb not null default '[]',
+  ask_people boolean not null default true,
+  retention_note text,
+  archived boolean not null default false,
+  template_id uuid references templates(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+alter table events add column if not exists template_id uuid references templates(id) on delete set null;
+alter table events add column if not exists people jsonb not null default '{}';
+alter table templates add column if not exists people jsonb not null default '{}';
+alter table events add column if not exists visibility jsonb not null default '{}';
+alter table events add column if not exists event_on date;
+alter table events add column if not exists signup_from date;
+alter table events add column if not exists signup_until date;
+alter table events add column if not exists signup_released boolean not null default true;
+alter table events add column if not exists retention_days int not null default 14;
+alter table events add column if not exists mandatory boolean not null default false;
+alter table events add column if not exists expected_families int;
+alter table signups add column if not exists status text not null default 'zusage';
+alter table signups add column if not exists materials jsonb not null default '[]';
+-- Fotos zu Aufgaben: siehe migration-7.sql
+
+-- 3. Interne Planung: Checkliste und Rückblick. Nur fürs Orgateam lesbar.
+create table if not exists planning (
+  event_id uuid primary key references events(id) on delete cascade,
+  checklist jsonb not null default '[]',
+  review jsonb not null default '{}',
+  updated_at timestamptz not null default now()
+);
+
+-- 4. Anmeldungen
+create table if not exists signups (
+  id uuid primary key default gen_random_uuid(),
+  event text not null,
+  created_at timestamptz not null default now(),
+  name text not null,
+  adults int not null default 1,
+  kids int not null default 0,
+  items jsonb not null default '[]',
+  tasks jsonb not null default '[]',
+  fields jsonb not null default '{}',
+  note text,
+  token text not null default encode(gen_random_bytes(8),'hex')
+);
+
+-- 5. Orga-Passwörter, eine Zeile pro Person
+create table if not exists orga_keys (secret text primary key, label text);
+insert into orga_keys values ('HIER-EIN-LANGES-ZUFALLS-PASSWORT', 'Orgateam') on conflict do nothing;
+
+create or replace function is_orga() returns boolean
+language sql security definer stable as $$
+  select exists (
+    select 1 from orga_keys k
+    where k.secret = current_setting('request.headers', true)::json ->> 'x-orga-key'
+  );
+$$;
+grant execute on function is_orga() to anon;
+
+-- 6. Rechte
+alter table events    enable row level security;
+alter table signups   enable row level security;
+alter table templates enable row level security;
+alter table planning  enable row level security;
+alter table orga_keys enable row level security;   -- keine Policy = unlesbar
+
+revoke select on signups from anon;
+grant select (id, event, created_at, name, adults, kids, items, tasks, fields, materials, note)
+  on signups to anon;
+
+create policy "events lesen"   on events for select to anon using (true);
+create policy "events anlegen" on events for insert to anon with check (is_orga());
+create policy "events aendern" on events for update to anon using (is_orga());
+create policy "events loeschen" on events for delete to anon using (is_orga());
+
+create policy "vorlagen" on templates for all to anon using (is_orga()) with check (is_orga());
+create policy "planung"  on planning  for all to anon using (is_orga()) with check (is_orga());
+
+create policy "anmelden"       on signups for select to anon using (true);
+create policy "anmeldung neu"  on signups for insert to anon with check (true);
+create policy "eigene aendern" on signups for update to anon
+  using (token = (current_setting('request.headers',true)::json ->> 'x-entry-token') or is_orga());
+create policy "eigene loeschen" on signups for delete to anon
+  using (token = (current_setting('request.headers',true)::json ->> 'x-entry-token') or is_orga());
+================================================================
+-->
+<style>
+  :root{
+    --sand:#EFEAE0;--paper:#F8F5EF;--ink:#2A2724;--ink-soft:#6B655C;
+    --line:#DCD5C7;--moss:#3F5540;--moss-soft:#E3E8DE;--ochre:#C98A21;--berry:#8C4A5C;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--sand);color:var(--ink);
+    font-family:'Work Sans',system-ui,sans-serif;font-size:16px;line-height:1.5}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 16px 80px}
+  h1,h2{font-family:'Fraunces',Georgia,serif;font-weight:600;line-height:1.15;margin:0}
+  h1{font-size:1.7rem}
+  h2{font-size:1.15rem;margin-bottom:2px}
+  h3{font-size:.95rem;margin:0;font-weight:600}
+  p{margin:.4em 0}
+  .lead{color:var(--ink-soft);font-size:.92rem;margin:0 0 14px}
+  .bar-top{display:flex;justify-content:space-between;align-items:center;gap:12px;
+    border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:20px}
+
+  .tabs{display:flex;gap:6px;margin-bottom:18px}
+  .tab{padding:8px 14px;border:1px solid var(--line);border-radius:20px;background:var(--paper);
+    font-size:.9rem;color:var(--ink-soft)}
+  .tab.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:500}
+
+  label{display:block;font-size:.88rem;font-weight:500;margin:12px 0 4px}
+  input[type=text],input[type=number],input[type=password],input[type=date],select,textarea{
+    width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:5px;
+    background:#fff;font:inherit;font-size:16px;color:var(--ink)}
+  textarea{min-height:60px;resize:vertical}
+  input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--moss);outline-offset:1px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:120px}
+  .hint{font-size:.8rem;color:var(--ink-soft);margin:4px 0 0}
+
+  button{font:inherit;cursor:pointer}
+  .primary{padding:12px 16px;border:none;border-radius:5px;background:var(--moss);color:#fff;font-weight:600}
+  .primary:disabled{background:var(--ink-soft);cursor:not-allowed}
+  .ghost{padding:9px 13px;border:1px solid var(--line);border-radius:5px;
+    background:var(--paper);color:var(--ink);font-size:.88rem}
+  .ghost.danger{color:var(--berry);border-color:var(--berry)}
+  .linkish{border:none;background:none;color:var(--moss);text-decoration:underline;padding:0;font-size:.88rem}
+
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:16px;margin-bottom:12px}
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .tag{font-size:.76rem;background:var(--moss-soft);color:var(--moss);border-radius:10px;
+    padding:2px 9px;white-space:nowrap}
+  .tag.grey{background:var(--line);color:var(--ink-soft)}
+  .tag.ochre{background:#F6EBD6;color:#8A5D07}
+  .card-meta{color:var(--ink-soft);font-size:.86rem;margin:3px 0 10px}
+  .card-actions{display:flex;flex-wrap:wrap;gap:7px}
+
+  fieldset{border:1px solid var(--line);border-radius:6px;padding:14px;margin:22px 0 0;background:var(--paper)}
+  legend{font-weight:600;font-size:.92rem;padding:0 6px}
+  .item{border:1px dashed var(--line);border-radius:5px;padding:11px;margin-bottom:9px;
+    position:relative;background:#fff}
+  .shots{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .shot{position:relative;width:74px;height:74px;border-radius:5px;overflow:hidden;
+    border:1px solid var(--line)}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .shot button{position:absolute;top:1px;right:1px;border:none;background:rgba(255,255,255,.9);
+    border-radius:3px;color:var(--berry);font-size:.8rem;padding:1px 5px;line-height:1.3}
+  .item .kopf{display:flex;align-items:flex-start;gap:9px;padding-right:104px;min-height:26px}
+  .item .kopf-text{font-size:.93rem;line-height:1.45}
+  .item .kopf-text b{font-weight:600}
+  .item .kopf-text span{color:var(--ink-soft)}
+  .item .kopf input[type=checkbox]{width:19px;height:19px;margin:2px 0 0;flex:none;accent-color:var(--moss)}
+  .item .kopf.fertig .kopf-text b{text-decoration:line-through;color:var(--ink-soft)}
+  .item .body{display:none;margin-top:4px}
+  .item.offen .kopf{display:none}
+  .item.offen .body{display:block}
+  .item.offen{background:var(--paper);border-style:solid;border-color:var(--moss)}
+  .item .tools{position:absolute;top:5px;right:5px;display:flex;gap:1px}
+  .item .tools button{border:none;background:none;color:var(--ink-soft);
+    font-size:1rem;padding:3px 7px;line-height:1;border-radius:4px}
+  .item .tools button:hover{color:var(--ink);background:var(--sand)}
+  .item .tools .drop{font-size:1.15rem}
+  .item .tools .drop:hover{color:var(--berry);background:#F6E6E9}
+  .item .tools button:disabled{opacity:.25;cursor:default;background:none}
+  .check{display:flex;gap:8px;align-items:flex-start;font-size:.92rem;font-weight:400;margin-top:10px}
+  .check input{margin:3px 0 0;width:18px;height:18px;flex:none;accent-color:var(--moss)}
+
+  table{width:100%;border-collapse:collapse;font-size:.86rem;margin-top:10px}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-weight:600;color:var(--ink-soft);font-size:.8rem}
+  .totals{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 0;font-size:.9rem}
+  .totals b{font-family:'Fraunces',serif;font-size:1.15rem;display:block}
+
+  .msg{border-left:3px solid var(--moss);background:var(--paper);padding:10px 12px;font-size:.9rem;margin:14px 0}
+  .msg.bad{border-color:var(--berry)}
+  .cockpit{background:#fff;border:1px solid var(--line);border-left:3px solid var(--ochre);
+    border-radius:6px;padding:14px 16px;margin-bottom:18px}
+  .cockpit h2{font-size:1.05rem;margin-bottom:8px}
+  .todo{display:flex;justify-content:space-between;gap:10px;padding:10px 0;
+    border-top:1px solid var(--line);font-size:.9rem;align-items:flex-start}
+  .todo .haken{width:19px;height:19px;flex:none;margin:2px 0 0;accent-color:var(--moss)}
+  .todo .mitte{flex:1}
+  .todo:first-of-type{border-top:none}
+  .todo .wann{white-space:nowrap;font-size:.82rem;color:var(--moss)}
+  .todo .wann.spaet{color:var(--berry);font-weight:600}
+  .todo .wo{display:block;color:var(--ink-soft);font-size:.82rem}
+  .hist{background:#fff;border:1px solid var(--line);border-left:3px solid var(--ochre);
+    border-radius:5px;padding:12px;margin-bottom:10px;font-size:.88rem}
+  .hist b{font-weight:600}
+  .hist table{margin-top:8px}
+  .quote{color:var(--ink-soft);font-style:italic;margin-top:8px}
+  .sticky{position:sticky;bottom:0;background:var(--sand);padding:14px 0 10px;
+    border-top:1px solid var(--line);margin-top:22px;display:flex;gap:8px;flex-wrap:wrap}
+  .sticky .msg{order:-1}
+  @keyframes blitz{0%{box-shadow:0 0 0 3px var(--ochre)}100%{box-shadow:0 0 0 3px transparent}}
+  .blitz{animation:blitz 2s ease-out;border-radius:6px}
+  .todo .mitte strong{cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);
+    text-underline-offset:3px}
+  .todo .mitte strong:hover{text-decoration-color:var(--moss)}
+  .zurueck{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--paper);border:1px dashed var(--line);border-radius:5px;
+    padding:8px 11px;margin-bottom:9px;font-size:.86rem;color:var(--ink-soft)}
+  .zurueck button{border:1px solid var(--moss);background:none;color:var(--moss);
+    border-radius:5px;padding:5px 11px;font:inherit;font-size:.84rem}
+  .todo.kritisch{border-left:3px solid var(--berry);padding-left:9px;margin-left:-12px}
+  .ohne{display:inline-block;background:#F6E6E9;color:var(--berry);border-radius:9px;
+    padding:1px 8px;font-size:.76rem;margin-left:6px;white-space:nowrap}
+  #loesch-dialog{position:fixed;inset:0;background:rgba(42,39,36,.55);z-index:60;
+    display:flex;align-items:center;justify-content:center;padding:16px}
+  #loesch-dialog.hidden{display:none}
+  .dialog-karte{background:var(--sand);border-radius:8px;max-width:460px;width:100%;
+    max-height:88vh;overflow:auto;padding:20px 18px}
+  .hidden{display:none}
+  code{background:#fff;border:1px solid var(--line);border-radius:4px;padding:2px 5px;
+    font-size:.82rem;word-break:break-all}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="loesch-dialog" class="hidden">
+    <div class="dialog-karte">
+      <h2 id="ld-titel">Löschen</h2>
+      <p class="lead" id="ld-was" style="margin-top:6px"></p>
+
+      <label style="margin-top:14px">Sicherung vorher herunterladen</label>
+      <div class="checks" id="ld-optionen">
+        <label class="check"><input type="radio" name="ld-sicherung" value="voll" checked>
+          <span><strong>Vollständig</strong> — alles inklusive Namen und Anmerkungen.
+          Nur damit lässt sich später etwas wiederherstellen.</span></label>
+        <label class="check"><input type="radio" name="ld-sicherung" value="zahlen">
+          <span><strong>Nur Zahlen</strong> — Anzahl Anmeldungen, Personen, Mengen je Kategorie,
+          Rückblick und Notizen. Ohne Namen.</span></label>
+        <label class="check"><input type="radio" name="ld-sicherung" value="keine">
+          <span><strong>Keine Sicherung</strong> — direkt löschen.</span></label>
+      </div>
+      <p class="hint">Eine vollständige Sicherung enthält personenbezogene Daten und liegt danach
+        in deinen Downloads. Nur behalten, solange du sie brauchst.</p>
+
+      <label for="ld-name">Zum Bestätigen den Namen abtippen</label>
+      <input type="text" id="ld-name" autocomplete="off">
+      <p class="hint" id="ld-erwartet"></p>
+
+      <div id="ld-msg" class="msg hidden"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+        <button class="primary" id="ld-los" style="background:var(--berry)">Endgültig löschen</button>
+        <button class="ghost" id="ld-abbruch">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bar-top">
+    <div>
+      <h1>Orga-Bereich</h1>
+      <p class="lead" style="margin:4px 0 0" id="sub">Veranstaltungen anlegen, planen, auswerten.</p>
+    </div>
+    <button class="ghost hidden" id="logout">Abmelden</button>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="view-login">
+    <div class="card">
+      <h2>Anmelden</h2>
+      <p class="lead">Mit dem Orga-Passwort aus der Datenbank. Es wird nur im Browser-Tab gehalten.</p>
+      <label for="key">Orga-Passwort</label>
+      <input type="password" id="key" placeholder="••••••••••">
+      <button class="primary" id="login" style="margin-top:14px;width:100%">Weiter</button>
+      <div id="login-msg" class="msg bad hidden"></div>
+    </div>
+  </div>
+
+  <!-- LISTE -->
+  <div id="view-list" class="hidden">
+    <div class="tabs">
+      <button class="tab on" id="tab-todos">To-dos</button>
+      <button class="tab" id="tab-events">Veranstaltungen</button>
+      <button class="tab" id="tab-templates">Vorlagen</button>
+    </div>
+
+    <div id="schema-warn" class="msg bad hidden"></div>
+
+    <div id="pane-todos">
+      <div id="cockpit" class="cockpit"></div>
+    </div>
+
+    <div id="pane-events" class="hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <h2>Veranstaltungen</h2>
+        <button class="primary" id="new-event" style="padding:10px 14px">+ Neue Veranstaltung</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="ghost" id="dump-json">Alles sichern (JSON)</button>
+        <button class="ghost" id="dump-csv">Alle Anmeldungen (CSV)</button>
+      </div>
+      <p class="hint" id="dump-msg" style="margin-top:6px"></p>
+      <div id="list" style="margin-top:14px"></div>
+    </div>
+
+    <div id="pane-templates" class="hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <h2>Vorlagen</h2>
+        <button class="primary" id="new-template" style="padding:10px 14px">+ Neue Vorlage</button>
+      </div>
+      <p class="lead" style="margin-top:8px">Wiederkehrende Veranstaltungen einmal definieren: Kategorien,
+        Aufgaben, Zusatzfragen und Planungs-Checkliste. Jede Veranstaltung daraus erbt alles und sammelt
+        seine eigene Historie.</p>
+      <div id="tlist"></div>
+    </div>
+  </div>
+
+  <!-- EVENT-EDITOR -->
+  <div id="view-edit" class="hidden">
+    <button class="linkish" id="back-1">← Zurück zur Übersicht</button>
+    <h2 style="margin-top:12px" id="edit-title">Neue Veranstaltung</h2>
+    <p class="lead" id="edit-sub">Alles hier steuert, was die Gäste auf der Anmeldeseite sehen.</p>
+
+    <div id="history"></div>
+
+    <fieldset>
+      <legend>Eckdaten</legend>
+      <label for="e-title">Name der Veranstaltung</label>
+      <input type="text" id="e-title" placeholder="Oma-Opa-Tag">
+      <label for="e-slug">Kurzname für den Link</label>
+      <input type="text" id="e-slug" placeholder="oma-opa-tag-2026">
+      <p class="hint">Nur Kleinbuchstaben, Zahlen und Bindestriche.</p>
+      <div class="row">
+        <div><label for="e-on">Datum</label>
+          <input type="date" id="e-on"></div>
+        <div><label for="e-time">Uhrzeit</label>
+          <input type="text" id="e-time" placeholder="15–18 Uhr"></div>
+      </div>
+      <p class="hint">Nach diesem Datum verschwindet die Veranstaltung automatisch von der Startseite.</p>
+      <label for="e-date">Abweichender Anzeigetext <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <input type="text" id="e-date" placeholder="leer lassen, dann wird das Datum ausgeschrieben">
+      <label class="check" style="margin-top:14px"><input type="checkbox" id="e-mandatory">
+        <span><strong>Pflichtveranstaltung</strong> — wer nicht kann, muss sich mit Begründung abmelden</span></label>
+      <div class="row" id="e-familien-zeile">
+        <div><label for="e-familien">Wie viele Familien insgesamt? <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+          <input type="number" id="e-familien" min="0" max="500" placeholder="z. B. 24"></div>
+      </div>
+      <p class="hint">Mit dieser Zahl siehst du, von wie vielen Familien noch keine Antwort da ist.</p>
+      <label class="check" style="margin-top:14px"><input type="checkbox" id="e-released">
+        <span><strong>Anmeldung freigegeben</strong> — erst dann können sich Eltern eintragen</span></label>
+      <p class="hint">Solange der Haken fehlt, sehen die Eltern die Veranstaltung mit dem Hinweis,
+        dass die Anmeldung noch kommt. Setz ihn, wenn Aufgaben und Kategorien stehen.</p>
+      <div class="row">
+        <div><label for="e-from">Frühestens ab <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+          <input type="date" id="e-from"></div>
+        <div><label for="e-until">Anmeldeschluss <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+          <input type="date" id="e-until"></div>
+      </div>
+      <p class="hint">Nur nötig, wenn ihr ein festes Datum kennt. Ohne Anmeldeschluss läuft die
+        Anmeldung bis zum Veranstaltungstag.</p>
+      <label for="e-place">Ort</label>
+      <input type="text" id="e-place" placeholder="Kita-Außengelände">
+      <label for="e-intro">Begrüßungstext <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <textarea id="e-intro"></textarea>
+      <label for="e-days">Anmeldungen löschen nach</label>
+      <select id="e-days">
+        <option value="14">14 Tagen (empfohlen)</option>
+        <option value="30">30 Tagen</option>
+        <option value="60">60 Tagen</option>
+        <option value="90">90 Tagen</option>
+        <option value="180">einem halben Jahr</option>
+      </select>
+      <p class="hint" id="e-days-hint">Gezählt ab dem Veranstaltungstag. Gelöscht werden Namen,
+        Anmerkungen und Antworten — die Zahlen für den Rückblick werden vorher gesichert und bleiben.</p>
+      <label for="e-retention">Abweichender Hinweistext <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <input type="text" id="e-retention" placeholder="leer lassen, dann wird der Satz automatisch gebildet">
+      <label>Wen soll die Anmeldung zählen?</label>
+      <p class="hint" style="margin:0 0 8px">Beide Gruppen sind frei benennbar. Was abgeschaltet ist,
+        taucht im Formular nicht auf — beim Oma-Opa-Tag zum Beispiel nur „Großeltern".</p>
+      <div class="row">
+        <div><label class="check" style="margin-top:0"><input type="checkbox" id="e-g1-on" checked>
+          <span>erste Gruppe</span></label>
+          <input type="text" id="e-g1-label" value="Erwachsene">
+          <label>höchstens</label><input type="number" id="e-g1-max" min="1" max="30" value="6"></div>
+        <div><label class="check" style="margin-top:0"><input type="checkbox" id="e-g2-on" checked>
+          <span>zweite Gruppe</span></label>
+          <input type="text" id="e-g2-label" value="Kinder">
+          <label>höchstens</label><input type="number" id="e-g2-max" min="1" max="30" value="6"></div>
+      </div>
+      <label class="check"><input type="checkbox" id="e-archived">
+        <span>Archivieren — verschwindet von der Startseite, der direkte Link bleibt gültig</span></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Was sehen die Gäste auf der Seite?</legend>
+      <p class="hint" style="margin:0 0 10px">Betrifft nur die öffentliche Anmeldeseite. Im Orga-Bereich
+        siehst du immer alles.</p>
+      <label class="check"><input type="checkbox" id="v-totals" checked>
+        <span>Gesamtzahlen im Kopf — Anmeldungen und Personen</span></label>
+      <label class="check"><input type="checkbox" id="v-items" checked>
+        <span>Liste der Mitbringsel — ohne sie bleiben nur die Fortschrittsbalken</span></label>
+      <label class="check"><input type="checkbox" id="v-item-names" checked>
+        <span>Namen an den Mitbringseln</span></label>
+      <label class="check"><input type="checkbox" id="v-task-names" checked>
+        <span>Namen in der Helferliste — sonst nur „3 von 6 belegt"</span></label>
+      <label class="check"><input type="checkbox" id="v-tasks-first">
+        <span>Aufgabenliste oben zeigen statt der Mitbringsel — für Arbeitseinsätze</span></label>
+      <label class="check"><input type="checkbox" id="v-no-signup">
+        <span>Aufgaben werden vor Ort verteilt — keine Plätze, kein Eintragen vorab</span></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Mitbringsel-Kategorien</legend>
+      <p class="hint" style="margin:0 0 10px">Zielwert steuert den Fortschrittsbalken. 0 = kein Ziel.</p>
+      <div id="cats"></div>
+      <button type="button" class="ghost" id="add-cat">+ Kategorie</button>
+    </fieldset>
+
+    <fieldset id="box-vorschlaege" class="hidden">
+      <legend>Gemeldete Aufgaben</legend>
+      <p class="hint" style="margin:0 0 6px">Eingegangen über den Meldelink von Leitung, Vorstand
+        und Teamleitungen. Übernommene Aufgaben landen unten in der Aufgabenliste.</p>
+      <p class="hint" style="margin:0 0 10px">Meldelink: <code id="melde-anzeige"></code></p>
+      <div id="vorschlaege"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Aufgaben am Veranstaltungstag</legend>
+      <div id="tasks"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="ghost" id="add-task">+ Aufgabe</button>
+        <button type="button" class="ghost hidden" id="from-tpl">+ Standardaufgaben aus der Vorlage</button>
+        <button type="button" class="ghost hidden" id="from-last">+ Offene Aufgaben vom letzten Mal</button>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Zusätzliche Fragen an die Gäste</legend>
+      <div id="fields"></div>
+      <button type="button" class="ghost" id="add-field">+ Frage</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Planung — interne Checkliste</legend>
+      <p class="hint" style="margin:0 0 10px">Sieht nur das Orgateam. Alles, was vorher passieren muss:
+        Pavillon leihen, Kaffee bestellen, Aushang drucken.</p>
+      <div id="checks"></div>
+      <button type="button" class="ghost" id="add-check">+ Punkt</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Einkaufsliste</legend>
+      <p class="hint" style="margin:0 0 10px">Nur fürs Orgateam. Zum Verteilen als Text kopieren
+        und in WhatsApp einfügen.</p>
+      <div id="einkauf"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <button type="button" class="ghost" id="add-kauf">+ Posten</button>
+        <button type="button" class="ghost hidden" id="kauf-tpl">+ Standardliste aus der Vorlage</button>
+        <button type="button" class="ghost" id="kauf-text">Als Text kopieren</button>
+        <button type="button" class="ghost" id="kauf-csv">Als CSV</button>
+      </div>
+      <p class="hint" id="kauf-msg"></p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Rückblick — für das nächste Mal</legend>
+      <p class="hint" style="margin:0 0 10px">Nach der Veranstaltung ausfüllen. Die Ist-Zahlen sind aus den
+        Anmeldungen vorbelegt und überschreibbar. Die Bewertung wird beim nächsten Veranstaltung aus derselben
+        Vorlage als Zielvorschlag angeboten.</p>
+      <label class="check" style="margin-bottom:12px"><input type="checkbox" id="v-feedback">
+        <span>Rückmeldungen der Eltern einsammeln — erzeugt einen eigenen Link</span></label>
+      <div id="feedback-box"></div>
+      <div class="row">
+        <div><label for="r-guests">Tatsächlich da (Personen)</label>
+          <input type="number" id="r-guests" min="0" placeholder="z. B. 78"></div>
+        <div><label for="r-expected">Angemeldet waren</label>
+          <input type="number" id="r-expected" readonly style="background:var(--sand)"></div>
+      </div>
+      <div id="review-cats" style="margin-top:12px"></div>
+      <label for="r-notes">Was war gut, was fehlte?</label>
+      <textarea id="r-notes" placeholder="Kuchen war um 16 Uhr weg. Nächstes Mal mehr herzhaft, Punsch blieb übrig."></textarea>
+    </fieldset>
+
+    <div class="sticky">
+      <div id="edit-msg" class="msg hidden" style="width:100%;margin:0 0 10px"></div>
+      <button class="primary" id="save">Speichern</button>
+      <button class="ghost" id="fertig">Fertig, zur Übersicht</button>
+      <button class="ghost" id="preview">Anmeldeseite öffnen</button>
+      <button class="ghost" id="copy-link">Anmeldelink kopieren</button>
+      <button class="ghost" id="copy-melde">Meldelink kopieren</button>
+    </div>
+  </div>
+
+  <!-- VORLAGEN-EDITOR -->
+  <div id="view-template" class="hidden">
+    <button class="linkish" id="back-3">← Zurück zur Übersicht</button>
+    <h2 style="margin-top:12px" id="tpl-title">Neue Vorlage</h2>
+    <p class="lead">Was diese Vorlage enthält, wird beim Anlegen einer Veranstaltung übernommen.</p>
+
+    <fieldset>
+      <legend>Eckdaten</legend>
+      <label for="t-name">Name</label>
+      <input type="text" id="t-name" placeholder="Oma-Opa-Tag">
+      <label for="t-desc">Kurzbeschreibung</label>
+      <input type="text" id="t-desc" placeholder="Jährlich im Oktober, Großeltern zu Kaffee und Kuchen">
+      <label>Wen soll die Anmeldung zählen?</label>
+      <div class="row">
+        <div><label class="check" style="margin-top:0"><input type="checkbox" id="t-g1-on" checked>
+          <span>erste Gruppe</span></label>
+          <input type="text" id="t-g1-label" value="Erwachsene">
+          <label>höchstens</label><input type="number" id="t-g1-max" min="1" max="30" value="6"></div>
+        <div><label class="check" style="margin-top:0"><input type="checkbox" id="t-g2-on" checked>
+          <span>zweite Gruppe</span></label>
+          <input type="text" id="t-g2-label" value="Kinder">
+          <label>höchstens</label><input type="number" id="t-g2-max" min="1" max="30" value="6"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Mitbringsel-Kategorien</legend>
+      <div id="t-cats"></div>
+      <button type="button" class="ghost" id="t-add-cat">+ Kategorie</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Aufgaben am Veranstaltungstag</legend>
+      <div id="t-tasks"></div>
+      <button type="button" class="ghost" id="t-add-task">+ Aufgabe</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Zusätzliche Fragen</legend>
+      <div id="t-fields"></div>
+      <button type="button" class="ghost" id="t-add-field">+ Frage</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Standard-Einkaufsliste</legend>
+      <p class="hint" style="margin:0 0 10px">Wird bei jeder Veranstaltung aus dieser Vorlage
+        als Startpunkt angeboten.</p>
+      <div id="t-einkauf"></div>
+      <button type="button" class="ghost" id="t-add-kauf">+ Posten</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Planungs-Checkliste</legend>
+      <div id="t-checks"></div>
+      <button type="button" class="ghost" id="t-add-check">+ Punkt</button>
+    </fieldset>
+
+    <div class="sticky">
+      <div id="tpl-msg" class="msg hidden" style="width:100%;margin:0 0 10px"></div>
+      <button class="primary" id="t-save">Vorlage speichern</button>
+      <button class="ghost" id="t-fertig">Fertig, zur Übersicht</button>
+    </div>
+  </div>
+
+  <!-- ANMELDUNGEN -->
+  <div id="view-signups" class="hidden">
+    <button class="linkish" id="back-2">← Zurück zur Übersicht</button>
+    <h2 style="margin-top:12px" id="su-title">Anmeldungen</h2>
+    <div class="totals" id="totals"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="ghost" id="manual">+ Anmeldung eintragen</button>
+      <button class="ghost" id="export">Als CSV exportieren</button>
+      <button class="ghost" id="reload">Aktualisieren</button>
+    </div>
+
+    <div id="manual-form" class="card hidden" style="margin-top:14px">
+      <h3 id="manual-title">Anmeldung eintragen</h3>
+      <p class="hint" style="margin:2px 0 10px">Für alle, die per Zettel oder Anruf zusagen.
+        Der Eintrag erscheint für die Gäste wie jede andere Anmeldung.</p>
+      <label for="m-name">Name</label>
+      <input type="text" id="m-name" placeholder="Vorname und Nachname">
+      <div class="row" id="m-people">
+        <div id="m-grp1"><label for="m-adults" id="m-lbl1">Erwachsene</label>
+          <select id="m-adults"></select></div>
+        <div id="m-grp2"><label for="m-kids" id="m-lbl2">Kinder</label>
+          <select id="m-kids"></select></div>
+      </div>
+      <label>Bringt mit</label>
+      <div id="m-items"></div>
+      <button type="button" class="ghost" id="m-add-item">+ Mitbringsel</button>
+      <label>Hilft bei</label>
+      <div class="checks" id="m-tasks"></div>
+      <label for="m-note">Anmerkung</label>
+      <textarea id="m-note"></textarea>
+      <div id="m-msg" class="msg hidden"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <button class="primary" id="m-save">Eintragen</button>
+        <button class="ghost" id="m-cancel">Abbrechen</button>
+      </div>
+    </div>
+
+    <div id="su-table"></div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const CONFIG = {
+  supabase: { url:"", anonKey:"" },     // leer = Demo-Modus
+  publicPage: "fest-anmeldung.html",
+  proposalPage: "vorschlag.html",
+  feedbackPage: "feedback.html"
+};
+
+const live = !!(CONFIG.supabase.url && CONFIG.supabase.anonKey);
+const $ = id => document.getElementById(id);
+const esc = s => String(s??"").replace(/[<>&"']/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[c]));
+/* Fotos nur als eingebettetes Bild zulassen, sonst leer (schuetzt src="..." vor Fremdcode) */
+const bildUrl = s => /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(String(s||"")) ? s : "";
+const slugify = s => String(s).toLowerCase().trim()
+  .replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss")
+  .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const uid = () => "x" + Math.random().toString(36).slice(2,8);
+const groups = o => {
+  const p = (o && o.people) || {};
+  const on = (o && o.ask_people) !== false;
+  return {
+    adults: { on: p.adults ? !!p.adults.on : on, label: (p.adults && p.adults.label) || "Erwachsene",
+              max: (p.adults && +p.adults.max) || 6 },
+    kids:   { on: p.kids   ? !!p.kids.on   : on, label: (p.kids   && p.kids.label)   || "Kinder",
+              max: (p.kids   && +p.kids.max)   || 6 }
+  };
+};
+const vis = ev => {
+  const v = (ev && ev.visibility) || {};
+  const on = k => v[k] !== false;
+  return { totals:on("totals"), items:on("items"), itemNames:on("itemNames"), taskNames:on("taskNames") };
+};
+
+function fillGroups(prefix, o){
+  const g = groups(o);
+  $(prefix+"-g1-on").checked = g.adults.on;
+  $(prefix+"-g1-label").value = g.adults.label;
+  $(prefix+"-g1-max").value = g.adults.max;
+  $(prefix+"-g2-on").checked = g.kids.on;
+  $(prefix+"-g2-label").value = g.kids.label;
+  $(prefix+"-g2-max").value = g.kids.max;
+}
+function readGroups(prefix){
+  return {
+    adults:{ on:$(prefix+"-g1-on").checked, label:$(prefix+"-g1-label").value.trim() || "Erwachsene",
+             max:Math.max(1, +$(prefix+"-g1-max").value || 6) },
+    kids:  { on:$(prefix+"-g2-on").checked, label:$(prefix+"-g2-label").value.trim() || "Kinder",
+             max:Math.max(1, +$(prefix+"-g2-max").value || 6) }
+  };
+}
+
+let orgaKey = null, events = [], templates = [], current = null, currentTpl = null;
+let signups = [], planning = {checklist:[], review:{}};
+
+/* ---------- Demo-Daten ---------- */
+let demoTemplates = [{
+  id:"t1", name:"Oma-Opa-Tag",
+  description:"Jährlich im Oktober, Großeltern zu Kaffee und Kuchen",
+  categories:[
+    {id:"kuchen",label:"Kuchen & Süßes",target:14,unit:"Kuchen",ideas:["Marmorkuchen","Apfelkuchen","Käsekuchen"]},
+    {id:"herzhaft",label:"Herzhaftes",target:6,unit:"Beiträge",ideas:["Quiche","Laugengebäck"]},
+    {id:"kaffee",label:"Kaffee & Getränke",target:8,unit:"Portionen",ideas:["Kaffee gemahlen","Milch","Saft"]}
+  ],
+  tasks:[{id:"aufbau",label:"Aufbau",when:"ab 13 Uhr",needed:6},
+         {id:"theke",label:"Kuchentheke",when:"in Schichten",needed:5},
+         {id:"abbau",label:"Abbau",when:"ab 18 Uhr",needed:6}],
+  fields:[],
+  people:{ adults:{on:true,label:"Großeltern",max:6}, kids:{on:false,label:"Kinder",max:6} },
+  checklist:[
+    {id:"c1",label:"Kaffeemaschine aus dem Gemeindehaus leihen",who:"Orgateam",due:"2 Wochen vorher",done:false},
+    {id:"c2",label:"Aushang im Flur und Elternbrief raus",who:"",due:"3 Wochen vorher",done:false},
+    {id:"c3",label:"Tische und Bänke zählen",who:"",due:"1 Woche vorher",done:false}
+  ]
+}];
+let demoEvents = [{
+  id:"e-alt", slug:"oma-opa-tag-2025", title:"Oma-Opa-Tag 2025", template_id:"t1",
+  event_date:"Freitag, 18. Oktober 2025", event_time:"15–18 Uhr", place:"Kita-Außengelände",
+  intro:"", retention_note:"Alle Angaben werden zwei Wochen nach der Veranstaltung gelöscht.",
+  ask_people:true, archived:true,
+  categories:demoTemplates[0].categories.map(c=>({...c, target:c.id==="kuchen"?10:c.target})),
+  tasks:demoTemplates[0].tasks, fields:demoTemplates[0].fields
+},{
+  id:"e-neu", slug:"sommerfest-2026", title:"Sommerfest", template_id:null,
+  event_date:"Samstag, 26. September 2026", event_time:"14–19 Uhr", place:"Kita-Außengelände",
+  intro:"", retention_note:"Alle Angaben werden zwei Wochen nach der Veranstaltung gelöscht.",
+  ask_people:true, archived:false,
+  categories:[{id:"kuchen",label:"Kuchen & Süßes",target:12,unit:"Kuchen",ideas:["Marmorkuchen"]},
+              {id:"salat",label:"Salate",target:6,unit:"Salate",ideas:["Nudelsalat"]}],
+  tasks:[{id:"aufbau",label:"Aufbau",when:"ab 12 Uhr",needed:6}], fields:[]
+}];
+let demoPlanning = { "e-alt": {
+  checklist:[{id:"c1",label:"Kaffeemaschine leihen",who:"Nina",due:"2 Wochen vorher",done:true}],
+  review:{ guests:82, expected:64, notes:"Kuchen war um 16 Uhr weg, Großeltern kamen zu zweit statt einzeln.",
+           cats:{ kuchen:{ist:10, urteil:"wenig"}, herzhaft:{ist:6, urteil:"ok"}, kaffee:{ist:9, urteil:"viel"} } }
+}};
+let demoSignups = [
+  { id:"s1", event:"oma-opa-tag-2025", created_at:"2025-10-10T10:00:00Z", name:"Sarah Klein",
+    adults:2, kids:2, items:[{cat:"kuchen",what:"Käsekuchen"}], tasks:["theke"], fields:{}, note:"" },
+  { id:"s2", event:"sommerfest-2026", created_at:new Date().toISOString(), name:"Tim Bergmann",
+    adults:2, kids:1, items:[{cat:"kuchen",what:"Marmorkuchen"}], tasks:["aufbau"], fields:{}, note:"" }
+];
+
+/* ============================================================
+   Datenzugriff
+   ============================================================ */
+const head = extra => Object.assign({
+  apikey: CONFIG.supabase.anonKey,
+  Authorization: "Bearer " + CONFIG.supabase.anonKey,
+  "Content-Type": "application/json"
+}, orgaKey ? {"X-Orga-Key": orgaKey} : {}, extra||{});
+
+async function req(path, opts){
+  const r = await fetch(CONFIG.supabase.url + "/rest/v1/" + path, opts);
+  if(!r.ok) throw new Error(await r.text() || "Anfrage fehlgeschlagen.");
+  const t = await r.text();
+  return t ? JSON.parse(t) : null;
+}
+
+const db = {
+  async checkKey(key){
+    if(!live) return key.length > 0;
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/rpc/is_orga",{
+      method:"POST",
+      headers:{ apikey:CONFIG.supabase.anonKey, Authorization:"Bearer "+CONFIG.supabase.anonKey,
+                "Content-Type":"application/json", "X-Orga-Key":key },
+      body:"{}"
+    });
+    if(!r.ok) throw new Error("Server nicht erreichbar.");
+    return (await r.json()) === true;
+  },
+  async listEvents(){
+    if(!live) return demoEvents.map(e=>({...e}));
+    return req("events?select=*&order=created_at.desc", { headers: head() });
+  },
+  async listTemplates(){
+    if(!live) return demoTemplates.map(t=>({...t}));
+    return req("templates?select=*&order=name.asc", { headers: head() });
+  },
+  async saveEvent(ev){
+    if(!live){
+      const i = demoEvents.findIndex(e=>e.id===ev.id);
+      if(i>-1){ demoEvents[i] = {...ev}; return demoEvents[i]; }
+      const rec = {...ev, id:"demo-"+Date.now()}; demoEvents.unshift(rec); return rec;
+    }
+    const body = JSON.stringify(ev);
+    try{
+      const res = ev.id
+        ? await req("events?id=eq."+ev.id, { method:"PATCH", headers:head({Prefer:"return=representation"}), body })
+        : await req("events", { method:"POST", headers:head({Prefer:"return=representation"}), body });
+      return Array.isArray(res) ? res[0] : res;
+    }catch(err){
+      const txt = String(err.message);
+      if(txt.includes("duplicate")) throw new Error("Diesen Kurznamen gibt es schon.");
+      const spalte = (txt.match(/column "?([a-z_]+)"? .*(does not exist|schema cache)/) || [])[1];
+      if(spalte || txt.includes("schema cache"))
+        throw new Error("Der Datenbank fehlt eine Spalte" + (spalte ? " (" + spalte + ")" : "") +
+          ". Führ die neueste migration-Datei in Supabase aus — bis dahin wird nichts gespeichert. " +
+          "Lass dieses Fenster offen, dann sind deine Eingaben nicht verloren.");
+      if(txt.includes("row-level security"))
+        throw new Error("Die Datenbank verweigert das Anlegen. Melde dich ab und wieder an — " +
+          "meist ist das Orga-Passwort in dieser Sitzung nicht mehr gültig.");
+      throw new Error("Speichern fehlgeschlagen: " + txt.slice(0,300));
+    }
+  },
+  async saveTemplate(tpl){
+    if(!live){
+      const i = demoTemplates.findIndex(t=>t.id===tpl.id);
+      if(i>-1) demoTemplates[i] = {...tpl}; else demoTemplates.push({...tpl, id:"demo-"+Date.now()});
+      return;
+    }
+    const body = JSON.stringify(tpl);
+    tpl.id ? await req("templates?id=eq."+tpl.id, { method:"PATCH", headers:head(), body })
+           : await req("templates", { method:"POST", headers:head(), body });
+  },
+  async deleteEvent(id){
+    if(!live){ demoEvents = demoEvents.filter(e=>e.id!==id); return; }
+    await req("events?id=eq."+id, { method:"DELETE", headers: head() });
+  },
+  async deleteTemplate(id){
+    if(!live){ demoTemplates = demoTemplates.filter(t=>t.id!==id); return; }
+    await req("templates?id=eq."+id, { method:"DELETE", headers: head() });
+  },
+  async getPlanning(eventId){
+    if(!eventId) return {checklist:[], review:{}, shopping:[]};
+    if(!live) return demoPlanning[eventId] ? JSON.parse(JSON.stringify(demoPlanning[eventId]))
+                                           : {checklist:[], review:{}, shopping:[]};
+    const rows = await req("planning?select=*&event_id=eq."+eventId, { headers: head() });
+    return rows && rows[0]
+      ? {checklist:rows[0].checklist||[], review:rows[0].review||{}, shopping:rows[0].shopping||[]}
+      : {checklist:[], review:{}, shopping:[]};
+  },
+  async savePlanning(eventId, data){
+    if(!eventId) return;
+    if(!live){ demoPlanning[eventId] = JSON.parse(JSON.stringify(data)); return; }
+    await req("planning", {
+      method:"POST",
+      headers:head({ Prefer:"resolution=merge-duplicates" }),
+      body: JSON.stringify({ event_id:eventId, checklist:data.checklist, review:data.review,
+                             shopping:data.shopping || [], updated_at:new Date().toISOString() })
+    });
+  },
+  async allPlanning(){
+    if(!live) return Object.entries(demoPlanning).map(([event_id,p])=>
+      ({event_id, checklist:p.checklist||[], review:p.review||{}}));
+    return req("planning?select=event_id,checklist,review", { headers: head() });
+  },
+  async proposals(eventId){
+    if(!eventId || !live) return [];
+    return req("proposals?select=*&event_id=eq."+eventId+"&status=eq.neu&order=created_at.asc",
+      { headers: head() });
+  },
+  async aufraeumen(){
+    if(!live) return [];
+    return req("rpc/daten_aufraeumen", { method:"POST", headers: head(), body:"{}" });
+  },
+  async feedback(eventId){
+    if(!eventId || !live) return [];
+    return req("feedback?select=*&event_id=eq."+eventId+"&order=created_at.desc", { headers: head() });
+  },
+  async feedbackDel(id){
+    if(!live) return;
+    await req("feedback?id=eq."+id, { method:"DELETE", headers: head() });
+  },
+  async proposalsOffen(){
+    if(!live) return [];
+    return req("proposals?select=id,event_id,title,from_name&status=eq.neu&order=created_at.asc",
+      { headers: head() });
+  },
+  async proposalStatus(id, status, note){
+    if(!live) return;
+    await req("proposals?id=eq."+id, { method:"PATCH", headers:head(),
+      body: JSON.stringify({ status, note: note || null }) });
+  },
+  async claims(eventId){
+    if(!eventId || !live) return [];
+    return req("task_claims?select=id,task_id,name,done&event_id=eq."+eventId, { headers: head() });
+  },
+  async images(eventId){
+    if(!eventId || !live) return [];
+    return req("task_images?select=id,task_id,data&event_id=eq."+eventId, { headers: head() });
+  },
+  async addImage(eventId, taskId, data){
+    if(!live) return;
+    await req("task_images", { method:"POST", headers:head(),
+      body: JSON.stringify({ event_id:eventId, task_id:taskId, data }) });
+  },
+  async delImage(id){
+    if(!live) return;
+    await req("task_images?id=eq."+id, { method:"DELETE", headers: head() });
+  },
+  async listSignups(slug){
+    if(!live) return demoSignups.filter(s=>s.event===slug).map(s=>({...s}));
+    const cols = "id,event,created_at,name,adults,kids,items,tasks,fields,note,status";
+    return req("signups?select="+cols+"&event=eq."+slug+"&order=created_at.asc", { headers: head() });
+  },
+  async signupsFor(slugs){
+    if(!slugs.length) return [];
+    if(!live) return demoSignups.filter(s=>slugs.includes(s.event)).map(s=>({...s}));
+    const list = slugs.map(s=>'"'+s+'"').join(",");
+    return req("signups?select=event,adults,kids,items,tasks&event=in.("+encodeURIComponent(list)+")",
+      { headers: head() });
+  },
+  async saveSignup(id, data, slug){
+    if(!live){
+      if(id){
+        const i = demoSignups.findIndex(s=>s.id===id);
+        if(i>-1) demoSignups[i] = {...demoSignups[i], ...data};
+      } else {
+        demoSignups.push({...data, id:"m"+Date.now(), event:slug, created_at:new Date().toISOString()});
+      }
+      return;
+    }
+    const body = JSON.stringify(id ? data : {...data, event:slug});
+    if(id) await req("signups?id=eq."+id, { method:"PATCH", headers:head(), body });
+    else   await req("signups", { method:"POST", headers:head(), body });
+  },
+  async deleteSignup(id){
+    if(!live){ demoSignups = demoSignups.filter(s=>s.id!==id); return; }
+    await req("signups?id=eq."+id, { method:"DELETE", headers: head() });
+  }
+};
+
+/* ============================================================
+   Ansichten
+   ============================================================ */
+let dirty = false;
+const markDirty = () => { dirty = true; };
+function clearDirty(){ dirty = false; }
+function leaveOk(){
+  return !dirty || confirm("Ungespeicherte Änderungen gehen verloren. Trotzdem zurück?");
+}
+window.addEventListener("beforeunload", e => {
+  if(dirty){ e.preventDefault(); e.returnValue = ""; }
+});
+["view-edit","view-template"].forEach(id=>{
+  document.addEventListener("input", e => {
+    const box = document.getElementById(id);
+    if(box && !box.classList.contains("hidden") && box.contains(e.target)) markDirty();
+  });
+});
+
+function show(view){
+  ["login","list","edit","template","signups"].forEach(v=>
+    $("view-"+v).classList.toggle("hidden", v!==view));
+  $("logout").classList.toggle("hidden", view==="login");
+  window.scrollTo({top:0});
+}
+function msg(el, text, bad){
+  el.textContent = text;
+  el.className = "msg" + (bad?" bad":"");
+  if(!text) el.classList.add("hidden");
+}
+
+/* ---------- Login ---------- */
+$("login").onclick = async () => {
+  const key = $("key").value.trim();
+  if(!key){ msg($("login-msg"),"Bitte Passwort eingeben.",true); return; }
+  $("login").disabled = true;
+  try{
+    if(!await db.checkKey(key)){ msg($("login-msg"),"Passwort stimmt nicht.",true); return; }
+    orgaKey = key;
+    rememberKey(key);
+    $("sub").textContent = live ? "Mit der Datenbank verbunden." : "Demo-Modus ohne Datenbank.";
+    await loadList();
+  }catch(err){ msg($("login-msg"), err.message, true); }
+  finally{ $("login").disabled = false; }
+};
+$("key").addEventListener("keydown", e => { if(e.key==="Enter") $("login").click(); });
+$("logout").onclick = () => {
+  orgaKey = null;
+  $("key").value = "";
+  try{ sessionStorage.removeItem("orgaKey"); }catch(e){}
+  show("login");
+};
+
+/* Schluessel bleibt im geoeffneten Tab, ist beim Schliessen weg */
+function rememberKey(k){ try{ sessionStorage.setItem("orgaKey", k); }catch(e){} }
+async function autoLogin(){
+  let k = null;
+  try{ k = sessionStorage.getItem("orgaKey"); }catch(e){}
+  if(!k) return false;
+  try{
+    if(await db.checkKey(k)){
+      orgaKey = k;
+      $("sub").textContent = live ? "Mit der Datenbank verbunden." : "Demo-Modus ohne Datenbank.";
+      await loadList();
+      return true;
+    }
+  }catch(e){}
+  try{ sessionStorage.removeItem("orgaKey"); }catch(e){}
+  return false;
+}
+
+/* ---------- Tabs ---------- */
+let aktiverTab = "todos";
+
+function tab(which){
+  aktiverTab = which;
+  ["todos","events","templates"].forEach(v=>{
+    $("tab-"+v).classList.toggle("on", which===v);
+    $("pane-"+v).classList.toggle("hidden", which!==v);
+  });
+}
+$("tab-todos").onclick     = () => tab("todos");
+$("tab-events").onclick    = () => tab("events");
+$("tab-templates").onclick = () => tab("templates");
+
+/* ---------- Übersicht ---------- */
+const tplName = id => (templates.find(t=>t.id===id)||{}).name;
+const fmtDate = iso => {
+  if(!iso) return "";
+  const d = new Date(iso + "T12:00:00");
+  if(isNaN(d)) return "";
+  return d.toLocaleDateString("de-DE", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+};
+const heute = () => new Date().toISOString().slice(0,10);
+const vorbei = e => !!(e.event_on && e.event_on < heute());
+
+/* Prueft, ob die Datenbank alle Spalten hat, die diese Version braucht.
+   Verhindert, dass ein Speichern still fehlschlaegt. */
+const NEEDED = {
+  events: ["people","visibility","event_on","template_id","signup_from","signup_released",
+           "retention_days","mandatory"],
+  templates: ["people","checklist"],
+  signups: ["fields","status"],
+  proposals: ["status","image"],
+  planning: ["shopping"],
+  task_claims: ["done"]
+};
+
+async function checkSchema(){
+  if(!live) return true;
+  const fehlt = [];
+  for(const [tabelle, spalten] of Object.entries(NEEDED)){
+    try{
+      await req(tabelle + "?select=" + spalten.join(",") + "&limit=1", { headers: head() });
+    }catch(err){
+      const txt = String(err.message);
+      const treffer = spalten.filter(sp=>txt.includes(sp));
+      if(treffer.length) treffer.forEach(sp=>fehlt.push(tabelle + "." + sp));
+      else fehlt.push("Tabelle " + tabelle);
+    }
+  }
+  if(fehlt.length){
+    $("schema-warn").classList.remove("hidden");
+    $("schema-warn").innerHTML = "<strong>Die Datenbank ist nicht auf dem Stand dieser Version.</strong><br>" +
+      "Es fehlt: " + esc(fehlt.join(", ")) + ".<br>" +
+      "Führ die neueste migration-Datei im Supabase SQL-Editor aus, bevor du etwas anlegst — " +
+      "sonst schlägt das Speichern fehl und die Eingaben sind weg.";
+    return false;
+  }
+  $("schema-warn").classList.add("hidden");
+  return true;
+}
+
+let aufraeumBericht = "";
+
+async function loadList(){
+  await checkSchema();
+  try{
+    const bericht = await db.aufraeumen();
+    const weg = (bericht || []).filter(z=>z.anzahl > 0);
+    aufraeumBericht = weg.length
+      ? "Aufgeräumt: " + weg.map(z=>z.anzahl + " " + z.was).join(", ") + "."
+      : "";
+  }catch(e){ aufraeumBericht = ""; }
+  [events, templates] = await Promise.all([db.listEvents(), db.listTemplates()]);
+  events.sort((a,b)=>{
+    const wa = (a.archived?2:0) + (vorbei(a)?1:0);
+    const wb = (b.archived?2:0) + (vorbei(b)?1:0);
+    if(wa !== wb) return wa - wb;
+    return String(a.event_on||"9999").localeCompare(String(b.event_on||"9999"));
+  });
+
+  $("list").innerHTML = events.length ? events.map(e=>
+    '<div class="card"><div class="card-head"><div><h3>'+esc(e.title)+'</h3>'+
+    '<p class="card-meta">'+esc(e.event_date || fmtDate(e.event_on) || "ohne Datum")+" · "+esc(e.place||"ohne Ort")+
+    (tplName(e.template_id)?'<br><span class="tag ochre">Vorlage: '+esc(tplName(e.template_id))+'</span>':"")+
+    '</p></div>'+
+    (e.mandatory ? '<br><span class="tag" style="background:#F6E6E9;color:var(--berry)">Pflicht</span>' : "")+
+    '<span class="tag'+(e.archived||vorbei(e)?" grey":"")+'">'+
+    (e.archived ? "archiviert"
+      : vorbei(e) ? "Nachbereitung"
+      : (e.signup_released === false) ? "Anmeldung gesperrt"
+      : (e.signup_from && e.signup_from > heute()) ? "Anmeldung ab " +
+          new Date(e.signup_from+"T12:00:00").toLocaleDateString("de-DE")
+      : (e.signup_until && e.signup_until < heute()) ? "Anmeldung zu"
+      : "aktiv")+'</span></div>'+
+    '<div class="card-actions">'+
+    '<button class="ghost" data-act="edit" data-id="'+e.id+'">Bearbeiten</button>'+
+    '<button class="ghost" data-act="signups" data-id="'+e.id+'">Anmeldungen</button>'+
+    '<button class="ghost" data-act="copy" data-id="'+e.id+'">Anmeldelink</button>'+
+    '<button class="ghost" data-act="melde" data-id="'+e.id+'">Meldelink</button>'+
+    '<button class="ghost" data-act="dupe" data-id="'+e.id+'">Duplizieren</button>'+
+    '<button class="ghost danger" data-act="del" data-id="'+e.id+'">Löschen</button></div></div>').join("")
+    : '<div class="card"><p style="margin:0">Noch keine Veranstaltung angelegt. Am besten zuerst eine Vorlage bauen — '+
+      'dann erbt jede Veranstaltung Kategorien, Aufgaben und Checkliste.</p></div>';
+  $("list").querySelectorAll("button[data-act]").forEach(b=>
+    b.onclick = () => handleCard(b.dataset.act, b.dataset.id));
+
+  $("tlist").innerHTML = templates.length ? templates.map(t=>{
+    const runs = events.filter(e=>e.template_id===t.id).length;
+    return '<div class="card"><div class="card-head"><div><h3>'+esc(t.name)+'</h3>'+
+      '<p class="card-meta">'+esc(t.description||"")+'<br>'+
+      (t.categories||[]).length+" Kategorien · "+(t.tasks||[]).length+" Aufgaben · "+
+      (t.checklist||[]).length+" Checklistenpunkte</p></div>"+
+      '<span class="tag'+(runs?"":" grey")+'">'+(runs?runs+"× gelaufen":"neu")+'</span></div>'+
+      '<div class="card-actions">'+
+      '<button class="ghost" data-tact="use" data-id="'+t.id+'">Veranstaltung daraus anlegen</button>'+
+      '<button class="ghost" data-tact="edit" data-id="'+t.id+'">Bearbeiten</button>'+
+      '<button class="ghost danger" data-tact="del" data-id="'+t.id+'">Löschen</button></div></div>';
+  }).join("")
+  : '<div class="card"><p style="margin:0">Noch keine Vorlage. Sinnvoll für alles, was jährlich '+
+    'wiederkommt: Sommerfest, Laternenfest, Oma-Opa-Tag.</p></div>';
+  $("tlist").querySelectorAll("button[data-tact]").forEach(b=>
+    b.onclick = () => handleTemplate(b.dataset.tact, b.dataset.id));
+
+  show("list");
+  tab(aktiverTab);
+  renderCockpit().catch(err=>{
+    $("cockpit").classList.remove("hidden");
+    $("cockpit").innerHTML = "<h2>To-dos nicht ladbar</h2>" +
+      '<p style="margin:0;font-size:.9rem">' + esc(String(err && err.message || err).slice(0,200)) + '</p>';
+  });
+}
+
+/* Was in den naechsten zwei Wochen ansteht, ueber alle Veranstaltungen hinweg. */
+let nach_plan = {};
+
+async function renderCockpit(){
+  const box = $("cockpit");
+  let plaene = [];
+  try{ plaene = await db.allPlanning(); }
+  catch(err){
+    box.classList.remove("hidden");
+    box.innerHTML = "<h2>To-dos nicht ladbar</h2>" +
+      '<p style="margin:0;font-size:.9rem">Die Planungsdaten konnten nicht geholt werden. ' +
+      'Meist fehlt eine Migration — schau oben nach dem roten Hinweis.</p>' +
+      '<p class="hint" style="margin-top:8px">' + esc(String(err.message).slice(0,200)) + '</p>';
+    return;
+  }
+  const nach = {};
+  (plaene||[]).forEach(p=>{ nach[p.event_id] = p.checklist || []; });
+  nach_plan = {};
+  (plaene||[]).forEach(p=>{ nach_plan[p.event_id] = p; });
+
+  const offen = [];
+  events.filter(e=>!e.archived && e.event_on && !vorbei(e)).forEach(e=>{
+    (nach[e.id]||[]).filter(c=>!c.done).forEach(c=>{
+      const datum = faelligAm(e.event_on, parseVorlauf(c));
+      if(!datum) return;
+      const tage = tageBis(datum);
+      const herrenlos = !String(c.who || "").trim();
+      if(tage <= 14) offen.push({e, c, datum, tage, herrenlos,
+        kritisch: herrenlos && tage <= 7});
+    });
+  });
+
+  // Vergangene Veranstaltungen, bei denen der Rückblick noch fehlt
+  const ohneRueckblick = events.filter(e=>{
+    if(!e.event_on || !vorbei(e)) return false;
+    const p = nach_plan[e.id];
+    const rv = (p && p.review) || {};
+    const bewertet = rv.cats && Object.values(rv.cats).some(c=>c && c.urteil);
+    return !(bewertet || rv.notes || rv.guests);
+  }).slice(0, 4);
+
+  let neueMeldungen0 = [];
+  try{ neueMeldungen0 = await db.proposalsOffen(); }catch(e){}
+  if(!offen.length && !neueMeldungen0.length && !ohneRueckblick.length){
+    const naechste = events.filter(e=>!e.archived && e.event_on && !vorbei(e)).length;
+    box.innerHTML = "<h2>Nichts überfällig</h2><p style=\"margin:0;font-size:.9rem;color:var(--ink-soft)\">" +
+      (naechste ? "In den nächsten zwei Wochen steht auf den Checklisten nichts an."
+                : "Keine kommende Veranstaltung mit Datum angelegt — ohne Datum lassen sich keine Fristen rechnen.") +
+      "</p>" +
+      (aufraeumBericht ? '<p class="hint" style="margin:8px 0 0">' + esc(aufraeumBericht) + '</p>' : "");
+    $("tab-todos").textContent = "To-dos";
+    box.classList.remove("hidden");
+    return;
+  }
+
+  const neueMeldungen = neueMeldungen0;
+  const rueckblickText = ohneRueckblick.length
+    ? '<p class="hint" style="margin:0 0 6px"><strong>Rückblick fehlt</strong> — solange er offen ist, ' +
+      'schlägt beim nächsten Mal nichts vor:</p>' +
+      ohneRueckblick.map((e,i)=>'<div class="todo"><div class="mitte">'+
+        '<strong data-rueckblick="'+i+'">'+esc(e.title)+'</strong>'+
+        '<span class="wo">war am ' + esc(e.event_date || fmtDate(e.event_on)) + '</span></div>'+
+        '<span class="wann">nachtragen</span></div>').join("") + '<div style="height:10px"></div>'
+    : "";
+
+  const meldungText = neueMeldungen.length
+    ? '<p class="hint" style="margin:0 0 6px;color:var(--berry)"><strong>' + neueMeldungen.length +
+      (neueMeldungen.length === 1 ? " gemeldete Aufgabe wartet" : " gemeldete Aufgaben warten") +
+      '</strong> auf Entscheidung:</p>' +
+      neueMeldungen.map((m,i)=>{
+        const e = events.find(x=>x.id === m.event_id);
+        return '<div class="todo"><div class="mitte"><strong data-vorschlag="'+i+'">'+
+          esc(m.title)+'</strong><span class="wo">'+
+          (e ? esc(e.title) : "unbekannte Veranstaltung") +
+          (m.from_name ? " · " + esc(m.from_name) : "")+'</span></div>'+
+          '<span class="wann">entscheiden</span></div>';
+      }).join("") + '<div style="height:10px"></div>'
+    : "";
+
+  // Erst was brennt: ohne Verantwortlichen und knapp vor der Frist
+  offen.sort((a,b)=>(b.kritisch?1:0) - (a.kritisch?1:0) || a.tage - b.tage);
+  if(!offen.length && (neueMeldungen0.length || ohneRueckblick.length)){
+    // nichts auf den Checklisten, aber Nacharbeit offen
+  }
+  const ueber = offen.filter(o=>o.tage < 0).length;
+  const herrenlos = offen.filter(o=>o.kritisch).length;
+  box.innerHTML = "<h2>Jetzt dran</h2>" +
+    (offen.length ? "" : '<p class="hint" style="margin:0 0 6px">Auf den Checklisten steht ' +
+      'nichts an — es liegen aber Meldungen vor.</p>') +
+    (offen.length ? '<p class="hint" style="margin:0 0 6px">' : '<span class="hidden">') +
+    (ueber ? ueber + (ueber===1 ? " Punkt ist überfällig" : " Punkte sind überfällig") + ", "
+           : "") + offen.length + " offen in den nächsten zwei Wochen." +
+    (herrenlos ? " " + herrenlos + (herrenlos===1
+      ? " Punkt hat noch niemanden, der ihn macht."
+      : " Punkte haben noch niemanden, der sie macht.") : " Abhaken speichert sofort.") +
+    (offen.length ? "</p>" : "</span>") +
+    meldungText + rueckblickText +
+    (aufraeumBericht ? '<p class="hint" style="margin:0 0 8px">' + esc(aufraeumBericht) + '</p>' : "") +
+    offen.slice(0,15).map((o,i)=>
+    '<div class="todo'+(o.kritisch?" kritisch":"")+'">'+
+    '<input type="checkbox" class="haken" data-i="'+i+'" title="erledigt">'+
+    '<div class="mitte"><strong data-go="'+i+'">'+esc(o.c.label)+'</strong>'+
+    (o.kritisch ? '<span class="ohne">niemand zuständig</span>' : "")+
+    '<span class="wo">'+esc(o.e.title)+
+      (o.c.who ? " · " + esc(o.c.who) : (o.herrenlos && !o.kritisch ? " · noch offen, wer" : ""))+
+      '</span></div>'+
+    '<span class="wann'+(o.tage < 0 ? " spaet" : "")+'">'+wannText(o.tage)+'<br>'+
+    new Date(o.datum+"T12:00:00").toLocaleDateString("de-DE")+'</span></div>').join("") +
+    (offen.length > 15 ? '<p class="hint">und '+(offen.length-15)+' weitere</p>' : "");
+
+  box.querySelectorAll("[data-rueckblick]").forEach(el=>{
+    el.onclick = () => springeZu(ohneRueckblick[+el.dataset.rueckblick], { typ:"rueckblick" });
+  });
+  box.querySelectorAll("[data-vorschlag]").forEach(el=>{
+    el.onclick = () => {
+      const m = neueMeldungen[+el.dataset.vorschlag];
+      const e = events.find(x=>x.id === m.event_id);
+      if(e) springeZu(e, { typ:"vorschlag", id:m.id });
+    };
+  });
+  box.querySelectorAll("[data-go]").forEach(el=>{
+    el.onclick = () => {
+      const o = offen[+el.dataset.go];
+      springeZu(o.e, { typ:"check", id:o.c.id, label:o.c.label });
+    };
+  });
+  box.querySelectorAll(".haken").forEach(h=>{
+    h.onchange = async () => {
+      const o = offen[+h.dataset.i];
+      h.disabled = true;
+      const plan = plaene.find(p=>p.event_id === o.e.id) || {checklist:[], review:{}};
+      const liste = (plan.checklist||[]).map(c=>c.id === o.c.id ? {...c, done:true} : c);
+      try{
+        await db.savePlanning(o.e.id, { checklist: liste, review: plan.review || {} });
+        await renderCockpit();
+      }catch(err){
+        h.disabled = false; h.checked = false;
+        alert("Konnte nicht gespeichert werden: " + err.message);
+      }
+    };
+  });
+  $("tab-todos").textContent = "To-dos (" + (offen.length + neueMeldungen.length) + ")";
+  box.classList.remove("hidden");
+}
+
+/* Aus der Übersicht direkt an die richtige Stelle im Editor springen.
+   Wird mehrfach nachgezogen, weil Bilder und Zeilen erst nachträglich
+   Platz brauchen und das Ziel sonst nach unten wegrutscht. */
+function anDenAnfang(el, abstand){
+  const y = el.getBoundingClientRect().top + window.pageYOffset - (abstand || 14);
+  window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+}
+
+async function springeZu(ev, ziel){
+  aktiverTab = "todos";
+  await openEditor(ev);
+  if(ziel.typ === "vorschlag") await renderVorschlaege();
+  if(ziel.typ === "rueckblick"){
+    const feld = $("review-cats").closest("fieldset");
+    if(feld){
+      feld.classList.add("blitz");
+      setTimeout(()=>feld.classList.remove("blitz"), 2600);
+      anDenAnfang(feld);
+      [160, 420, 900].forEach(ms => setTimeout(()=>anDenAnfang(feld), ms));
+    }
+    return;
+  }
+  const ankerBox = ziel.typ === "check" ? $("checks") : $("vorschlaege");
+  const treffer = ziel.id
+    ? [...ankerBox.children].find(d => d.dataset.id === ziel.id || d.dataset.vid === ziel.id)
+    : null;
+  let ziel_el = treffer || ankerBox.closest("fieldset") || ankerBox;
+
+  // Bei Einkaufsthemen direkt zur Einkaufsliste, da sitzt die Arbeit
+  if(ziel.typ === "check" && /einkauf|besorg|bestell/i.test(ziel.label || "")){
+    ziel_el = $("einkauf").closest("fieldset") || ziel_el;
+  }
+
+  if(treffer && treffer._auf) treffer._auf(true);
+  ziel_el.classList.add("blitz");
+  setTimeout(()=>ziel_el.classList.remove("blitz"), 2600);
+
+  anDenAnfang(ziel_el);
+  [160, 420, 900].forEach(ms => setTimeout(()=>anDenAnfang(ziel_el), ms));
+}
+
+function publicLink(slug){
+  return location.href.replace(/[^/]*$/, "") + CONFIG.publicPage + "?event=" + slug;
+}
+
+function meldeLink(id){
+  return location.href.replace(/[^/]*$/, "") + CONFIG.proposalPage + "?event=" + id;
+}
+
+async function kopieren(text, sagen){
+  try{ await navigator.clipboard.writeText(text); if(sagen) sagen("Link kopiert."); }
+  catch{ prompt("Link:", text); }
+}
+
+/* Vor dem Löschen: was hängt eigentlich dran? */
+async function bestandAufnehmen(ev){
+  const zahl = async pfad => {
+    try{ const r = await req(pfad, { headers: head() }); return (r || []).length; }
+    catch(e){ return 0; }
+  };
+  const [anmeldungen, belegungen, bilder, meldungen, rueckmeldungen] = await Promise.all([
+    zahl("signups?select=id&event=eq." + ev.slug),
+    zahl("task_claims?select=id&event_id=eq." + ev.id),
+    zahl("task_images?select=id&event_id=eq." + ev.id),
+    zahl("proposals?select=id&event_id=eq." + ev.id),
+    zahl("feedback?select=id&event_id=eq." + ev.id)
+  ]);
+  return { anmeldungen, belegungen, bilder, meldungen, rueckmeldungen };
+}
+
+async function sicherungZiehen(ev, art){
+  if(art === "keine") return { name:null, uebersprungen:true };
+  const hol = async pfad => {
+    try{ return await req(pfad, { headers: head() }) || []; }catch(e){ return []; }
+  };
+  const cols = "id,event,created_at,name,adults,kids,items,tasks,fields,note";
+  const [signups, planung, claims, bilder, meldungen, feedbackListe] = await Promise.all([
+    hol("signups?select=" + cols + "&event=eq." + ev.slug),
+    hol("planning?select=*&event_id=eq." + ev.id),
+    hol("task_claims?select=*&event_id=eq." + ev.id),
+    hol("task_images?select=*&event_id=eq." + ev.id),
+    hol("proposals?select=*&event_id=eq." + ev.id),
+    hol("feedback?select=*&event_id=eq." + ev.id)
+  ]);
+  const daten = { gesichert_am:new Date().toISOString(), grund:"vor dem Löschen",
+    event:ev, planning:planung, signups, task_claims:claims, task_images:bilder,
+    proposals:meldungen, feedback:feedbackListe };
+  if(art === "zahlen"){
+    const proKat = {};
+    signups.flatMap(s=>s.items||[]).forEach(i=>{
+      proKat[i.cat] = (proKat[i.cat] || 0) + (+i.qty || 1);
+    });
+    const proAufgabe = {};
+    signups.flatMap(s=>s.tasks||[]).forEach(t=>{ proAufgabe[t] = (proAufgabe[t] || 0) + 1; });
+    const knapp = {
+      gesichert_am:new Date().toISOString(), grund:"vor dem Löschen, ohne Personenbezug",
+      event:{ slug:ev.slug, title:ev.title, event_on:ev.event_on, place:ev.place,
+              categories:ev.categories, tasks:ev.tasks },
+      zahlen:{
+        anmeldungen: signups.length,
+        erwachsene: signups.reduce((a,s)=>a+(+s.adults||0),0),
+        kinder: signups.reduce((a,s)=>a+(+s.kids||0),0),
+        kategorien: proKat, aufgaben: proAufgabe,
+        aufgabenzusagen: claims.length,
+        rueckmeldungen: feedbackListe.length
+      },
+      planung: (planung||[]).map(p=>({ review:p.review, checklist:p.checklist, shopping:p.shopping })),
+      rueckmeldungen: (feedbackListe||[]).map(r=>({ rating:r.rating, good:r.good, better:r.better })),
+      meldungen: (meldungen||[]).map(m=>({ title:m.title, info:m.info, status:m.status }))
+    };
+    const kname = "zahlen-" + ev.slug + "-" + heute() + ".json";
+    download(kname, JSON.stringify(knapp, null, 2), "application/json");
+    return { name: kname, anzahl: 0 };
+  }
+  const name = "geloescht-" + ev.slug + "-" + heute() + ".json";
+  download(name, JSON.stringify(daten, null, 2), "application/json");
+  return { name, anzahl: signups.length };
+}
+
+/* Eigener Löschdialog statt Browser-Fenster: mehr Platz, echte Auswahl */
+function loeschDialog({ titel, was, name, optionen = true }){
+  return new Promise(fertig => {
+    const box = $("loesch-dialog");
+    $("ld-titel").textContent = titel;
+    $("ld-was").innerHTML = was;
+    $("ld-erwartet").textContent = "Erwartet: " + name;
+    $("ld-name").value = "";
+    $("ld-optionen").parentNode.querySelectorAll('[name="ld-sicherung"]')[0].checked = true;
+    $("ld-optionen").classList.toggle("hidden", !optionen);
+    $("ld-optionen").previousElementSibling.classList.toggle("hidden", !optionen);
+    msg($("ld-msg"), "");
+    box.classList.remove("hidden");
+    $("ld-name").focus();
+
+    let erledigt = false;
+    const schliessen = wert => {
+      if(erledigt) return;
+      erledigt = true;
+      box.classList.add("hidden");
+      $("ld-los").onclick = null;
+      $("ld-abbruch").onclick = null;
+      box.removeEventListener("click", hintergrund);
+      document.removeEventListener("keydown", taste);
+      fertig(wert);
+    };
+    const hintergrund = ev => { if(ev.target === box) schliessen(null); };
+    const taste = ev => { if(ev.key === "Escape") schliessen(null); };
+    box.addEventListener("click", hintergrund);
+    document.addEventListener("keydown", taste);
+    $("ld-abbruch").onclick = () => schliessen(null);
+    $("ld-los").onclick = () => {
+      if($("ld-name").value.trim().toLowerCase() !== String(name).trim().toLowerCase()){
+        msg($("ld-msg"), "Der Name stimmt noch nicht überein.", true);
+        return;
+      }
+      const gewaehlt = [...document.querySelectorAll('[name="ld-sicherung"]')]
+        .find(r=>r.checked);
+      schliessen({ sicherung: optionen ? (gewaehlt ? gewaehlt.value : "voll") : "keine" });
+    };
+  });
+}
+
+async function handleCard(act, id){
+  aktiverTab = "events";
+  const ev = events.find(e=>e.id===id);
+  if(act==="edit")    return openEditor(ev);
+  if(act==="signups") return openSignups(ev);
+  if(act==="copy"){
+    await kopieren(publicLink(ev.slug), () => alert("Anmeldelink kopiert."));
+    return;
+  }
+  if(act==="melde"){
+    await kopieren(meldeLink(ev.id), () => alert("Meldelink kopiert. Der ist für Leitung, " +
+      "Vorstand und Teamleitungen, nicht für alle Eltern."));
+    return;
+  }
+  if(act==="dupe"){
+    const copy = {...ev};
+    delete copy.id; delete copy.created_at;
+    copy.title = ev.title + " (Kopie)"; copy.slug = ev.slug + "-kopie"; copy.archived = false;
+    return openEditor(copy, {fresh:true});
+  }
+  if(act==="del"){
+    const b = live ? await bestandAufnehmen(ev)
+                   : {anmeldungen:0,belegungen:0,bilder:0,meldungen:0,rueckmeldungen:0};
+    const teile = [
+      b.anmeldungen ? b.anmeldungen + " Anmeldungen mit Namen" : "",
+      b.belegungen ? b.belegungen + " übernommene Aufgaben" : "",
+      b.bilder ? b.bilder + " Fotos" : "",
+      b.meldungen ? b.meldungen + " gemeldete Aufgaben" : "",
+      b.rueckmeldungen ? b.rueckmeldungen + " Rückmeldungen" : ""
+    ].filter(Boolean);
+
+    const antwort = await loeschDialog({
+      titel: ev.title + " löschen?",
+      was: teile.length
+        ? "Gelöscht wird die Veranstaltung mit allem, was daran hängt:<br>• " +
+          teile.join("<br>• ") + "<br><br>Das lässt sich nicht rückgängig machen. " +
+          "Wenn du sie nur aus der Übersicht nehmen willst, ist <b>Archivieren</b> im Editor der sanftere Weg."
+        : "Es hängen keine Daten daran. Wenn du sie nur aus der Übersicht nehmen willst, " +
+          "ist <b>Archivieren</b> im Editor der sanftere Weg.",
+      name: ev.title,
+      optionen: teile.length > 0
+    });
+    if(!antwort) return;
+
+    if(live && antwort.sicherung !== "keine"){
+      let sicherung = null;
+      try{ sicherung = await sicherungZiehen(ev, antwort.sicherung); }catch(e){}
+      if(!sicherung || !sicherung.name){
+        if(!confirm("Die Sicherung hat nicht geklappt.\n\nTrotzdem endgültig löschen?")) return;
+      }
+    }
+    await db.deleteEvent(id);
+    await loadList();
+  }
+}
+
+async function handleTemplate(act, id){
+  const t = templates.find(x=>x.id===id);
+  if(act==="edit") return openTemplate(t);
+  if(act==="del"){
+    const genutzt = events.filter(e=>e.template_id === t.id);
+    const antwort = await loeschDialog({
+      titel: "Vorlage löschen?",
+      was: genutzt.length
+        ? "Die Vorlage wird von " + genutzt.length +
+          (genutzt.length === 1 ? " Veranstaltung" : " Veranstaltungen") + " genutzt:<br>• " +
+          genutzt.slice(0,6).map(e=>esc(e.title)).join("<br>• ") +
+          "<br><br>Die bleiben erhalten, verlieren aber ihre Historie und damit die " +
+          "Zielvorschläge fürs nächste Mal."
+        : "Die Vorlage wird bisher nirgends genutzt.",
+      name: t.name,
+      optionen: false
+    });
+    if(!antwort) return;
+    await db.deleteTemplate(id); await loadList(); tab("templates"); return;
+  }
+  if(act==="use"){
+    const year = new Date().getFullYear();
+    return openEditor({
+      title: t.name + " " + year, slug: slugify(t.name + "-" + year),
+      event_date:"", event_time:"", place:"", intro:"",
+      retention_note:"Alle Angaben werden zwei Wochen nach der Veranstaltung gelöscht.",
+      ask_people:true, people:JSON.parse(JSON.stringify(t.people || {})),
+      archived:false, template_id:t.id,
+      categories:JSON.parse(JSON.stringify(t.categories||[])),
+      tasks:JSON.parse(JSON.stringify(t.tasks||[])),
+      fields:JSON.parse(JSON.stringify(t.fields||[]))
+    }, {fresh:true, checklist:JSON.parse(JSON.stringify(t.checklist||[])),
+        shopping:JSON.parse(JSON.stringify(t.shopping||[]))});
+  }
+}
+
+/* ---------- Sicherung und Gesamtexport ---------- */
+function download(name, text, typ){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], {type:typ}));
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+const heuteDatei = () => new Date().toISOString().slice(0,10);
+
+async function alleAnmeldungen(){
+  if(!live) return demoSignups.map(x=>({...x}));
+  const cols = "id,event,created_at,name,adults,kids,items,tasks,fields,note";
+  return req("signups?select=" + cols + "&order=created_at.asc", { headers: head() });
+}
+
+$("dump-json").onclick = async () => {
+  $("dump-msg").textContent = "Sammle Daten …";
+  try{
+    const [ev, tpl, plan, su] = await Promise.all([
+      db.listEvents(), db.listTemplates(), db.allPlanning(), alleAnmeldungen()
+    ]);
+    const daten = { gesichert_am:new Date().toISOString(), version:1,
+                    templates:tpl, events:ev, planning:plan, signups:su };
+    download("kita-sicherung-" + heuteDatei() + ".json",
+             JSON.stringify(daten, null, 2), "application/json");
+    $("dump-msg").textContent = tpl.length + " Vorlagen, " + ev.length + " Veranstaltungen, " +
+      su.length + " Anmeldungen gesichert. Enthält Namen — entsprechend ablegen.";
+  }catch(err){ $("dump-msg").textContent = "Fehlgeschlagen: " + err.message; }
+};
+
+$("dump-csv").onclick = async () => {
+  $("dump-msg").textContent = "Sammle Daten …";
+  try{
+    const [ev, su] = await Promise.all([db.listEvents(), alleAnmeldungen()]);
+    const titel = slug => (ev.find(e=>e.slug===slug)||{}).title || slug;
+    const katLabel = (slug, id) => {
+      const e = ev.find(x=>x.slug===slug) || {};
+      return ((e.categories||[]).find(c=>c.id===id)||{}).label || id;
+    };
+    const aufLabel = (slug, id) => {
+      const e = ev.find(x=>x.slug===slug) || {};
+      return ((e.tasks||[]).find(t=>t.id===id)||{}).label || id;
+    };
+    const cell = v => '"' + String(v??"").replace(/"/g,'""') + '"';
+    const kopf = ["Veranstaltung","Datum","Name","Erwachsene","Kinder","Mitbringsel","Aufgaben",
+                  "Zusatzangaben","Anmerkung","Angemeldet am"];
+    const zeilen = su.map(s=>[
+      titel(s.event),
+      ((ev.find(e=>e.slug===s.event)||{}).event_on) || "",
+      s.name, s.adults, s.kids,
+      (s.items||[]).map(i=>((+i.qty||1)>1 ? (+i.qty)+"x " : "") + i.what +
+        " (" + katLabel(s.event, i.cat) + ")").join(" | "),
+      (s.tasks||[]).map(id=>aufLabel(s.event, id)).join(" | "),
+      Object.entries(s.fields||{}).map(([k,v])=>k+": "+v).join(" | "),
+      s.note || "",
+      new Date(s.created_at).toLocaleString("de-DE")
+    ].map(cell).join(";"));
+    download("kita-anmeldungen-alle-" + heuteDatei() + ".csv",
+      "\uFEFF" + [kopf.map(cell).join(";"), ...zeilen].join("\r\n"), "text/csv;charset=utf-8");
+    $("dump-msg").textContent = su.length + " Anmeldungen aus " + ev.length + " Veranstaltungen exportiert.";
+  }catch(err){ $("dump-msg").textContent = "Fehlgeschlagen: " + err.message; }
+};
+
+$("new-event").onclick = () => { aktiverTab = "events"; openEditor(null); };
+$("new-template").onclick = () => openTemplate(null);
+$("back-1").onclick = () => { if(leaveOk()){ clearDirty(); loadList(); } };
+$("fertig").onclick = () => { if(leaveOk()){ clearDirty(); loadList(); } };
+$("t-fertig").onclick = async () => {
+  if(!leaveOk()) return;
+  clearDirty(); await loadList(); tab("templates");
+};
+$("back-2").onclick = loadList;
+$("back-3").onclick = async () => {
+  if(!leaveOk()) return;
+  clearDirty(); await loadList(); tab("templates");
+};
+
+/* ============================================================
+   Zeilenbausteine
+   ============================================================ */
+const TOOLS = '<div class="tools">'+
+  '<button type="button" class="stift" title="bearbeiten">\u270e</button>'+
+  '<button type="button" class="up" title="nach oben">\u2191</button>'+
+  '<button type="button" class="down" title="nach unten">\u2193</button>'+
+  '<button type="button" class="drop" title="entfernen">\u00d7</button></div>';
+
+function refreshTools(box){
+  [...box.children].forEach((d,i)=>{
+    const up = d.querySelector(".up"), down = d.querySelector(".down");
+    if(up) up.disabled = i === 0;
+    if(down) down.disabled = i === box.children.length - 1;
+  });
+}
+
+/* Zeile in Lesefassung und Bearbeitungsfassung aufteilen */
+function faltbar(d, textFn, kopfExtra){
+  const tools = d.querySelector(".tools");
+  const body = document.createElement("div");
+  body.className = "body";
+  [...d.children].forEach(ch => { if(ch !== tools) body.appendChild(ch); });
+
+  const kopf = document.createElement("div");
+  kopf.className = "kopf";
+  if(kopfExtra) kopf.appendChild(kopfExtra);
+  const txt = document.createElement("span");
+  txt.className = "kopf-text";
+  kopf.appendChild(txt);
+
+  d.appendChild(kopf);
+  d.appendChild(body);
+  if(tools) d.appendChild(tools);
+
+  d._aktualisiere = () => {
+    const inhalt = textFn(d);
+    txt.innerHTML = inhalt || '<span>noch nichts eingetragen</span>';
+    const haken = kopf.querySelector("input[type=checkbox]");
+    kopf.classList.toggle("fertig", !!(haken && haken.checked));
+  };
+  d._auf = an => { d.classList.toggle("offen", an); d._aktualisiere(); };
+  d.addEventListener("input", () => d._aktualisiere());
+  d.addEventListener("change", () => d._aktualisiere());
+  d._aktualisiere();
+}
+
+/* Gelöschte Zeile lässt sich zurückholen — angenehmer als eine Rückfrage vorweg */
+function zeigeRueckgaengig(box, zeile, stelle, name){
+  const alt = box.parentNode.querySelector(".zurueck");
+  if(alt) alt.remove();
+  const strip = document.createElement("div");
+  strip.className = "zurueck";
+  strip.innerHTML = "<span>" + esc(String(name).slice(0,40)) +
+    " entfernt</span><button type=\"button\">Rückgängig</button>";
+  strip.querySelector("button").onclick = () => {
+    const kinder = [...box.children];
+    if(stelle >= 0 && stelle < kinder.length) box.insertBefore(zeile, kinder[stelle]);
+    else box.appendChild(zeile);
+    refreshTools(box);
+    if(box.id === "cats" && current) renderReview();
+    if(zeile._aktualisiere) zeile._aktualisiere();
+    strip.remove();
+  };
+  box.parentNode.insertBefore(strip, box.nextSibling);
+  setTimeout(()=>{ if(strip.isConnected) strip.remove(); }, 30000);
+}
+
+function wireTools(d){
+  const after = () => {
+    const box = d.parentNode;
+    if(box){
+      refreshTools(box);
+      if(box.id === "cats" && current) renderReview();
+    }
+  };
+  const stift = d.querySelector(".stift");
+  if(stift) stift.onclick = () => {
+    const auf = !d.classList.contains("offen");
+    if(d._auf) d._auf(auf); else d.classList.toggle("offen", auf);
+    if(auf){
+      const erstes = d.querySelector(".body input[type=text], .body input[type=number], .body textarea");
+      if(erstes) erstes.focus();
+    }
+  };
+  d.querySelector(".up").onclick = () => {
+    const prev = d.previousElementSibling;
+    if(prev){ d.parentNode.insertBefore(d, prev); d.scrollIntoView({block:"nearest"}); after(); }
+  };
+  d.querySelector(".down").onclick = () => {
+    const next = d.nextElementSibling;
+    if(next){ d.parentNode.insertBefore(next, d); d.scrollIntoView({block:"nearest"}); after(); }
+  };
+  d.querySelector(".drop").onclick = () => {
+    const box = d.parentNode;
+    if(!box) return;
+    const stelle = [...box.children].indexOf(d);
+    const name = (d.querySelector("input[type=text]") || {}).value || "Zeile";
+    d.remove();
+    refreshTools(box);
+    if(box.id === "cats" && current) renderReview();
+    markDirty();
+    zeigeRueckgaengig(box, d, stelle, name);
+  };
+}
+
+/* Vorschläge dürfen einen Bedarf tragen: "Akkuschrauber x2" */
+function ideenLesen(text){
+  return String(text || "").split(",").map(t=>t.trim()).filter(Boolean).map(t=>{
+    const m = t.match(/^(.*?)\s*[x×]\s*(\d+)$/i);
+    return m ? { text: m[1].trim(), need: Math.max(1, +m[2]) } : { text: t, need: 0 };
+  }).filter(i=>i.text);
+}
+
+function ideenText(ideen){
+  return (ideen || []).map(i=>{
+    if(typeof i === "string") return i;
+    return i.need ? i.text + " x" + i.need : i.text;
+  }).join(", ");
+}
+
+function catRow(c){
+  c = c || {};
+  const d = document.createElement("div"); d.className = "item";
+  d.innerHTML = TOOLS+
+    '<label>Kategorie</label><input type="text" class="c-label" value="'+esc(c.label||"")+'" placeholder="Kuchen & Süßes">'+
+    '<div class="row"><div><label>Ziel (0 = kein Ziel)</label>'+
+    '<input type="number" class="c-target" min="0" value="'+(c.target??0)+'"></div>'+
+    '<div><label>Einheit</label><input type="text" class="c-unit" value="'+esc(c.unit||"Beiträge")+'"></div></div>'+
+    '<label>Vorschläge zum Antippen</label>'+
+    '<input type="text" class="c-ideas" value="'+esc(ideenText(c.ideas))+'" placeholder="Akkuschrauber x2, Säge, Leiter">'+
+    '<p class="hint">Mit Komma trennen. Ein angehängtes x2 heißt: davon werden zwei gebraucht. ' +
+    'Ohne Angabe ist es nur ein Vorschlag ohne festen Bedarf.</p>';
+  d.dataset.id = c.id || "";
+  wireTools(d);
+  faltbar(d, x=>{
+    const label = x.querySelector(".c-label").value.trim();
+    if(!label) return "";
+    const ziel = +x.querySelector(".c-target").value || 0;
+    const einheit = x.querySelector(".c-unit").value.trim();
+    const bedarf = ideenLesen(x.querySelector(".c-ideas").value).filter(i=>i.need);
+    const summe = bedarf.reduce((a,i)=>a+i.need, 0);
+    return "<b>"+esc(label)+"</b>" +
+      (ziel ? " <span>Ziel " + ziel + (einheit ? " " + esc(einheit) : "") + "</span>"
+            : bedarf.length ? " <span>" + summe + " Stück konkret gesucht</span>"
+            : " <span>ohne Ziel</span>");
+  });
+  d._auf(!c.label);
+  return d;
+}
+/* Bild im Browser verkleinern, damit die Datenbank klein bleibt */
+function verkleinern(datei, kante=1000, guete=0.72){
+  return new Promise((ok, fehler)=>{
+    const leser = new FileReader();
+    leser.onerror = () => fehler(new Error("Lesefehler"));
+    leser.onload = () => {
+      const bild = new Image();
+      bild.onerror = () => fehler(new Error("Kein Bild"));
+      bild.onload = () => {
+        const f = Math.min(1, kante / Math.max(bild.width, bild.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(bild.width * f);
+        c.height = Math.round(bild.height * f);
+        c.getContext("2d").drawImage(bild, 0, 0, c.width, c.height);
+        ok(c.toDataURL("image/jpeg", guete));
+      };
+      bild.src = leser.result;
+    };
+    leser.readAsDataURL(datei);
+  });
+}
+
+function taskRow(t, bilder){
+  t = t || {};
+  const d = document.createElement("div"); d.className = "item";
+  d.innerHTML = TOOLS+
+    '<label>Aufgabe</label><input type="text" class="t-label" value="'+esc(t.label||"")+'" placeholder="Aufbau">'+
+    '<div class="row"><div><label>Wann <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>'+
+    '<input type="text" class="t-when" value="'+esc(t.when||"")+'" placeholder="leer lassen, wenn ganztags"></div>'+
+    '<div><label>Wie viele</label><input type="number" class="t-needed" min="1" value="'+(t.needed??4)+'"></div></div>'+
+    '<label>Erklärung für die Eltern <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>'+
+    '<textarea class="t-info" placeholder="Was genau ist zu tun, worauf achten?">'+esc(t.info||"")+'</textarea>'+
+    '<label>Fotos <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>'+
+    '<input type="file" class="t-img" accept="image/*" multiple>'+
+    '<p class="hint">Werden automatisch verkleinert. Keine Bilder mit Kindern — die Liste ist für alle sichtbar, die den Link haben.</p>'+
+    '<div class="shots"></div>';
+  d.dataset.id = t.id || "";
+  d._neu = [];          // frisch ausgewaehlte Bilder
+  d._weg = [];          // zu loeschende, bereits gespeicherte Bilder
+  d._alt = (bilder || []).slice();
+  const shots = d.querySelector(".shots");
+  const zeichne = () => {
+    shots.innerHTML = "";
+    d._alt.forEach(b=>{
+      const el = document.createElement("div");
+      el.className = "shot";
+      el.innerHTML = '<img src="'+bildUrl(b.data)+'" alt=""><button type="button">×</button>';
+      el.querySelector("button").onclick = () => {
+        d._weg.push(b.id);
+        d._alt = d._alt.filter(x=>x.id !== b.id);
+        markDirty(); zeichne();
+      };
+      shots.appendChild(el);
+    });
+    d._neu.forEach((data,i)=>{
+      const el = document.createElement("div");
+      el.className = "shot";
+      el.innerHTML = '<img src="'+bildUrl(data)+'" alt=""><button type="button">×</button>';
+      el.querySelector("button").onclick = () => { d._neu.splice(i,1); zeichne(); };
+      shots.appendChild(el);
+    });
+  };
+  d.querySelector(".t-img").onchange = async ev => {
+    for(const datei of [...ev.target.files]){
+      try{ d._neu.push(await verkleinern(datei)); }
+      catch(e){ alert("Bild konnte nicht gelesen werden: " + datei.name); }
+    }
+    ev.target.value = "";
+    markDirty(); zeichne();
+  };
+  d._zeichne = zeichne;
+  zeichne();
+  wireTools(d);
+  faltbar(d, x=>{
+    const label = x.querySelector(".t-label").value.trim();
+    if(!label) return "";
+    const teile = [];
+    const wann = x.querySelector(".t-when").value.trim();
+    if(wann) teile.push(esc(wann));
+    teile.push((+x.querySelector(".t-needed").value || 1) + " Plätze");
+    const fotos = (x._alt || []).length + (x._neu || []).length;
+    if(fotos) teile.push(fotos + (fotos === 1 ? " Foto" : " Fotos"));
+    if(x.querySelector(".t-info").value.trim()) teile.push("mit Erklärung");
+    return "<b>"+esc(label)+"</b> <span>" + teile.join(" · ") + "</span>";
+  });
+  d._auf(!t.label);
+  return d;
+}
+function fieldRow(f){
+  f = f || {};
+  const d = document.createElement("div"); d.className = "item";
+  d.innerHTML = TOOLS+
+    '<label>Frage</label><input type="text" class="f-label" value="'+esc(f.label||"")+'" placeholder="Wie viele Großeltern kommen mit?">'+
+    '<div class="row"><div><label>Art der Antwort</label><select class="f-type">'+
+    '<option value="text">Kurzer Text</option><option value="textarea">Langer Text</option>'+
+    '<option value="select">Auswahl</option><option value="checkbox">Ja/Nein</option>'+
+    '<option value="number">Zahl</option></select></div>'+
+    '<div><label>Pflichtfeld</label><select class="f-req"><option value="0">nein</option>'+
+    '<option value="1">ja</option></select></div></div>'+
+    '<div class="f-opts hidden"><label>Antwortmöglichkeiten</label>'+
+    '<input type="text" class="f-options" value="'+esc((f.options||[]).join(", "))+'" placeholder="zu Fuß, Rad, Auto">'+
+    '<p class="hint">Mit Komma trennen.</p></div>';
+  d.dataset.id = f.id || "";
+  const type = d.querySelector(".f-type"), opts = d.querySelector(".f-opts");
+  type.value = f.type || "text";
+  d.querySelector(".f-req").value = f.required ? "1" : "0";
+  const sync = () => opts.classList.toggle("hidden", type.value !== "select");
+  type.onchange = sync; sync();
+  wireTools(d);
+  const ARTEN = { text:"kurzer Text", textarea:"langer Text", select:"Auswahl",
+                  checkbox:"Ja/Nein", number:"Zahl" };
+  faltbar(d, x=>{
+    const label = x.querySelector(".f-label").value.trim();
+    if(!label) return "";
+    const art = ARTEN[x.querySelector(".f-type").value] || "";
+    const pflicht = x.querySelector(".f-req").value === "1" ? " · Pflicht" : "";
+    return "<b>"+esc(label)+"</b> <span>" + art + pflicht + "</span>";
+  });
+  d._auf(!f.label);
+  return d;
+}
+/* Vorlauf: Text wie "4 Wochen vorher" wird zu Tagen vor der Veranstaltung. */
+const VORLAUF = [
+  {d:null, label:"kein fester Termin"},
+  {d:0,   label:"am Tag der Veranstaltung"},
+  {d:1,   label:"1 Tag vorher"},
+  {d:3,   label:"3 Tage vorher"},
+  {d:7,   label:"1 Woche vorher"},
+  {d:14,  label:"2 Wochen vorher"},
+  {d:21,  label:"3 Wochen vorher"},
+  {d:28,  label:"4 Wochen vorher"},
+  {d:42,  label:"6 Wochen vorher"},
+  {d:56,  label:"8 Wochen vorher"},
+  {d:90,  label:"3 Monate vorher"}
+];
+
+function parseVorlauf(c){
+  if(c && c.offset !== undefined && c.offset !== null) return c.offset;
+  const txt = String((c && c.due) || "").toLowerCase();
+  if(!txt) return null;
+  if(txt.includes("am tag")) return 0;
+  const m = txt.match(/(\d+)\s*(tag|woche|monat)/);
+  if(!m) return null;
+  const n = +m[1];
+  const faktor = m[2] === "tag" ? 1 : m[2] === "woche" ? 7 : 30;
+  const tage = n * faktor;
+  // auf den naechsten Listenwert runden
+  const werte = VORLAUF.filter(v=>v.d !== null).map(v=>v.d);
+  return werte.reduce((a,b)=> Math.abs(b-tage) < Math.abs(a-tage) ? b : a);
+}
+
+function faelligAm(eventOn, offset){
+  if(!eventOn || offset === null || offset === undefined) return null;
+  const d = new Date(eventOn + "T12:00:00");
+  if(isNaN(d)) return null;
+  d.setDate(d.getDate() - offset);
+  return d.toISOString().slice(0,10);
+}
+
+function tageBis(iso){
+  if(!iso) return null;
+  const a = new Date(heute() + "T12:00:00"), b = new Date(iso + "T12:00:00");
+  return Math.round((b - a) / 86400000);
+}
+
+function wannText(tage){
+  if(tage === null) return "";
+  if(tage < 0) return "seit " + Math.abs(tage) + (Math.abs(tage)===1?" Tag":" Tagen") + " überfällig";
+  if(tage === 0) return "heute";
+  if(tage === 1) return "morgen";
+  return "in " + tage + " Tagen";
+}
+
+function kaufRow(p){
+  p = p || {};
+  const d = document.createElement("div");
+  d.className = "item";
+  d.innerHTML = TOOLS +
+    '<div class="row"><div style="flex:0 0 74px;min-width:64px"><label>Menge</label>'+
+    '<input type="text" class="k-menge" value="'+esc(p.menge??"")+'" placeholder="2"></div>'+
+    '<div style="flex:0 0 84px;min-width:70px"><label>Einheit</label>'+
+    '<input type="text" class="k-einheit" value="'+esc(p.einheit||"")+'" placeholder="Pk"></div>'+
+    '<div style="flex:2;min-width:150px"><label>Was</label>'+
+    '<input type="text" class="k-artikel" value="'+esc(p.artikel||"")+'" placeholder="Brötchen"></div></div>'+
+    '<div class="row"><div><label>Wer besorgt es</label>'+
+    '<input type="text" class="k-wer" value="'+esc(p.wer||"")+'" placeholder="offen"></div></div>'+
+    '';
+  d.dataset.id = p.id || "";
+  wireTools(d);
+  const hakenK = document.createElement("input");
+  hakenK.type = "checkbox";
+  hakenK.className = "k-gekauft";
+  hakenK.checked = !!p.done;
+  hakenK.title = "gekauft";
+  faltbar(d, x=>{
+    const artikel = x.querySelector(".k-artikel").value.trim();
+    if(!artikel) return "";
+    const menge = [x.querySelector(".k-menge").value.trim(),
+                   x.querySelector(".k-einheit").value.trim()].filter(Boolean).join(" ");
+    const wer = x.querySelector(".k-wer").value.trim();
+    return "<b>" + (menge ? esc(menge) + " " : "") + esc(artikel) + "</b>" +
+      (wer ? ' <span>' + esc(wer) + "</span>" : "");
+  }, hakenK);
+  d._auf(!p.artikel);
+  return d;
+}
+
+const readKauf = box => [...box.children].map(d=>{
+  const artikel = d.querySelector(".k-artikel").value.trim();
+  return artikel ? { id:d.dataset.id || uid(), artikel,
+    menge:d.querySelector(".k-menge").value.trim(),
+    einheit:d.querySelector(".k-einheit").value.trim(),
+    wer:d.querySelector(".k-wer").value.trim(),
+    done:d.querySelector(".k-gekauft").checked } : null;
+}).filter(Boolean);
+
+function checkRow(c){
+  c = c || {};
+  const d = document.createElement("div"); d.className = "item";
+  d.innerHTML = TOOLS+
+    '<label>Was ist zu tun?</label>'+
+    '<input type="text" class="k-label" value="'+esc(c.label||"")+'" placeholder="Kaffeemaschine leihen">'+
+    '<div class="row"><div><label>Wer</label>'+
+    '<input type="text" class="k-who" value="'+esc(c.who||"")+'" placeholder="Name oder Rolle"></div>'+
+    '<div><label>Vorlauf</label><select class="k-offset">'+
+    VORLAUF.map(v=>'<option value="'+(v.d===null?"":v.d)+'">'+v.label+'</option>').join("")+
+    '</select></div></div>'+
+    '<p class="hint k-faellig"></p>'+
+    '<p class="hint k-sprung hidden"><button type="button" class="linkish">'+
+    'zur Einkaufsliste springen</button></p>';
+  d.dataset.id = c.id || "";
+  d.dataset.due = c.due || "";
+  const sprung = d.querySelector(".k-sprung");
+  const labelFeld = d.querySelector(".k-label");
+  const pruefeSprung = () => sprung.classList.toggle("hidden",
+    !/einkauf|besorg|bestell/i.test(labelFeld.value));
+  labelFeld.addEventListener("input", pruefeSprung);
+  sprung.querySelector("button").onclick = () => {
+    const box = $("einkauf").closest("fieldset");
+    anDenAnfang(box);
+    box.classList.add("blitz");
+    setTimeout(()=>box.classList.remove("blitz"), 2600);
+  };
+  pruefeSprung();
+  const sel = d.querySelector(".k-offset");
+  const off = parseVorlauf(c);
+  sel.value = off === null ? "" : String(off);
+  const zeig = () => {
+    const o = sel.value === "" ? null : +sel.value;
+    const datum = faelligAm(($("e-on") && $("e-on").value) || null, o);
+    d.querySelector(".k-faellig").textContent = datum
+      ? "fällig am " + new Date(datum+"T12:00:00").toLocaleDateString("de-DE") + " (" + wannText(tageBis(datum)) + ")"
+      : (o === null ? "" : "Datum der Veranstaltung fehlt — kein Termin berechenbar");
+  };
+  sel.onchange = zeig; zeig();
+  wireTools(d);
+  const hakenC = document.createElement("input");
+  hakenC.type = "checkbox";
+  hakenC.className = "k-done";
+  hakenC.checked = !!c.done;
+  hakenC.title = "erledigt";
+  faltbar(d, x=>{
+    const label = x.querySelector(".k-label").value.trim();
+    if(!label) return "";
+    const teile = [];
+    const wer = x.querySelector(".k-who").value.trim();
+    if(wer) teile.push(esc(wer));
+    const o = x.querySelector(".k-offset").value;
+    const v = VORLAUF.find(z=>String(z.d) === o);
+    if(v && v.d !== null) teile.push(v.label);
+    const erledigt = (x.querySelector(".k-done") || {}).checked;
+    const knapp = !wer && !erledigt && o !== "" && $("e-on") && $("e-on").value &&
+      tageBis(faelligAm($("e-on").value, +o)) <= 7;
+    return "<b>"+esc(label)+"</b>" + (teile.length ? ' <span>' + teile.join(" · ") + "</span>" : "") +
+      (knapp ? '<span class="ohne">niemand zuständig</span>' : "");
+  }, hakenC);
+  d._auf(!c.label);
+  return d;
+}
+
+const readCats = box => [...box.children].map(d=>{
+  const label = d.querySelector(".c-label").value.trim();
+  return label ? { id:d.dataset.id || slugify(label) || uid(), label,
+    target:+d.querySelector(".c-target").value || 0,
+    unit:d.querySelector(".c-unit").value.trim() || "Beiträge",
+    ideas:ideenLesen(d.querySelector(".c-ideas").value) } : null;
+}).filter(Boolean);
+
+const readTasks = box => [...box.children].map(d=>{
+  const label = d.querySelector(".t-label").value.trim();
+  return label ? { id:d.dataset.id || slugify(label) || uid(), label,
+    when:d.querySelector(".t-when").value.trim(),
+    needed:+d.querySelector(".t-needed").value || 1,
+    info:d.querySelector(".t-info").value.trim() } : null;
+}).filter(Boolean);
+
+const readFields = box => [...box.children].map(d=>{
+  const label = d.querySelector(".f-label").value.trim();
+  return label ? { id:d.dataset.id || slugify(label) || uid(), label,
+    type:d.querySelector(".f-type").value,
+    required:d.querySelector(".f-req").value === "1",
+    options:d.querySelector(".f-options").value.split(",").map(s=>s.trim()).filter(Boolean) } : null;
+}).filter(Boolean);
+
+const readChecks = box => [...box.children].map(d=>{
+  const label = d.querySelector(".k-label").value.trim();
+  const off = d.querySelector(".k-offset").value;
+  return label ? { id:d.dataset.id || uid(), label,
+    who:d.querySelector(".k-who").value.trim(),
+    offset: off === "" ? null : +off,
+    due: (VORLAUF.find(v=>String(v.d)===off) || {}).label || d.dataset.due || "",
+    done:d.querySelector(".k-done").checked } : null;
+}).filter(Boolean);
+
+/* ============================================================
+   Vorlagen-Editor
+   ============================================================ */
+function openTemplate(t){
+  currentTpl = t ? {...t} : { name:"", description:"", categories:[], tasks:[], fields:[], checklist:[] };
+  $("tpl-title").textContent = t ? "Vorlage bearbeiten" : "Neue Vorlage";
+  $("t-name").value = currentTpl.name || "";
+  $("t-desc").value = currentTpl.description || "";
+  fillGroups("t", currentTpl);
+  $("t-cats").innerHTML = ""; (currentTpl.categories||[]).forEach(c=>$("t-cats").appendChild(catRow(c))); refreshTools($("t-cats"));
+  $("t-tasks").innerHTML = ""; (currentTpl.tasks||[]).forEach(x=>$("t-tasks").appendChild(taskRow(x))); refreshTools($("t-tasks"));
+  $("t-fields").innerHTML = ""; (currentTpl.fields||[]).forEach(f=>$("t-fields").appendChild(fieldRow(f))); refreshTools($("t-fields"));
+  $("t-checks").innerHTML = ""; (currentTpl.checklist||[]).forEach(c=>$("t-checks").appendChild(checkRow(c))); refreshTools($("t-checks"));
+  $("t-einkauf").innerHTML = ""; (currentTpl.shopping||[]).forEach(p=>$("t-einkauf").appendChild(kaufRow(p))); refreshTools($("t-einkauf"));
+  msg($("tpl-msg"),"");
+  clearDirty();
+  show("template");
+}
+$("t-add-cat").onclick   = () => { $("t-cats").appendChild(catRow()); refreshTools($("t-cats")); };
+$("t-add-task").onclick  = () => { $("t-tasks").appendChild(taskRow()); refreshTools($("t-tasks")); };
+$("t-add-field").onclick = () => { $("t-fields").appendChild(fieldRow()); refreshTools($("t-fields")); };
+$("t-add-check").onclick = () => { $("t-checks").appendChild(checkRow()); refreshTools($("t-checks")); };
+
+$("t-save").onclick = async () => {
+  const name = $("t-name").value.trim();
+  if(!name){ msg($("tpl-msg"),"Die Vorlage braucht einen Namen.",true); return; }
+  const tpl = {
+    ...(currentTpl.id ? {id:currentTpl.id} : {}),
+    name, description:$("t-desc").value.trim(), people:readGroups("t"),
+    categories:readCats($("t-cats")), tasks:readTasks($("t-tasks")),
+    fields:readFields($("t-fields")), checklist:readChecks($("t-checks")),
+    shopping:readKauf($("t-einkauf"))
+  };
+  $("t-save").disabled = true;
+  try{
+    await db.saveTemplate(tpl);
+    templates = await db.listTemplates();
+    currentTpl = templates.find(x=>x.name===name) || tpl;
+    clearDirty();
+    msg($('tpl-msg'), 'Vorlage gespeichert. Unter Vorlagen wird daraus mit einem Klick das nächste Veranstaltung.');
+  }catch(err){ msg($("tpl-msg"), err.message, true); }
+  finally{ $("t-save").disabled = false; }
+};
+
+/* ============================================================
+   Historie und Zielvorschlag
+   ============================================================ */
+function catStats(ev, rows, review){
+  const mine = rows.filter(s=>s.event===ev.slug);
+  const gefroren = (review || {}).zahlen;
+
+  // Nach dem Aufräumen gibt es keine Anmeldungen mehr — dann zählen die
+  // eingefrorenen Zahlen, sonst wäre die Historie leer
+  if(!mine.length && gefroren){
+    const per = {};
+    (ev.categories||[]).forEach(c=>{ per[c.id] = +(gefroren.kategorien||{})[c.id] || 0; });
+    return { count:+gefroren.anmeldungen || 0,
+      people:(+gefroren.erwachsene || 0) + (+gefroren.kinder || 0),
+      per, ausArchiv:true };
+  }
+
+  const items = mine.flatMap(s=>s.items||[]);
+  const per = {};
+  (ev.categories||[]).forEach(c=>{
+    per[c.id] = items.filter(i=>i.cat===c.id).reduce((a,i)=>a+(+i.qty||1),0);
+  });
+  return { count:mine.length,
+    people:mine.reduce((a,s)=>a+(+s.adults||0)+(+s.kids||0),0), per, ausArchiv:false };
+}
+
+let suggestion = null;   // {catId: neuesZiel}
+
+async function renderHistory(ev){
+  const box = $("history");
+  box.innerHTML = "";
+  suggestion = null;
+  if(!ev || !ev.template_id) return;
+
+  const siblings = events.filter(e=>e.template_id===ev.template_id && e.id && e.id!==ev.id);
+  if(!siblings.length) return;
+
+  let rows = [];
+  try{ rows = await db.signupsFor(siblings.map(e=>e.slug)); }catch(e){}
+  const plans = {};
+  for(const s of siblings){
+    try{ plans[s.id] = await db.getPlanning(s.id); }catch(e){ plans[s.id] = {review:{}}; }
+  }
+
+  const urteilText = { wenig:"war zu wenig", ok:"hat gepasst", viel:"war zu viel" };
+  const sorted = siblings.slice().reverse();
+
+  box.innerHTML = '<h3 style="margin-bottom:8px">Aus den letzten Malen</h3>' + sorted.map(s=>{
+    const rv = (plans[s.id]||{}).review || {};
+    const st = catStats(s, rows, rv);
+    const cats = (s.categories||[]).map(c=>{
+      const ist = (rv.cats && rv.cats[c.id] && rv.cats[c.id].ist != null) ? rv.cats[c.id].ist : (st.per[c.id]||0);
+      const u = rv.cats && rv.cats[c.id] ? rv.cats[c.id].urteil : "";
+      return "<tr><td>"+esc(c.label)+"</td><td>"+(c.target||"–")+"</td><td>"+ist+"</td><td>"+
+        (u ? esc(urteilText[u]||u) : "–")+"</td></tr>";
+    }).join("");
+    return '<div class="hist"><b>'+esc(s.title)+'</b> — '+esc(s.event_date || fmtDate(s.event_on) || "")+
+      "<br>"+st.count+" Anmeldungen, "+(rv.guests || st.people)+" Personen"+
+      (st.ausArchiv ? ' <span style="color:var(--ink-soft)">(aus der Zusammenfassung, '+
+        'die Anmeldungen sind gelöscht)</span>' : "")+
+      (rv.guests ? " tatsächlich da (angemeldet: "+st.people+")" : "")+
+      '<table><tr><th>Kategorie</th><th>Ziel</th><th>Ist</th><th>Bewertung</th></tr>'+cats+"</table>"+
+      (rv.notes ? '<p class="quote">„'+esc(rv.notes)+'"</p>' : "") + "</div>";
+  }).join("");
+
+  /* Vorschlag aus dem jüngsten Rückblick */
+  const last = sorted[0];
+  const rv = (plans[last.id]||{}).review || {};
+  if(rv.cats){
+    const st = catStats(last, rows, rv);
+    suggestion = {};
+    let any = false;
+    (ev.categories||[]).forEach(c=>{
+      const r = rv.cats[c.id];
+      if(!r) return;
+      const ist = r.ist != null ? +r.ist : (st.per[c.id]||0);
+      let ziel = ist;
+      if(r.urteil==="wenig") ziel = Math.max(ist+2, Math.ceil(ist*1.25));
+      if(r.urteil==="viel")  ziel = Math.max(1, Math.floor(ist*0.85));
+      if(ziel !== (c.target||0)) any = true;
+      suggestion[c.id] = ziel;
+    });
+    if(any){
+      const btn = document.createElement("button");
+      btn.className = "ghost";
+      btn.textContent = "Zielwerte aus dem Rückblick übernehmen";
+      btn.onclick = () => {
+        [...$("cats").children].forEach(d=>{
+          const id = d.dataset.id;
+          if(suggestion[id] != null) d.querySelector(".c-target").value = suggestion[id];
+        });
+        msg($("edit-msg"),"Zielwerte angepasst. Prüf sie gegen die erwartete Personenzahl — "+
+          "die Rechnung kennt nur das letzte Veranstaltung, nicht eure Anmeldelage.");
+      };
+      box.appendChild(btn);
+    }
+  }
+}
+
+/* ============================================================
+   Event-Editor
+   ============================================================ */
+const DEFAULTS = {
+  categories:[
+    {label:"Kuchen & Süßes",target:12,unit:"Kuchen",ideas:["Marmorkuchen","Apfelkuchen","Muffins"]},
+    {label:"Herzhaftes",target:8,unit:"Beiträge",ideas:["Quiche","Frikadellen"]},
+    {label:"Salate",target:6,unit:"Salate",ideas:["Nudelsalat","Kartoffelsalat"]},
+    {label:"Getränke",target:10,unit:"Kisten",ideas:["Apfelschorle","Wasser still"]}
+  ],
+  tasks:[{label:"Aufbau",when:"ab 12 Uhr",needed:6},{label:"Grillen",when:"15–18 Uhr",needed:4},
+         {label:"Abbau",when:"ab 19 Uhr",needed:8}]
+};
+
+async function openEditor(ev, opts){
+  opts = opts || {};
+  current = ev ? {...ev} : {
+    title:"", slug:"", event_date:"", event_time:"", place:"", intro:"",
+    retention_note:"Alle Angaben werden zwei Wochen nach der Veranstaltung gelöscht.",
+    ask_people:true, archived:false, template_id:null,
+    categories:JSON.parse(JSON.stringify(DEFAULTS.categories)),
+    tasks:JSON.parse(JSON.stringify(DEFAULTS.tasks)), fields:[]
+  };
+  if(opts.fresh) delete current.id;
+
+  $("edit-title").textContent = current.id ? "Veranstaltung bearbeiten" : "Neue Veranstaltung";
+  $("edit-sub").textContent = tplName(current.template_id)
+    ? 'Aus der Vorlage ' + tplName(current.template_id) + '. Änderungen hier gelten nur für diese Veranstaltung.'
+    : "Alles hier steuert, was die Gäste auf der Anmeldeseite sehen.";
+
+  $("e-title").value = current.title || "";
+  $("e-slug").value  = current.slug || "";
+  $("e-date").value  = current.event_date || "";
+  $("e-on").value    = current.event_on || "";
+  $("e-released").checked = current.id ? current.signup_released !== false : false;
+  $("e-mandatory").checked = current.mandatory === true;
+  $("e-familien").value = current.expected_families || "";
+  $("e-from").value  = current.signup_from || "";
+  $("e-until").value = current.signup_until || "";
+  $("e-time").value  = current.event_time || "";
+  $("e-place").value = current.place || "";
+  $("e-intro").value = current.intro || "";
+  $("e-retention").value = current.retention_note || "";
+  $("e-days").value = String(current.retention_days || 14);
+  const zeigeLoeschtag = () => {
+    const tage = +$("e-days").value || 14;
+    const wann = $("e-on").value
+      ? new Date(new Date($("e-on").value + "T12:00:00").getTime() + tage*864e5)
+          .toLocaleDateString("de-DE")
+      : null;
+    $("e-days-hint").textContent = (wann ? "Löschung am " + wann + ". " : "Gezählt ab dem Veranstaltungstag. ") +
+      "Gelöscht werden Namen, Anmerkungen und Antworten — die Zahlen für den Rückblick werden " +
+      "vorher gesichert und bleiben.";
+  };
+  $("e-days").onchange = zeigeLoeschtag;
+  $("e-on").addEventListener("change", zeigeLoeschtag);
+  zeigeLoeschtag();
+  fillGroups("e", current);
+  const v = vis(current);
+  $("v-totals").checked = v.totals;
+  $("v-items").checked = v.items;
+  $("v-item-names").checked = v.itemNames;
+  $("v-task-names").checked = v.taskNames;
+  $("v-tasks-first").checked = (current.visibility||{}).tasksFirst === true;
+  $("v-feedback").checked = (current.visibility||{}).feedback === true;
+  $("v-no-signup").checked = (current.visibility||{}).taskSignup === false;
+  $("e-archived").checked = !!current.archived;
+
+  $("cats").innerHTML = ""; (current.categories||[]).forEach(c=>$("cats").appendChild(catRow(c))); refreshTools($("cats"));
+  let bilder = [];
+  try{ bilder = await db.images(current.id); }catch(e){}
+  const proAufgabe = id => bilder.filter(b=>b.task_id === id);
+  $("tasks").innerHTML = "";
+  (current.tasks||[]).forEach(t=>$("tasks").appendChild(taskRow(t, proAufgabe(t.id))));
+  refreshTools($("tasks"));
+  $("from-tpl").classList.toggle("hidden", !(current.template_id && templates.some(t=>t.id===current.template_id)));
+  $("fields").innerHTML = ""; (current.fields||[]).forEach(f=>$("fields").appendChild(fieldRow(f))); refreshTools($("fields"));
+
+  planning = opts.checklist ? {checklist:opts.checklist, review:{}, shopping:opts.shopping || []}
+                            : await db.getPlanning(current.id);
+  $("einkauf").innerHTML = "";
+  (planning.shopping||[]).forEach(p=>$("einkauf").appendChild(kaufRow(p)));
+  refreshTools($("einkauf"));
+  $("kauf-tpl").classList.toggle("hidden",
+    !(current.template_id && templates.some(t=>t.id===current.template_id)));
+  $("checks").innerHTML = ""; (planning.checklist||[]).forEach(c=>$("checks").appendChild(checkRow(c))); refreshTools($("checks"));
+
+  signups = current.slug ? await db.listSignups(current.slug).catch(()=>[]) : [];
+  renderReview();
+  renderFeedback();
+  msg($("edit-msg"), "");
+  clearDirty();
+  show("edit");
+  renderHistory(current);
+  offenePruefen();
+  renderVorschlaege();
+}
+
+function feedbackLink(id){
+  return location.href.replace(/[^/]*$/, "") + CONFIG.feedbackPage + "?event=" + id;
+}
+
+async function renderFeedback(){
+  const box = $("feedback-box");
+  box.innerHTML = "";
+  if(!current || !current.id){ return; }
+  if(!$("v-feedback").checked){
+    box.innerHTML = '<p class="hint" style="margin:0 0 12px">Einschalten, speichern, dann steht hier ' +
+      'der Link zum Verteilen — und später die Rückmeldungen.</p>';
+    return;
+  }
+  let liste = [];
+  try{ liste = await db.feedback(current.id); }catch(e){}
+  const noten = liste.map(x=>x.rating).filter(Boolean);
+  const schnitt = noten.length ? (noten.reduce((a,b)=>a+b,0) / noten.length).toFixed(1) : null;
+
+  box.innerHTML =
+    '<p class="hint" style="margin:0 0 8px">Link zum Verteilen: <code>' +
+      esc(feedbackLink(current.id)) + '</code></p>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">' +
+      '<button type="button" class="ghost" id="copy-feedback">Rückmeldelink kopieren</button></div>' +
+    (liste.length
+      ? '<div class="card" style="margin:0 0 12px">' +
+        '<div class="totals" style="margin:0 0 8px">' +
+        '<div><b>' + liste.length + '</b>Rückmeldungen</div>' +
+        (schnitt ? '<div><b>' + schnitt + '</b>von 5 im Schnitt</div>' : "") + '</div>' +
+        liste.map(x=>'<div class="task" style="align-items:flex-start"><div>' +
+          (x.good ? '<strong>Gut:</strong> ' + esc(x.good) + '<br>' : "") +
+          (x.better ? '<strong>Ändern:</strong> ' + esc(x.better) : "") +
+          '<span class="task-people">' + (x.from_name ? esc(x.from_name) + " · " : "anonym · ") +
+          new Date(x.created_at).toLocaleDateString("de-DE") + '</span></div>' +
+          '<span class="task-free">' + (x.rating ? esc(x.rating) + "/5" : "—") + '</span></div>').join("") +
+        '</div>'
+      : '<p class="hint" style="margin:0 0 12px">Noch keine Rückmeldung eingegangen.</p>');
+
+  const k = $("copy-feedback");
+  if(k) k.onclick = () => kopieren(feedbackLink(current.id),
+    () => msg($("edit-msg"), "Rückmeldelink kopiert — der geht nach der Veranstaltung an alle Eltern."));
+}
+
+$("v-feedback").addEventListener("change", () => { markDirty(); renderFeedback(); });
+
+function renderReview(){
+  const rv = planning.review || {};
+  const angemeldet = signups.reduce((a,s)=>a+(+s.adults||0)+(+s.kids||0),0);
+  $("r-expected").value = angemeldet;
+  $("r-guests").value = rv.guests != null ? rv.guests : "";
+  $("r-notes").value = rv.notes || "";
+  const items = signups.flatMap(s=>s.items||[]);
+  $("review-cats").innerHTML = readCats($("cats")).map(c=>{
+    const auto = items.filter(i=>i.cat===c.id).reduce((a,i)=>a+(+i.qty||1),0);
+    const r = (rv.cats||{})[c.id] || {};
+    const ist = r.ist != null ? r.ist : auto;
+    return '<div class="row" style="align-items:flex-end" data-rcat="'+c.id+'">'+
+      '<div><label>'+esc(c.label)+' — tatsächlich</label>'+
+      '<input type="number" class="r-ist" min="0" value="'+ist+'"></div>'+
+      '<div><label>Bewertung</label><select class="r-urteil">'+
+      '<option value="">noch offen</option>'+
+      '<option value="wenig"'+(r.urteil==="wenig"?" selected":"")+'>zu wenig</option>'+
+      '<option value="ok"'+(r.urteil==="ok"?" selected":"")+'>hat gepasst</option>'+
+      '<option value="viel"'+(r.urteil==="viel"?" selected":"")+'>zu viel</option>'+
+      '</select></div></div>';
+  }).join("") || '<p class="hint">Erst Kategorien anlegen.</p>';
+}
+$("cats").addEventListener("focusout", () => { if(current) renderReview(); });
+$("e-on").addEventListener("change", () => {
+  const aktuell = readChecks($("checks"));
+  $("checks").innerHTML = "";
+  aktuell.forEach(c=>$("checks").appendChild(checkRow(c)));
+  refreshTools($("checks"));
+});
+
+$("add-cat").onclick   = () => { $("cats").appendChild(catRow()); refreshTools($("cats")); };
+$("add-task").onclick  = () => { $("tasks").appendChild(taskRow()); refreshTools($("tasks")); };
+/* ---------- Gemeldete Aufgaben ---------- */
+let uebernommen = [];    // ids, deren Status beim Speichern gesetzt wird
+
+async function renderVorschlaege(){
+  uebernommen = [];
+  const box = $("box-vorschlaege");
+  if(!current || !current.id){ box.classList.add("hidden"); return; }
+  let liste = [];
+  try{ liste = await db.proposals(current.id); }catch(e){ box.classList.add("hidden"); return; }
+  if(!liste.length){ box.classList.add("hidden"); return; }
+
+  const anzeige = $("melde-anzeige");
+  if(anzeige) anzeige.textContent = meldeLink(current.id);
+  $("vorschlaege").innerHTML = liste.map(p=>
+    '<div class="item" data-vid="'+esc(p.id)+'">'+
+    '<h3>'+esc(p.title)+'</h3>'+
+    '<p class="card-meta" style="margin:4px 0 8px">'+
+      (p.from_name ? "gemeldet von " + esc(p.from_name) + " · " : "") +
+      esc(p.needed) + " Hände · " + new Date(p.created_at).toLocaleDateString("de-DE") + "</p>"+
+    (p.info ? '<p style="margin:0 0 8px;font-size:.9rem">'+esc(p.info)+'</p>' : "")+
+    (bildUrl(p.image) ? '<div class="shots"><div class="shot"><img src="'+bildUrl(p.image)+'" alt=""></div></div>' : "")+
+    '<div class="card-actions" style="margin-top:10px">'+
+    '<button type="button" class="ghost" data-nehmen="'+esc(p.id)+'">Übernehmen</button>'+
+    '<button type="button" class="ghost danger" data-ab="'+esc(p.id)+'">Ablehnen</button></div></div>').join("");
+
+  $("vorschlaege").querySelectorAll("[data-nehmen]").forEach(b=>{
+    b.onclick = () => {
+      const p = liste.find(x=>x.id === b.dataset.nehmen);
+      const zeile = taskRow({ label:p.title, info:p.info || "", needed:p.needed, when:"" }, []);
+      if(bildUrl(p.image)){ zeile._neu = [bildUrl(p.image)]; zeile._zeichne(); }
+      $("tasks").appendChild(zeile);
+      refreshTools($("tasks"));
+      uebernommen.push(p.id);
+      b.closest(".item").remove();
+      markDirty();
+      msg($("edit-msg"), p.title + " steht jetzt in der Aufgabenliste. " +
+        "Erst beim Speichern wird die Meldung als erledigt markiert.");
+      if(!$("vorschlaege").children.length) $("box-vorschlaege").classList.add("hidden");
+    };
+  });
+  $("vorschlaege").querySelectorAll("[data-ab]").forEach(b=>{
+    b.onclick = async () => {
+      const grund = prompt("Kurze Notiz, warum nicht? (optional)") ;
+      if(grund === null) return;
+      try{
+        await db.proposalStatus(b.dataset.ab, "abgelehnt", grund.trim());
+        b.closest(".item").remove();
+        if(!$("vorschlaege").children.length) $("box-vorschlaege").classList.add("hidden");
+      }catch(err){ msg($("edit-msg"), err.message, true); }
+    };
+  });
+  box.classList.remove("hidden");
+}
+
+/* Aufgaben, die beim letzten Veranstaltung derselben Vorlage niemand erledigt hat */
+let offeneVomLetzten = null;
+
+async function offenePruefen(){
+  $("from-last").classList.add("hidden");
+  offeneVomLetzten = null;
+  if(!current || !current.template_id) return;
+  const frueher = events.filter(e=>e.template_id === current.template_id && e.id && e.id !== current.id);
+  if(!frueher.length) return;
+  const letztes = frueher.sort((a,b)=>
+    String(a.event_on||"").localeCompare(String(b.event_on||"")))[frueher.length-1];
+  let belegt = [];
+  try{ belegt = await db.claims(letztes.id); }catch(e){ return; }
+  // Ohne digitale Spur wissen wir nicht, was offen blieb — dann kein Vorschlag
+  if(!belegt.length) return;
+  const fertig = new Set(belegt.filter(c=>c.done).map(c=>c.task_id));
+  const offen = (letztes.tasks||[]).filter(t=>!fertig.has(t.id));
+  if(!offen.length) return;
+  let bilder = [];
+  try{ bilder = await db.images(letztes.id); }catch(e){}
+  offeneVomLetzten = { fest:letztes, aufgaben:offen, bilder };
+  $("from-last").textContent = "+ " + offen.length + " offene Aufgaben vom " +
+    (letztes.event_date || fmtDate(letztes.event_on) || letztes.title);
+  $("from-last").classList.remove("hidden");
+}
+
+$("from-last").onclick = () => {
+  if(!offeneVomLetzten) return;
+  const da = readTasks($("tasks")).map(t=>t.id);
+  const neu = offeneVomLetzten.aufgaben.filter(t=>!da.includes(t.id));
+  if(!neu.length){ msg($("edit-msg"),"Die offenen Aufgaben stehen schon in der Liste."); return; }
+  neu.forEach(t=>{
+    const bilder = offeneVomLetzten.bilder.filter(b=>b.task_id === t.id)
+      .map(b=>({ id:"kopie-"+Math.random(), data:b.data }));
+    const zeile = taskRow(t, []);
+    zeile._neu = bilder.map(b=>b.data);   // Fotos werden mitkopiert
+    zeile._zeichne();
+    $("tasks").appendChild(zeile);
+  });
+  refreshTools($("tasks"));
+  markDirty();
+  msg($("edit-msg"), neu.length + " Aufgaben übernommen, inklusive Erklärungen und Fotos. " +
+    "Nicht vergessen zu speichern.");
+};
+
+$("from-tpl").onclick = () => {
+  const T = templates.find(t=>t.id === (current && current.template_id));
+  if(!T) return;
+  const da = readTasks($("tasks")).map(t=>t.id);
+  const neu = (T.tasks||[]).filter(t=>!da.includes(t.id));
+  if(!neu.length){ msg($("edit-msg"),"Alle Standardaufgaben der Vorlage sind schon drin."); return; }
+  neu.forEach(t=>$("tasks").appendChild(taskRow(t)));
+  refreshTools($("tasks"));
+  markDirty();
+  msg($("edit-msg"), neu.length + (neu.length===1 ? " Aufgabe ergänzt." : " Aufgaben ergänzt.") +
+    " Nicht vergessen zu speichern.");
+};
+$("add-field").onclick = () => { $("fields").appendChild(fieldRow()); refreshTools($("fields")); };
+$("add-check").onclick = () => { $("checks").appendChild(checkRow()); refreshTools($("checks")); };
+$("add-kauf").onclick = () => { $("einkauf").appendChild(kaufRow()); refreshTools($("einkauf")); markDirty(); };
+$("t-add-kauf").onclick = () => { $("t-einkauf").appendChild(kaufRow()); refreshTools($("t-einkauf")); };
+
+$("kauf-tpl").onclick = () => {
+  const T = templates.find(t=>t.id === (current && current.template_id));
+  if(!T || !(T.shopping||[]).length){
+    $("kauf-msg").textContent = "Diese Vorlage hat noch keine Standardliste."; return;
+  }
+  const da = readKauf($("einkauf")).map(p=>p.artikel.toLowerCase());
+  const neu = T.shopping.filter(p=>!da.includes(String(p.artikel).toLowerCase()));
+  neu.forEach(p=>$("einkauf").appendChild(kaufRow({...p, done:false})));
+  refreshTools($("einkauf"));
+  markDirty();
+  $("kauf-msg").textContent = neu.length
+    ? neu.length + " Posten ergänzt. Mengen prüfen und speichern."
+    : "Alles aus der Standardliste steht schon drin.";
+};
+
+function kaufText(){
+  const liste = readKauf($("einkauf"));
+  const kopfzeile = "Einkauf — " + $("e-title").value.trim() +
+    ($("e-on").value ? ", " + new Date($("e-on").value+"T12:00:00").toLocaleDateString("de-DE") : "");
+  const zeilen = liste.map(p=>
+    (p.done ? "[x] " : "[ ] ") +
+    [p.menge, p.einheit, p.artikel].filter(Boolean).join(" ") +
+    (p.wer ? " — " + p.wer : ""));
+  return kopfzeile + "\n\n" + (zeilen.join("\n") || "(noch nichts eingetragen)");
+}
+
+$("kauf-text").onclick = async () => {
+  const text = kaufText();
+  try{ await navigator.clipboard.writeText(text);
+       $("kauf-msg").textContent = "Liste kopiert — kann direkt in WhatsApp eingefügt werden."; }
+  catch{ prompt("Zum Kopieren markieren:", text); }
+};
+
+$("kauf-csv").onclick = () => {
+  const liste = readKauf($("einkauf"));
+  const cell = v => '"' + String(v??"").replace(/"/g,'""') + '"';
+  const csv = "\uFEFF" + [["Menge","Einheit","Was","Wer besorgt","gekauft"].map(cell).join(";"),
+    ...liste.map(p=>[p.menge, p.einheit, p.artikel, p.wer, p.done ? "ja" : "nein"].map(cell).join(";"))
+  ].join("\r\n");
+  download("einkauf-" + (current.slug || "liste") + ".csv", csv, "text/csv;charset=utf-8");
+};
+
+$("e-title").addEventListener("blur", () => {
+  if(!$("e-slug").value.trim() && $("e-title").value.trim())
+    $("e-slug").value = slugify($("e-title").value);
+});
+
+function collectEvent(){
+  // Aufgaben-Kennungen festzurren, damit Bilder sicher zugeordnet bleiben
+  [...$("tasks").children].forEach(d=>{
+    if(!d.dataset.id){
+      const label = d.querySelector(".t-label").value.trim();
+      if(label) d.dataset.id = slugify(label) || uid();
+    }
+  });
+  return {
+    ...(current.id ? {id:current.id} : {}),
+    title:$("e-title").value.trim(),
+    slug:slugify($("e-slug").value || $("e-title").value),
+    event_date:$("e-date").value.trim(),
+    event_on:$("e-on").value || null,
+    signup_released:$("e-released").checked,
+    mandatory:$("e-mandatory").checked,
+    expected_families:+$("e-familien").value || null,
+    signup_from:$("e-from").value || null,
+    signup_until:$("e-until").value || null,
+    event_time:$("e-time").value.trim(),
+    place:$("e-place").value.trim(),
+    intro:$("e-intro").value.trim(),
+    retention_note:$("e-retention").value.trim(),
+    retention_days:+$("e-days").value || 14,
+    people:readGroups("e"),
+    visibility:{ totals:$("v-totals").checked, items:$("v-items").checked,
+                 itemNames:$("v-item-names").checked, taskNames:$("v-task-names").checked,
+                 tasksFirst:$("v-tasks-first").checked,
+                 feedback:$("v-feedback").checked,
+                 taskSignup:!$("v-no-signup").checked },
+    ask_people:$("e-g1-on").checked || $("e-g2-on").checked,
+    archived:$("e-archived").checked,
+    template_id:current.template_id || null,
+    categories:readCats($("cats")), tasks:readTasks($("tasks")), fields:readFields($("fields"))
+  };
+}
+
+function collectPlanning(){
+  const cats = {};
+  document.querySelectorAll("#review-cats [data-rcat]").forEach(d=>{
+    const ist = d.querySelector(".r-ist").value;
+    const urteil = d.querySelector(".r-urteil").value;
+    if(ist !== "" || urteil) cats[d.dataset.rcat] = { ist: ist===""?null:+ist, urteil };
+  });
+  const guests = $("r-guests").value;
+  return {
+    shopping: readKauf($("einkauf")),
+    checklist: readChecks($("checks")),
+    review: { guests: guests===""?null:+guests, expected:+$("r-expected").value || 0,
+              notes: $("r-notes").value.trim(), cats }
+  };
+}
+
+$("save").onclick = async () => {
+  const ev = collectEvent();
+  if(!ev.title){ msg($("edit-msg"),"Die Veranstaltung braucht einen Namen.",true); return; }
+  if(!ev.slug){ msg($("edit-msg"),"Der Kurzname für den Link fehlt.",true); return; }
+
+  // Kurzname schon vergeben? Dann gleich einen freien vorschlagen
+  const kollision = events.find(e=>e.slug === ev.slug && e.id !== current.id);
+  if(kollision){
+    let frei = ev.slug, i = 2;
+    while(events.some(e=>e.slug === frei)) frei = ev.slug + "-" + (i++);
+    $("e-slug").value = frei;
+    msg($("edit-msg"), "Der Kurzname " + ev.slug + " gehört schon zu " + kollision.title +
+      ". Ich habe " + frei + " eingetragen — nochmal auf Speichern drücken.", true);
+    return;
+  }
+  $("save").disabled = true;
+  try{
+    const ohneAbfrage = !ev.categories.length && !ev.tasks.length && !ev.fields.length;
+    const gesperrt = !ev.signup_released && !ohneAbfrage;
+    const saved = await db.saveEvent(ev);
+    const id = (saved && saved.id) || current.id;
+    current = {...ev, id};
+    planning = collectPlanning();
+    await db.savePlanning(id, planning);
+
+    for(const vid of uebernommen){
+      try{ await db.proposalStatus(vid, "uebernommen", null); }catch(e){}
+    }
+    uebernommen = [];
+
+    // Fotos nachziehen
+    for(const d of [...$("tasks").children]){
+      for(const weg of (d._weg || [])) await db.delImage(weg);
+      d._weg = [];
+      for(const data of (d._neu || [])) await db.addImage(id, d.dataset.id, data);
+      if(d._neu && d._neu.length){
+        d._alt = (d._alt || []).concat(d._neu.map(x=>({id:"neu-"+Math.random(), data:x})));
+        d._neu = [];
+      }
+    }
+    events = await db.listEvents();
+    clearDirty();
+    const offen = planning.checklist.filter(c=>!c.done).length;
+    msg($("edit-msg"), "Gespeichert. " + (offen ? offen + (offen === 1 ? " Punkt" : " Punkte") + " auf der Checkliste noch offen. " : "") +
+      (ohneAbfrage
+        ? "Diese Veranstaltung fragt nichts ab — die Anmeldeseite zeigt nur Datum und Ort. " +
+          "Für eine reine Orga-Planung ist das genau richtig."
+        : "Link: " + publicLink(current.slug)) +
+      (gesperrt ? " Die Anmeldung ist noch gesperrt — setz den Haken bei Anmeldung freigegeben, " +
+        "wenn die Eltern loslegen sollen." : "") +
+      " Der Editor bleibt offen, Fertig bringt dich zurück zur Übersicht.");
+  }catch(err){ msg($("edit-msg"), err.message, true); dirty = true; }
+  finally{ $("save").disabled = false; }
+};
+
+$("preview").onclick = () => {
+  const slug = slugify($("e-slug").value || $("e-title").value);
+  if(!slug){ msg($("edit-msg"),"Erst speichern, dann öffnen.",true); return; }
+  window.open(publicLink(slug), "_blank");
+};
+$("copy-link").onclick = async () => {
+  const slug = slugify($("e-slug").value || $("e-title").value);
+  await kopieren(publicLink(slug), t => msg($("edit-msg"), "Anmeldelink kopiert — der geht an alle Eltern."));
+};
+
+$("copy-melde").onclick = async () => {
+  if(!current || !current.id){
+    msg($("edit-msg"), "Erst speichern, dann gibt es einen Meldelink.", true); return;
+  }
+  await kopieren(meldeLink(current.id), () => msg($("edit-msg"),
+    "Meldelink kopiert — für Leitung, Vorstand und Teamleitungen. Damit melden sie Aufgaben, " +
+    "die hier im Block Gemeldete Aufgaben ankommen."));
+};
+
+/* ============================================================
+   Anmeldungen
+   ============================================================ */
+async function openSignups(ev){
+  current = ev;
+  $("su-title").textContent = "Anmeldungen — " + ev.title;
+  $("manual-form").classList.add("hidden");
+  editingSignup = null;
+  show("signups");
+  await loadSignups();
+}
+
+async function loadSignups(){
+  try{ signups = await db.listSignups(current.slug); }
+  catch(err){ $("su-table").innerHTML = '<div class="msg bad">'+esc(err.message)+'</div>'; return; }
+
+  const adults = signups.reduce((a,s)=>a+(+s.adults||0),0);
+  const kids   = signups.reduce((a,s)=>a+(+s.kids||0),0);
+  const items  = signups.reduce((a,s)=>a+(s.items||[]).reduce((b,i)=>b+(+i.qty||1),0),0);
+  const g = groups(current);
+  const zusagen = signups.filter(s=>s.status !== "absage");
+  const absagen = signups.filter(s=>s.status === "absage");
+  const erwartet = +current.expected_families || 0;
+  const fehlend = erwartet ? Math.max(0, erwartet - signups.length) : 0;
+  $("totals").innerHTML =
+    (current.mandatory
+      ? "<div><b>"+zusagen.length+"</b>Zusagen</div><div><b>"+absagen.length+"</b>Absagen</div>" +
+        (erwartet ? "<div><b>"+fehlend+"</b>ohne Antwort</div>" : "")
+      : "<div><b>"+signups.length+"</b>Anmeldungen</div>")+
+    (g.adults.on ? "<div><b>"+adults+"</b>"+esc(g.adults.label)+"</div>" : "")+
+    (g.kids.on ? "<div><b>"+kids+"</b>"+esc(g.kids.label)+"</div>" : "")+
+    "<div><b>"+items+"</b>Mitbringsel</div>";
+
+  const catLabel = id => ((current.categories||[]).find(c=>c.id===id)||{}).label || id;
+  const taskLabel = id => ((current.tasks||[]).find(t=>t.id===id)||{}).label || id;
+
+  let belegt = [];
+  try{ belegt = await db.claims(current.id); }catch(e){}
+  const standBox = belegt.length
+    ? '<div class="card" style="margin-top:16px"><h3>Aufgabenstand</h3>' +
+      (current.tasks||[]).map(t=>{
+        const wer = belegt.filter(c=>c.task_id === t.id);
+        if(!wer.length) return '<div class="task"><div><strong>'+esc(t.label)+'</strong></div>'+
+          '<span class="task-free full">niemand</span></div>';
+        const fertig = wer.every(c=>c.done);
+        return '<div class="task"><div><strong>'+esc(t.label)+'</strong>'+
+          '<span class="task-people">'+wer.map(c=>esc(c.name)+(c.done?" ✓":"")).join(", ")+'</span></div>'+
+          '<span class="task-free'+(fertig?"":" full")+'">'+(fertig?"erledigt":"läuft")+'</span></div>';
+      }).join("") + '</div>'
+    : "";
+
+  $("su-table").innerHTML = standBox + (signups.length
+    ? "<table><tr><th>Wer</th><th>Bringt mit</th><th>Hilft bei</th><th></th></tr>"+
+      signups.map(s=>"<tr><td><strong>"+esc(s.name)+"</strong>"+
+        (s.status === "absage" ? ' <span class="tag" style="background:#F6E6E9;color:var(--berry)">abgemeldet</span>' : "")+
+        "<br>"+
+        '<span style="color:var(--ink-soft)">'+[
+          g.adults.on ? (+s.adults||0)+" "+esc(g.adults.label) : "",
+          g.kids.on ? (+s.kids||0)+" "+esc(g.kids.label) : ""
+        ].filter(Boolean).join(", ")+"</span>"+
+        (s.note?'<br><span style="color:var(--ink-soft)">„'+esc(s.note)+'"</span>':"")+
+        Object.entries(s.fields||{}).map(([k,v])=>
+          '<br><span style="color:var(--ink-soft)">'+esc(k)+": "+esc(v)+"</span>").join("")+
+        "</td><td>"+((s.items||[]).map(i=>((+i.qty||1)>1 ? (+i.qty)+"\u00d7 " : "")+esc(i.what)+
+          ' <span style="color:var(--ink-soft)">('+esc(catLabel(i.cat))+")</span>").join("<br>") || "–")+
+        "</td><td>"+((s.tasks||[]).map(t=>esc(taskLabel(t))).join("<br>") || "–")+
+        '</td><td><button class="linkish" data-edit="'+esc(s.id)+'">bearbeiten</button><br>'+
+        '<button class="linkish" style="color:var(--berry)" data-del="'+esc(s.id)+'">löschen</button></td></tr>').join("")+
+      "</table>"
+    : '<div class="card" style="margin-top:14px"><p style="margin:0">Noch keine Anmeldung. '+
+      'Teile den Link, dann füllt sich die Liste.</p></div>');
+
+  $("su-table").querySelectorAll("button[data-edit]").forEach(b=>{
+    b.onclick = () => openManual(signups.find(x=>x.id===b.dataset.edit));
+  });
+  $("su-table").querySelectorAll("button[data-del]").forEach(b=>{
+    b.onclick = async () => {
+      const wer = (signups.find(x=>x.id === b.dataset.del) || {}).name || "diese Anmeldung";
+      if(!confirm("Anmeldung von " + wer + " löschen?\n\nDas wirkt sofort und lässt sich " +
+        "nicht zurückholen.")) return;
+      await db.deleteSignup(b.dataset.del); await loadSignups();
+    };
+  });
+}
+$("reload").onclick = loadSignups;
+
+/* ---------- Anmeldung durch das Orgateam ---------- */
+let editingSignup = null;
+
+function mItemRow(pre){
+  pre = pre || {};
+  const d = document.createElement("div");
+  d.className = "item";
+  d.innerHTML = TOOLS +
+    '<select class="mi-cat">'+(current.categories||[]).map(c=>
+      '<option value="'+esc(c.id)+'" '+(c.id===pre.cat?"selected":"")+'>'+esc(c.label)+'</option>').join("")+
+    '</select><div class="row" style="margin-top:8px">'+
+    '<div style="flex:3"><input type="text" class="mi-what" placeholder="Was genau?" value="'+esc(pre.what||"")+'"></div>'+
+    '<div style="flex:1;min-width:74px"><input type="number" class="mi-qty" min="1" value="'+(+pre.qty||1)+'"></div>'+
+    '</div>';
+  wireTools(d);
+  return d;
+}
+
+function openManual(entry){
+  editingSignup = entry || null;
+  const g = groups(current);
+  $("manual-title").textContent = entry ? "Anmeldung bearbeiten" : "Anmeldung eintragen";
+  const opts = (max, wert) => {
+    let o = "";
+    for(let i=0; i<=max; i++) o += '<option value="'+i+'" '+(i===wert?"selected":"")+'>'+i+'</option>';
+    return o;
+  };
+  $("m-name").value = entry ? entry.name : "";
+  $("m-adults").innerHTML = opts(g.adults.max, entry ? (entry.adults||0) : 1);
+  $("m-kids").innerHTML   = opts(g.kids.max,   entry ? (entry.kids||0)   : 0);
+  $("m-note").value = entry ? (entry.note||"") : "";
+  $("m-lbl1").textContent = g.adults.label;
+  $("m-lbl2").textContent = g.kids.label;
+  $("m-grp1").classList.toggle("hidden", !g.adults.on);
+  $("m-grp2").classList.toggle("hidden", !g.kids.on);
+  $("m-people").classList.toggle("hidden", !g.adults.on && !g.kids.on);
+  $("m-items").innerHTML = "";
+  ((entry && entry.items) || []).forEach(i=>$("m-items").appendChild(mItemRow(i)));
+  if(!$("m-items").children.length) $("m-items").appendChild(mItemRow());
+  refreshTools($("m-items"));
+  const belegt = id => signups.filter(x=>(x.tasks||[]).includes(id) && (!entry || x.id!==entry.id)).length;
+  $("m-tasks").innerHTML = (current.tasks||[]).map(t=>{
+    const frei = t.needed - belegt(t.id);
+    const an = entry && (entry.tasks||[]).includes(t.id);
+    return '<label class="check"><input type="checkbox" value="'+t.id+'" '+(an?"checked":"")+'>'+
+      '<span>'+esc(t.label)+(t.when?", "+esc(t.when):"")+" — "+
+      (frei>0 ? frei+" frei" : "voll, geht aber")+'</span></label>';
+  }).join("") || '<p class="hint">Für diese Veranstaltung sind keine Aufgaben angelegt.</p>';
+  msg($("m-msg"),"");
+  $("manual-form").classList.remove("hidden");
+  $("manual-form").scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+$("manual").onclick = () => openManual(null);
+$("m-cancel").onclick = () => { $("manual-form").classList.add("hidden"); editingSignup = null; };
+$("m-add-item").onclick = () => { $("m-items").appendChild(mItemRow()); refreshTools($("m-items")); };
+
+$("m-save").onclick = async () => {
+  const name = $("m-name").value.trim();
+  if(!name){ msg($("m-msg"),"Ohne Namen geht es nicht.",true); return; }
+  const doppelt = signups.find(x=>x.name.toLowerCase() === name.toLowerCase() &&
+    (!editingSignup || x.id !== editingSignup.id));
+  if(doppelt && !confirm(name + " steht schon auf der Liste. Trotzdem ein zweites Mal eintragen?")) return;
+  const data = {
+    name,
+    adults:+$("m-adults").value || 0,
+    kids:+$("m-kids").value || 0,
+    items:[...$("m-items").children].map(d=>({
+      cat:d.querySelector(".mi-cat").value,
+      what:d.querySelector(".mi-what").value.trim(),
+      qty:Math.max(1, +d.querySelector(".mi-qty").value || 1)
+    })).filter(i=>i.what),
+    tasks:[...$("m-tasks").querySelectorAll("input:checked")].map(c=>c.value),
+    fields:(editingSignup && editingSignup.fields) || {},
+    note:$("m-note").value.trim() || null
+  };
+  $("m-save").disabled = true;
+  try{
+    await db.saveSignup(editingSignup ? editingSignup.id : null, data, current.slug);
+    $("manual-form").classList.add("hidden");
+    editingSignup = null;
+    await loadSignups();
+  }catch(err){ msg($("m-msg"), err.message, true); }
+  finally{ $("m-save").disabled = false; }
+};
+
+$("export").onclick = () => {
+  const catLabel = id => ((current.categories||[]).find(c=>c.id===id)||{}).label || id;
+  const taskLabel = id => ((current.tasks||[]).find(t=>t.id===id)||{}).label || id;
+  const extra = [...new Set(signups.flatMap(s=>Object.keys(s.fields||{})))];
+  const cell = v => '"' + String(v??"").replace(/"/g,'""') + '"';
+  const g = groups(current);
+  const head = ["Name","Status",g.adults.label,g.kids.label,"Mitbringsel","Aufgaben",
+    "Anmerkung",...extra,"Angemeldet am"];
+  const rows = signups.map(s=>[
+    s.name, s.status === "absage" ? "abgemeldet" : "zugesagt", s.adults, s.kids,
+    (s.items||[]).map(i=>((+i.qty||1)>1 ? (+i.qty)+"x " : "")+i.what+" ("+catLabel(i.cat)+")").join(" | "),
+    (s.tasks||[]).map(taskLabel).join(" | "),
+    s.note || "", ...extra.map(k=>(s.fields||{})[k] ?? ""),
+    new Date(s.created_at).toLocaleString("de-DE")
+  ].map(cell).join(";"));
+  const csv = "\uFEFF" + [head.map(cell).join(";"), ...rows].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download = "anmeldungen-" + current.slug + ".csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+/* Der Dialog ist beim Start immer zu, egal was vorher im Markup steht */
+$("loesch-dialog").classList.add("hidden");
+$("loesch-dialog").addEventListener("click", ev => {
+  if(ev.target.id === "loesch-dialog") $("loesch-dialog").classList.add("hidden");
+});
+document.addEventListener("keydown", ev => {
+  if(ev.key === "Escape") $("loesch-dialog").classList.add("hidden");
+});
+
+show("login");
+if(!live) $("sub").textContent = "Demo-Modus: ohne Supabase-Keys wird nichts gespeichert.";
+autoLogin();
+</script>
+</body>
+</html>

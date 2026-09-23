@@ -1,0 +1,41 @@
+# Offene Aufgaben – nie einchecken
+aufgaben.md
+**/aufgaben.md
+
+# Zugangsdaten und Konfiguration mit echten Werten (nur .example-Dateien committen)
+supabase.env
+*.env
+!*.env.example
+pgpass
+.pgpass
+*.pgpass
+
+# Datenbank-Dumps und Exporte mit Elterndaten
+*.dump
+*.sql.gz
+*.backup
+export/
+exporte/
+*.csv
+!*.example.csv
+
+# Einwilligungstexte mit echten Namen
+einwilligung*
+!einwilligung*.example*
+
+# Tests (Node wird nur für die Tests benutzt)
+node_modules/
+tests/node_modules/
+coverage/
+npm-debug.log*
+
+# Editor und Betriebssystem
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Lokale Claude-Einstellungen
+.claude/settings.local.json

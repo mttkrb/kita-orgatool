@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rückmeldung</title>
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=fraunces:600,700|work-sans:400,500,600" rel="stylesheet">
+<style>
+  :root{--sand:#EFEAE0;--paper:#F8F5EF;--ink:#2A2724;--ink-soft:#6B655C;
+    --line:#DCD5C7;--moss:#3F5540;--moss-soft:#E3E8DE;--berry:#8C4A5C}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--sand);color:var(--ink);
+    font-family:'Work Sans',system-ui,sans-serif;font-size:16px;line-height:1.55}
+  .wrap{max-width:600px;margin:0 auto;padding:24px 18px 64px}
+  h1{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.9rem;margin:0;line-height:1.15}
+  header{padding:8px 0 20px;border-bottom:2px solid var(--ink);margin-bottom:24px}
+  .lead{color:var(--ink-soft);font-size:.95rem;margin:8px 0 0}
+  form{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px 16px}
+  label{display:block;font-size:.9rem;font-weight:500;margin:16px 0 5px}
+  label:first-child{margin-top:0}
+  input[type=text],select,textarea{width:100%;padding:10px 11px;border:1px solid var(--line);
+    border-radius:5px;background:#fff;font:inherit;font-size:16px;color:var(--ink)}
+  textarea{min-height:80px;resize:vertical}
+  input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--moss);outline-offset:1px}
+  .hint{font-size:.83rem;color:var(--ink-soft);margin:5px 0 0}
+  .noten{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .note{flex:1;min-width:56px;padding:11px 4px;border:1px solid var(--line);border-radius:5px;
+    background:#fff;font:inherit;font-size:.86rem;cursor:pointer;text-align:center;color:var(--ink)}
+  .note.an{background:var(--moss);border-color:var(--moss);color:#fff;font-weight:600}
+  button.primary{width:100%;margin-top:22px;padding:14px;border:none;border-radius:5px;
+    background:var(--moss);color:#fff;font:inherit;font-weight:600;font-size:1rem;cursor:pointer}
+  button.primary:disabled{background:var(--ink-soft)}
+  .error{background:#fff;border-left:3px solid var(--berry);padding:10px 12px;font-size:.9rem;margin-top:14px}
+  .done{background:var(--moss-soft);border:1px solid var(--moss);border-radius:6px;padding:18px 16px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="titel">Wie war es?</h1>
+    <p class="lead" id="unter">Zwei Minuten, die das nächste Mal besser machen.</p>
+  </header>
+
+  <form id="form" autocomplete="off">
+    <label>Wie war es insgesamt?</label>
+    <div class="noten" id="noten">
+      <button type="button" class="note" data-n="1">ging gar nicht</button>
+      <button type="button" class="note" data-n="2">mäßig</button>
+      <button type="button" class="note" data-n="3">okay</button>
+      <button type="button" class="note" data-n="4">gut</button>
+      <button type="button" class="note" data-n="5">richtig gut</button>
+    </div>
+
+    <label for="gut">Was war gut?</label>
+    <textarea id="gut" placeholder="Was sollen wir unbedingt beibehalten?"></textarea>
+
+    <label for="besser">Was sollen wir ändern?</label>
+    <textarea id="besser" placeholder="Was hat gefehlt, gestört oder nicht funktioniert?"></textarea>
+
+    <label for="wer">Dein Name <span style="font-weight:400;color:var(--ink-soft)">(freiwillig)</span></label>
+    <input type="text" id="wer" placeholder="kannst du auch weglassen">
+    <p class="hint">Die Rückmeldungen sieht nur das Orgateam, nicht die anderen Familien.</p>
+
+    <button type="submit" class="primary" id="senden">Abschicken</button>
+    <div id="error" class="error hidden"></div>
+  </form>
+
+  <div id="done" class="done hidden"></div>
+</div>
+
+<script>
+const CONFIG = { supabase: { url:"", anonKey:"" } };
+const live = !!(CONFIG.supabase.url && CONFIG.supabase.anonKey);
+const $ = id => document.getElementById(id);
+const kopf = () => ({ apikey:CONFIG.supabase.anonKey,
+  Authorization:"Bearer " + CONFIG.supabase.anonKey, "Content-Type":"application/json" });
+const eventId = new URLSearchParams(location.search).get("event");
+let note = null;
+
+$("noten").addEventListener("click", ev => {
+  const b = ev.target.closest(".note");
+  if(!b) return;
+  note = +b.dataset.n;
+  $("noten").querySelectorAll(".note").forEach(x=>x.classList.toggle("an", x === b));
+});
+
+(async function(){
+  if(!live || !eventId) return;
+  try{
+    const r = await fetch(CONFIG.supabase.url +
+      "/rest/v1/events?select=title,event_date,event_on&id=eq." + eventId, { headers: kopf() });
+    const [ev] = await r.json();
+    if(ev){
+      $("titel").textContent = "Wie war " + ev.title + "?";
+      document.title = "Rückmeldung — " + ev.title;
+    }
+  }catch(e){}
+})();
+
+$("form").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  $("error").classList.add("hidden");
+  const gut = $("gut").value.trim(), besser = $("besser").value.trim();
+  if(!note && !gut && !besser){
+    $("error").textContent = "Gib wenigstens eine Note oder ein paar Worte mit.";
+    $("error").classList.remove("hidden");
+    return;
+  }
+  if(!eventId){
+    $("error").textContent = "Der Link ist unvollständig. Frag im Orgateam nach dem richtigen.";
+    $("error").classList.remove("hidden");
+    return;
+  }
+  $("senden").disabled = true;
+  $("senden").textContent = "Wird gesendet …";
+  try{
+    if(live){
+      const r = await fetch(CONFIG.supabase.url + "/rest/v1/feedback", {
+        method:"POST", headers: Object.assign(kopf(), { Prefer:"return=minimal" }),
+        body: JSON.stringify({ event_id:eventId, rating:note, good:gut || null,
+          better:besser || null, from_name:$("wer").value.trim() || null })
+      });
+      if(!r.ok) throw new Error((await r.text()).slice(0,150));
+    }
+    $("form").classList.add("hidden");
+    $("done").classList.remove("hidden");
+    $("done").innerHTML = "<p style=\"margin:0\"><strong>Danke.</strong> Das Orgateam liest alles " +
+      "vor der Planung des nächsten Mals. Eine Antwort bekommst du nicht automatisch — " +
+      "bei Rückfragen meldet sich jemand, falls du deinen Namen dagelassen hast.</p>";
+    window.scrollTo({top:0, behavior:"smooth"});
+  }catch(err){
+    $("error").textContent = "Konnte nicht gesendet werden. " + err.message;
+    $("error").classList.remove("hidden");
+  }finally{
+    $("senden").disabled = false;
+    $("senden").textContent = "Abschicken";
+  }
+});
+</script>
+</body>
+</html>

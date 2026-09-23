@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anmeldung</title>
+<link rel="manifest" href="manifest-eltern.json">
+<meta name="theme-color" content="#3F5540">
+<link rel="icon" href="icons/eltern-192.png">
+<link rel="apple-touch-icon" href="icons/eltern-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Kita">
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=fraunces:600,700|work-sans:400,500,600" rel="stylesheet">
+<!-- Das SQL-Setup steht im Kopf von orga.html. Hier unten nur url + anonKey eintragen. -->
+<style>
+  :root{
+    --sand:#EFEAE0;--paper:#F8F5EF;--ink:#2A2724;--ink-soft:#6B655C;
+    --line:#DCD5C7;--moss:#3F5540;--moss-soft:#E3E8DE;--berry:#8C4A5C;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--sand);color:var(--ink);
+    font-family:'Work Sans',system-ui,sans-serif;font-size:16px;line-height:1.55}
+  .wrap{max-width:620px;margin:0 auto;padding:24px 18px 64px}
+  h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;line-height:1.15;margin:0}
+  h1{font-size:2rem;letter-spacing:-.015em}
+  h2{font-size:1.3rem;margin-bottom:4px}
+  h3{font-size:1.02rem;font-family:'Work Sans',sans-serif;font-weight:600}
+  p{margin:.5em 0}
+  header.hero{padding:8px 0 22px;border-bottom:2px solid var(--ink)}
+  .meta{color:var(--ink-soft);font-size:.95rem;margin-top:8px}
+  .meta strong{color:var(--ink);font-weight:600}
+  section{margin-top:34px}
+  .lead{color:var(--ink-soft);font-size:.95rem;margin:0 0 14px}
+  .cat{border-top:1px solid var(--line);padding:14px 0}
+  .cat:first-of-type{border-top:none}
+  .cat-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .cat-count{font-family:'Fraunces',serif;font-size:1.1rem;color:var(--moss);white-space:nowrap}
+  .cat-count.low{color:var(--berry)}
+  .bar{height:6px;background:var(--line);border-radius:3px;margin:9px 0 10px;overflow:hidden}
+  .bar span{display:block;height:100%;background:var(--moss);border-radius:3px;transition:width .4s ease}
+  .bar span.low{background:var(--berry)}
+  ul.items{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+  ul.items li{background:var(--paper);border:1px solid var(--line);border-radius:14px;
+    padding:4px 10px;font-size:.88rem}
+  ul.items li b{font-weight:600}
+  ul.bedarf{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:5px}
+  ul.bedarf li{display:flex;justify-content:space-between;gap:10px;font-size:.88rem;
+    background:#fff;border:1px solid var(--line);border-radius:5px;padding:6px 10px}
+  ul.bedarf li.voll{color:var(--ink-soft)}
+  ul.bedarf li.voll b{text-decoration:line-through}
+  ul.bedarf .stand{white-space:nowrap;color:var(--berry);font-size:.83rem}
+  ul.bedarf li.voll .stand{color:var(--moss);text-decoration:none}
+  ul.items li span{color:var(--ink-soft)}
+  .empty{font-size:.88rem;color:var(--ink-soft);font-style:italic}
+  .task{display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding:11px 0;border-top:1px solid var(--line);font-size:.95rem}
+  .task:first-of-type{border-top:none}
+  .task-free{font-size:.85rem;color:var(--moss);white-space:nowrap}
+  .task-free.full{color:var(--ink-soft)}
+  .task-people{display:block;color:var(--ink-soft);font-size:.85rem}
+  .gesucht{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
+  .gesucht button{border:1px solid var(--moss);background:#fff;color:var(--moss);
+    border-radius:14px;padding:5px 11px;font:inherit;font-size:.83rem;cursor:pointer}
+  .gesucht button.voll{border-color:var(--line);color:var(--ink-soft);text-decoration:line-through}
+  .gesucht .zahl{font-weight:600}
+  .absenden{position:sticky;bottom:0;background:var(--paper);padding:12px 0 4px;
+    margin-top:4px;border-top:1px solid var(--line)}
+  .check .frei{color:var(--moss)}
+  .check.off .frei{color:var(--ink-soft)}
+  .check .dabei{display:block;color:var(--ink-soft);font-size:.83rem}
+  .details{border:none;background:none;color:var(--moss);font-size:.83rem;padding:2px 0;
+    text-decoration:underline;cursor:pointer}
+  .aufgabe-info{font-size:.86rem;color:var(--ink-soft);margin:4px 0 0 27px}
+  .aufgabe-info img{width:84px;height:84px;object-fit:cover;border-radius:5px;
+    border:1px solid var(--line);margin-top:6px;cursor:zoom-in}
+  .wahl{display:flex;gap:8px;margin:6px 0 4px;flex-wrap:wrap}
+  .wahl button{flex:1;min-width:140px;padding:13px 10px;border:1px solid var(--line);
+    border-radius:6px;background:#fff;font:inherit;font-size:.95rem;cursor:pointer;color:var(--ink)}
+  .wahl button.an{background:var(--moss);border-color:var(--moss);color:#fff;font-weight:600}
+  .wahl button.nein.an{background:var(--berry);border-color:var(--berry)}
+  .pflicht{background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--berry);
+    border-radius:6px;padding:14px 16px;margin-bottom:20px;font-size:.92rem}
+  .task-info{display:block;color:var(--ink);font-size:.88rem;margin-top:4px}
+  .task-shots{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .task-shots img{width:88px;height:88px;object-fit:cover;border-radius:5px;
+    border:1px solid var(--line);cursor:zoom-in}
+  .lupe{position:fixed;inset:0;background:rgba(42,39,36,.92);display:flex;align-items:center;
+    justify-content:center;padding:18px;z-index:50}
+  .lupe img{max-width:100%;max-height:100%;border-radius:6px}
+  .task.block{display:block}
+  .task.fertig .t-name{text-decoration:line-through;color:var(--ink-soft)}
+  .claim{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .claim input[type=text]{flex:1;min-width:150px;padding:8px 10px;border:1px solid var(--line);
+    border-radius:5px;font:inherit;font-size:16px}
+  .claim button{border:1px solid var(--moss);background:var(--moss);color:#fff;border-radius:5px;
+    padding:8px 13px;font:inherit;font-size:.88rem;cursor:pointer}
+  .claim button.weg{background:none;color:var(--berry);border-color:var(--line);padding:4px 9px;font-size:.82rem}
+  .wer{display:flex;flex-direction:column;gap:6px;margin-top:9px}
+  .wer-zeile{display:flex;align-items:center;gap:8px;font-size:.9rem;
+    background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:7px 10px}
+  .wer-zeile input[type=checkbox]{width:19px;height:19px;accent-color:var(--moss);flex:none}
+  .wer-zeile .t-name{flex:1}
+  .wer-zeile.fertig .t-name{text-decoration:line-through;color:var(--ink-soft)}
+  form{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px 16px}
+  label{display:block;font-size:.9rem;font-weight:500;margin:14px 0 5px}
+  label:first-child{margin-top:0}
+  input[type=text],input[type=number],select,textarea{
+    width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:5px;
+    background:#fff;font:inherit;font-size:16px;color:var(--ink)}
+  textarea{min-height:70px;resize:vertical}
+  input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--moss);outline-offset:1px}
+  .row{display:flex;gap:12px}
+  .row>div{flex:1}
+  .hint{font-size:.83rem;color:var(--ink-soft);margin:5px 0 0}
+  .bring{border:1px dashed var(--line);border-radius:5px;padding:12px;margin-bottom:10px;position:relative}
+  .bring .drop{position:absolute;top:8px;right:8px;border:none;background:none;
+    color:var(--ink-soft);font-size:1.1rem;cursor:pointer;padding:2px 6px;line-height:1}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .chip{background:var(--moss-soft);border:none;border-radius:14px;padding:5px 11px;
+    font:inherit;font-size:.83rem;color:var(--moss);cursor:pointer}
+  .dupe{font-size:.83rem;color:var(--berry);margin:6px 0 0}
+  .checks{display:flex;flex-direction:column;gap:9px;margin-top:6px}
+  .check{display:flex;gap:9px;align-items:flex-start;font-size:.93rem;font-weight:400}
+  .check input{margin:3px 0 0;width:18px;height:18px;flex:none;accent-color:var(--moss)}
+  .check.off{color:var(--ink-soft)}
+  button.primary{width:100%;margin-top:20px;padding:14px;border:none;border-radius:5px;
+    background:var(--moss);color:#fff;font:inherit;font-weight:600;font-size:1rem;cursor:pointer}
+  button.primary:disabled{background:var(--ink-soft);cursor:not-allowed}
+  button.ghost{background:none;border:1px solid var(--line);border-radius:5px;
+    padding:10px 14px;font:inherit;font-size:.9rem;cursor:pointer;color:var(--ink)}
+  button.danger{color:var(--berry);border-color:var(--berry)}
+  .privacy{font-size:.83rem;color:var(--ink-soft);margin-top:14px;
+    border-top:1px solid var(--line);padding-top:12px}
+  .done{background:var(--moss-soft);border:1px solid var(--moss);border-radius:6px;padding:18px 16px}
+  .done code{display:block;background:#fff;border:1px solid var(--line);border-radius:4px;
+    padding:10px;margin:10px 0;font-size:.82rem;word-break:break-all}
+  .error{background:#fff;border-left:3px solid var(--berry);padding:10px 12px;font-size:.9rem;margin-top:14px}
+  .status{font-size:.83rem;color:var(--ink-soft);margin-top:8px}
+  .hidden{display:none}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1 id="ev-title">Lädt …</h1>
+    <p class="meta" id="ev-meta"></p>
+    <p class="meta" id="ev-intro"></p>
+    <p class="meta" id="ev-count"></p>
+  </header>
+
+  <div id="anmelde-hinweis" class="hidden" style="background:var(--paper);
+    border:1px solid var(--line);border-left:3px solid var(--ochre, #C98A21);border-radius:6px;
+    padding:14px 16px;margin-bottom:22px">
+    <p style="margin:0" id="anmelde-hinweis-text"></p>
+  </div>
+
+  <div id="rueckblick-hinweis" class="hidden" style="background:var(--moss-soft);
+    border:1px solid var(--moss);border-radius:6px;padding:14px 16px;margin-bottom:22px">
+    <p style="margin:0 0 8px"><strong>Vorbei — wie war es?</strong> Das Orgateam freut sich über
+      zwei Sätze für das nächste Mal.</p>
+    <a id="rueckblick-link" href="#" style="font-weight:600;color:var(--moss)">Rückmeldung geben</a>
+  </div>
+
+  <div id="main" class="hidden">
+    <section id="board-section">
+      <h2>Was schon zusammenkommt</h2>
+      <p class="lead" id="board-lead"></p>
+      <p class="hint" id="board-nachher" style="margin:-8px 0 12px"></p>
+      <div id="board"></div>
+    </section>
+
+    <section id="tasks-section">
+      <h2 id="tasks-head">Wer hilft mit</h2>
+      <p class="lead" id="tasks-lead">Freie Plätze kannst du unten im Formular auswählen.</p>
+      <div id="tasks"></div>
+    </section>
+
+    <section>
+      <h2 id="form-title">Anmelden</h2>
+      <p class="lead" id="form-lead">Dauert eine Minute.</p>
+      <div id="pflicht-hinweis" class="pflicht hidden"></div>
+      <div id="aufgaben-spaeter" class="pflicht hidden" style="border-left-color:var(--moss)"></div>
+
+      <form id="form" autocomplete="off">
+        <div id="wahl-block" class="hidden">
+          <label>Könnt ihr dabei sein?</label>
+          <div class="wahl">
+            <button type="button" id="w-ja" class="an">Wir kommen</button>
+            <button type="button" id="w-nein" class="nein">Wir können nicht</button>
+          </div>
+        </div>
+
+        <label for="f-name">Dein Name</label>
+        <input type="text" id="f-name" placeholder="Vorname und Nachname" required>
+        <p class="hint">Andere sehen nur deinen Vornamen und den ersten Buchstaben des Nachnamens.</p>
+
+        <div class="row" id="people-row">
+          <div id="grp-adults"><label for="f-adults" id="lbl-adults">Erwachsene</label>
+            <select id="f-adults"></select></div>
+          <div id="grp-kids"><label for="f-kids" id="lbl-kids">Kinder</label>
+            <select id="f-kids"></select></div>
+        </div>
+
+        <div id="brings-block">
+          <label>Was bringst du mit?</label>
+          <p class="hint" id="brings-lead" style="margin:0 0 6px"></p>
+          <div class="gesucht" id="gesucht"></div>
+          <div id="brings"></div>
+          <button type="button" class="ghost" id="add-bring">+ Noch etwas mitbringen</button>
+        </div>
+
+        <div id="tasks-block">
+          <label>Wobei kannst du helfen?</label>
+          <div class="checks" id="task-checks"></div>
+        </div>
+
+        <div id="extra-fields"></div>
+
+        <div id="absage-block" class="hidden">
+          <label for="f-grund">Warum könnt ihr nicht? <span style="color:var(--berry)">*</span></label>
+          <textarea id="f-grund" placeholder="Kurz genügt — Urlaub, Schichtdienst, krank …"></textarea>
+          <p class="hint">Das Orgateam braucht die Begründung für die Übersicht, wer gefehlt hat.</p>
+        </div>
+
+        <div id="note-block">
+          <label for="f-note">Anmerkung <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+          <textarea id="f-note" placeholder="Allergien, Kuchen ist vegan, komme später …"></textarea>
+        </div>
+
+        <div class="privacy">
+          <label class="check" style="font-weight:400">
+            <input type="checkbox" id="f-consent">
+            <span id="consent-text"></span>
+          </label>
+        </div>
+
+        <div class="absenden">
+          <button type="submit" class="primary" id="submit" style="margin-top:0">Anmeldung abschicken</button>
+          <div id="error" class="error hidden"></div>
+        </div>
+      </form>
+      <div id="done" class="done hidden"></div>
+    </section>
+  </div>
+
+  <p class="status" id="status"></p>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — nur diese zwei Werte. Alles Weitere kommt aus dem Orga-Bereich.
+   ============================================================ */
+const CONFIG = {
+  supabase: { url:"", anonKey:"" },     // leer = Demo-Modus
+  defaultEvent: "sommerfest-2026",      // Fallback, falls kein ?event=… im Link steht
+  startPage: "index.html",              // Übersicht aller offenen Veranstaltungen
+  showStart: false                      // true = ohne ?event=… direkt zur Übersicht springen
+};
+
+const live = !!(CONFIG.supabase.url && CONFIG.supabase.anonKey);
+const params = new URLSearchParams(location.search);
+const slug = params.get("event") || CONFIG.defaultEvent;
+if(!params.get("event") && CONFIG.startPage && CONFIG.showStart) location.replace(CONFIG.startPage);
+let myToken = params.get("entry") || null;
+let mySid = params.get("sid") || null;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s??"").replace(/[<>&"']/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[c]));
+/* Fotos nur als eingebettetes Bild zulassen, sonst leer (schuetzt src="..." vor Fremdcode) */
+const bildUrl = s => /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(String(s||"")) ? s : "";
+const vis = ev => {
+  const v = (ev && ev.visibility) || {};
+  const on = k => v[k] !== false;
+  return { totals:on("totals"), items:on("items"), itemNames:on("itemNames"), taskNames:on("taskNames") };
+};
+let absage = false;
+
+function wahlAnzeigen(){
+  const pflicht = EV && EV.mandatory === true;
+  $("wahl-block").classList.toggle("hidden", !pflicht);
+  $("pflicht-hinweis").classList.toggle("hidden", !pflicht);
+  if(pflicht){
+    $("pflicht-hinweis").innerHTML = "<strong>Diese Veranstaltung ist verbindlich.</strong> " +
+      "Wenn ihr nicht könnt, meldet euch bitte hier ab und schreibt kurz dazu, warum. " +
+      "So weiß das Orgateam, mit wie vielen Händen es rechnen kann.";
+  }
+  $("w-ja").classList.toggle("an", !absage);
+  $("w-nein").classList.toggle("an", absage);
+  ["people-row","brings-block","tasks-block","extra-fields","note-block"].forEach(id=>{
+    const el = $(id);
+    if(el) el.classList.toggle("hidden", absage);
+  });
+  $("absage-block").classList.toggle("hidden", !absage);
+  $("submit").textContent = absage ? "Abmeldung abschicken" : "Anmeldung abschicken";
+}
+
+const fmtDate = iso => {
+  if(!iso) return "";
+  const d = new Date(iso + "T12:00:00");
+  if(isNaN(d)) return "";
+  return d.toLocaleDateString("de-DE",
+    { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+};
+const groups = ev => {
+  const p = (ev && ev.people) || {};
+  const on = (ev && ev.ask_people) !== false;
+  return {
+    adults: { on: p.adults ? !!p.adults.on : on, label: (p.adults && p.adults.label) || "Erwachsene",
+              max: (p.adults && +p.adults.max) || 6 },
+    kids:   { on: p.kids   ? !!p.kids.on   : on, label: (p.kids   && p.kids.label)   || "Kinder",
+              max: (p.kids   && +p.kids.max)   || 6 }
+  };
+};
+const shortName = n => {
+  const p = String(n).trim().split(/\s+/);
+  return p.length<2 ? p[0] : p[0] + " " + p[p.length-1][0] + ".";
+};
+
+/* Demo-Veranstaltung, damit die Seite ohne Datenbank lebt */
+const DEMO_EVENT = {
+  slug:"sommerfest-2026", title:"Sommerfest",
+  event_date:"Samstag, 26. September 2026", event_time:"14–19 Uhr", place:"Kita-Außengelände",
+  intro:"", retention_note:"Alle Angaben werden zwei Wochen nach der Veranstaltung gelöscht.",
+  ask_people:true,
+  people:{ adults:{on:true,label:"Erwachsene",max:6}, kids:{on:true,label:"Kinder",max:6} },
+  visibility:{ totals:true, items:true, itemNames:true, taskNames:true },
+  categories:[
+    {id:"kuchen",label:"Kuchen & Süßes",target:12,unit:"Kuchen",ideas:["Marmorkuchen","Apfelkuchen","Muffins","Waffelteig"]},
+    {id:"herzhaft",label:"Herzhaftes",target:8,unit:"Beiträge",ideas:["Quiche","Frikadellen","Laugengebäck"]},
+    {id:"salat",label:"Salate",target:6,unit:"Salate",ideas:["Nudelsalat","Couscoussalat","Kartoffelsalat"]},
+    {id:"getraenk",label:"Getränke",target:10,unit:"Kisten",ideas:["Apfelschorle","Wasser still","Kaffee gemahlen"]},
+    {id:"sonst",label:"Sonstiges",target:0,unit:"Sachen",ideas:["Pavillon","Kuchenplatten","Kühlbox"]}
+  ],
+  tasks:[
+    {id:"aufbau",label:"Aufbau",when:"ab 12 Uhr",needed:6},
+    {id:"grill",label:"Grillen",when:"15–18 Uhr",needed:4},
+    {id:"theke",label:"Kuchentheke",when:"in Schichten",needed:4},
+    {id:"abbau",label:"Abbau",when:"ab 19 Uhr",needed:8}
+  ],
+  fields:[{id:"anfahrt",label:"Wie kommt ihr hin?",type:"select",required:false,
+    options:["zu Fuß","Rad","Auto"]}]
+};
+let demo = [
+  { id:"d1", name:"Sarah Klein", adults:2, kids:2, note:"", fields:{},
+    items:[{cat:"kuchen",what:"Käsekuchen"},{cat:"getraenk",what:"2 Kisten Apfelschorle"}], tasks:["aufbau"] },
+  { id:"d2", name:"Tim Bergmann", adults:1, kids:1, note:"", fields:{},
+    items:[{cat:"salat",what:"Nudelsalat, groß"}], tasks:["grill","abbau"] },
+  { id:"d3", name:"Anne Vogt", adults:2, kids:1, note:"Kuchen ist vegan", fields:{},
+    items:[{cat:"kuchen",what:"Marmorkuchen"}], tasks:["theke"] },
+  { id:"d4", name:"Jonas Peters", adults:1, kids:2, note:"", fields:{},
+    items:[{cat:"kuchen",what:"Muffins, 24 Stück"},{cat:"sonst",what:"Pavillon"}], tasks:["aufbau","abbau"] }
+];
+
+const COLS = "id,event,created_at,name,adults,kids,items,tasks,fields,note,status";
+const neueId = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+  : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c=>{
+      const r = Math.random()*16|0;
+      return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+const neuesToken = () => {
+  const a = new Uint8Array(8);
+  (window.crypto || window.msCrypto).getRandomValues(a);
+  return [...a].map(b=>b.toString(16).padStart(2,"0")).join("");
+};
+const fehlertext = async r => {
+  let t = "";
+  try{ t = (await r.text()).slice(0,160); }catch(e){}
+  return t ? " (" + t + ")" : "";
+};
+const baseHead = () => ({ apikey:CONFIG.supabase.anonKey,
+  Authorization:"Bearer " + CONFIG.supabase.anonKey });
+
+const api = {
+  async event(){
+    if(!live) return DEMO_EVENT;
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/events?select=*&slug=eq." + slug,
+      { headers: baseHead() });
+    if(!r.ok) throw new Error("Veranstaltung konnte nicht geladen werden.");
+    const [ev] = await r.json();
+    if(!ev) throw new Error("Diese Veranstaltung gibt es nicht mehr.");
+    EVENT_ID = ev.id;
+    return ev;
+  },
+  async list(){
+    if(!live) return demo.map(e=>({...e}));
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?select=" + COLS +
+      "&event=eq." + slug + "&order=created_at.asc", { headers: baseHead() });
+    if(!r.ok) throw new Error("Liste konnte nicht geladen werden." + await fehlertext(r));
+    return r.json();
+  },
+  async create(entry){
+    const token = neuesToken();
+    const id = neueId();
+    if(!live){ const rec = {...entry, id, token};
+      demo.push(rec); return rec; }
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups",{
+      method:"POST",
+      headers:Object.assign(baseHead(),{ "Content-Type":"application/json", Prefer:"return=minimal" }),
+      body: JSON.stringify({...entry, id, event:slug, token})
+    });
+    if(!r.ok) throw new Error("Anmeldung konnte nicht gespeichert werden." + await fehlertext(r));
+    return { token, id };
+  },
+  async update(token, entry, id){
+    if(!live){ const i = demo.findIndex(e=>e.token===token);
+      if(i>-1) demo[i] = {...demo[i], ...entry}; return; }
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?id=eq." + id,{
+      method:"PATCH",
+      headers:Object.assign(baseHead(),{ "Content-Type":"application/json", "X-Entry-Token":token }),
+      body: JSON.stringify(entry)
+    });
+    if(!r.ok) throw new Error("Änderung konnte nicht gespeichert werden." + await fehlertext(r));
+  },
+  async remove(token, id){
+    if(!live){ demo = demo.filter(e=>e.token!==token); return; }
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?id=eq." + id,{
+      method:"DELETE", headers:Object.assign(baseHead(),{ "X-Entry-Token":token })
+    });
+    if(!r.ok) throw new Error("Abmeldung hat nicht geklappt." + await fehlertext(r));
+  },
+  async claims(){
+    if(!live || !EVENT_ID) return DEMO_CLAIMS;
+    const r = await fetch(CONFIG.supabase.url +
+      "/rest/v1/task_claims?select=id,task_id,name,done&event_id=eq." + EVENT_ID +
+      "&order=created_at.asc", { headers: baseHead() });
+    if(!r.ok) return [];
+    return r.json();
+  },
+  async claimAdd(taskId, name){
+    if(!live || !EVENT_ID){ DEMO_CLAIMS.push({id:"c"+Date.now(), task_id:taskId, name, done:false}); return; }
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/task_claims",{
+      method:"POST",
+      headers:Object.assign(baseHead(),{ "Content-Type":"application/json", Prefer:"return=minimal" }),
+      body: JSON.stringify({ event_id:EVENT_ID, task_id:taskId, name })
+    });
+    if(!r.ok) throw new Error("Konnte nicht eingetragen werden." + await fehlertext(r));
+  },
+  async claimDone(id, done){
+    if(!live || !EVENT_ID){ const c = DEMO_CLAIMS.find(x=>x.id===id); if(c) c.done = done; return; }
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/task_claims?id=eq." + id,{
+      method:"PATCH",
+      headers:Object.assign(baseHead(),{ "Content-Type":"application/json" }),
+      body: JSON.stringify({ done })
+    });
+    if(!r.ok) throw new Error("Konnte nicht gespeichert werden." + await fehlertext(r));
+  },
+  async claimDel(id){
+    if(!live || !EVENT_ID){ DEMO_CLAIMS = DEMO_CLAIMS.filter(x=>x.id!==id); return; }
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/task_claims?id=eq." + id,
+      { method:"DELETE", headers: baseHead() });
+    if(!r.ok) throw new Error("Konnte nicht entfernt werden." + await fehlertext(r));
+  },
+  async images(){
+    if(!live || !EVENT_ID) return [];
+    const r = await fetch(CONFIG.supabase.url +
+      "/rest/v1/task_images?select=task_id,data&event_id=eq." + EVENT_ID, { headers: baseHead() });
+    if(!r.ok) return [];
+    return r.json();
+  },
+  async mine(token, id){
+    if(!live) return demo.find(e=>e.token===token) || null;
+    if(!id) return null;
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?select=" + COLS +
+      "&id=eq." + id, { headers: baseHead() });
+    if(!r.ok) return null;
+    const [mine] = await r.json();
+    return mine || null;
+  }
+};
+
+let EV = null, EVENT_ID = null, BELEGT = [];
+let DEMO_CLAIMS = [{id:"c1", task_id:"aufbau", name:"Sarah Klein", done:true}];
+let entries = [];
+const cat = id => (EV.categories||[]).find(c=>c.id===id);
+
+/* ---------- Rendern ---------- */
+function renderHead(){
+  document.title = "Anmeldung — " + EV.title;
+  $("ev-title").textContent = EV.title;
+  const datum = EV.event_date || fmtDate(EV.event_on);
+  const bits = [datum && "<strong>"+esc(datum)+"</strong>", esc(EV.event_time||""),
+    esc(EV.place||"")].filter(Boolean);
+  $("ev-meta").innerHTML = bits.join(" · ");
+  $("ev-intro").textContent = EV.intro || "";
+  $("ev-intro").classList.toggle("hidden", !EV.intro);
+  const V2 = vis(EV);
+  const sichtbar = [];
+  if(V2.items) sichtbar.push(V2.itemNames ? "meine Mitbringsel mit meinem Namen" : "meine Mitbringsel");
+  if((EV.tasks||[]).length) sichtbar.push(V2.taskNames ? "meine Aufgaben mit meinem Namen" : "meine Aufgaben");
+  $("consent-text").textContent = (sichtbar.length
+    ? "Ich bin einverstanden, dass " + sichtbar.join(" und ") +
+      " für alle sichtbar sind, die diesen Link haben. "
+    : "Meine Angaben sieht nur das Orgateam, nicht die anderen Gäste. ") +
+    "Das Orgateam sieht immer alle Angaben. " + (EV.retention_note ||
+      ("Alle Angaben werden " + (EV.retention_days === 1 ? "einen Tag" :
+        (EV.retention_days || 14) + " Tage") + " nach der Veranstaltung gelöscht."));
+  entries = entries.filter(e=>e.status !== "absage");
+  const ppl = entries.reduce((a,e)=>a+(+e.adults||0),0);
+  const kids = entries.reduce((a,e)=>a+(+e.kids||0),0);
+  const g = groups(EV);
+  const teile = [];
+  if(g.adults.on) teile.push(ppl + " " + g.adults.label);
+  if(g.kids.on)   teile.push(kids + " " + g.kids.label);
+  $("ev-count").textContent = !vis(EV).totals ? ""
+    : !entries.length ? "Noch keine Anmeldung — mach den Anfang."
+    : entries.length + " Anmeldungen" + (teile.length ? " · " + teile.join(", ") : "");
+  const fuellen = (id, max, vor) => {
+    const el = $(id);
+    const alt = el.value;
+    let o = "";
+    for(let i=0; i<=max; i++) o += '<option value="'+i+'">'+i+'</option>';
+    el.innerHTML = o;
+    el.value = alt !== "" && +alt <= max ? alt : String(Math.min(vor, max));
+  };
+  fuellen("f-adults", g.adults.max, 2);
+  fuellen("f-kids", g.kids.max, 1);
+  $("lbl-adults").textContent = g.adults.label;
+  $("lbl-kids").textContent = g.kids.label;
+  $("grp-adults").classList.toggle("hidden", !g.adults.on);
+  $("grp-kids").classList.toggle("hidden", !g.kids.on);
+  $("people-row").classList.toggle("hidden", !g.adults.on && !g.kids.on);
+  const heute = new Date().toISOString().slice(0,10);
+  const vorbei = EV.event_on && EV.event_on < heute;
+  if(vorbei && (EV.visibility||{}).feedback === true && EVENT_ID){
+    $("rueckblick-link").href = "feedback.html?event=" + EVENT_ID;
+    $("rueckblick-hinweis").classList.remove("hidden");
+  }
+  const heuteIso = new Date().toISOString().slice(0,10);
+  const nichtFrei = EV.signup_released === false;
+  const nochNicht = EV.signup_from && EV.signup_from > heuteIso;
+  const schonVorbei = (EV.signup_until && EV.signup_until < heuteIso) ||
+    (!EV.signup_until && EV.event_on && EV.event_on < heuteIso);
+  const offenFuerAnmeldung = !nichtFrei && !nochNicht && !schonVorbei;
+  const alsDatum = iso => new Date(iso + "T12:00:00").toLocaleDateString("de-DE",
+    { weekday:"long", day:"numeric", month:"long" });
+
+  if(!offenFuerAnmeldung){
+    $("anmelde-hinweis-text").innerHTML = nichtFrei
+      ? "<strong>Die Anmeldung wird noch vorbereitet.</strong> Das Orgateam schaltet sie frei, " +
+        "sobald alles steht. Termin schon mal vormerken" +
+        (EV.signup_from ? " — geplant ab " + esc(alsDatum(EV.signup_from)) : "") + "."
+      : nochNicht
+      ? "<strong>Die Anmeldung ist noch nicht offen.</strong> Ab " + esc(alsDatum(EV.signup_from)) +
+        " kannst du dich hier eintragen. Termin schon mal vormerken."
+      : "<strong>Die Anmeldung ist geschlossen.</strong> Wenn du noch dabei sein willst, " +
+        "sprich jemanden aus dem Orgateam an.";
+    $("anmelde-hinweis").classList.remove("hidden");
+  }
+
+  const hatKategorien = (EV.categories||[]).length > 0;
+  const hatAufgaben = (EV.tasks||[]).length > 0;
+  const vorOrt = (EV.visibility||{}).taskSignup === false;
+
+  $("board-section").classList.toggle("hidden", !hatKategorien);
+  $("brings-block").classList.toggle("hidden", !hatKategorien);
+
+  // Aufgaben stehen entweder zum Eintragen im Formular oder als Liste für den Tag,
+  // nie beides — das war doppelt und verwirrend
+  // Liste für den Tag: auf Wunsch erst am Veranstaltungstag selbst
+  const erstAmTag = (EV.visibility||{}).tasksOnDay === true;
+  const heuteJetzt = new Date().toISOString().slice(0,10);
+  const nochZu = erstAmTag && EV.event_on && heuteJetzt < EV.event_on;
+  $("tasks-section").classList.toggle("hidden", !hatAufgaben || !vorOrt || nochZu);
+
+  if(hatAufgaben && vorOrt && nochZu){
+    $("aufgaben-spaeter").classList.remove("hidden");
+    $("aufgaben-spaeter").innerHTML = "<strong>Die Aufgaben verteilen wir am Tag selbst.</strong> " +
+      "Die Liste erscheint hier am " +
+      new Date(EV.event_on + "T12:00:00").toLocaleDateString("de-DE") +
+      ". Melde dich jetzt einfach an oder ab.";
+  } else {
+    $("aufgaben-spaeter").classList.add("hidden");
+  }
+
+  // Das Formular ist die Hauptsache und steht immer ganz oben
+  const mainEl = $("main");
+  const formTeil = $("form").closest("section");
+  mainEl.appendChild(formTeil);
+  if(vorOrt) mainEl.appendChild($("tasks-section"));
+  mainEl.appendChild($("board-section"));
+  const verteilen = (EV.visibility||{}).taskSignup !== false;
+  $("tasks-block").classList.toggle("hidden", !verteilen || !(EV.tasks||[]).length);
+  const fragtNichts = !hatKategorien && !(EV.fields||[]).length &&
+    (!verteilen || !(EV.tasks||[]).length) && groups(EV).adults.on === false && groups(EV).kids.on === false;
+  const anmeldeTeil = $("form").closest("section");
+  if(anmeldeTeil) anmeldeTeil.classList.toggle("hidden",
+    (fragtNichts && !myToken) || (!offenFuerAnmeldung && !myToken));
+
+  if((EV.visibility||{}).tasksFirst === true){
+    $("tasks-head").textContent = "Aufgaben";
+    $("tasks-lead").textContent = "Such dir aus, wobei du anpackst. Werkzeug und Material trägst du weiter unten ein.";
+  }
+  if(!verteilen) $("tasks-lead").textContent =
+    "Die Aufgaben verteilen wir am Tag selbst vor Ort. Hier siehst du schon mal, was ansteht — "+
+    "und was vorher besorgt werden muss.";
+
+
+}
+
+/* Was noch fehlt, direkt im Formular — antippen füllt die Zeile */
+function renderGesucht(){
+  const box = $("gesucht");
+  if(!box) return;
+  const bedarf = [];
+  (EV.categories||[]).forEach(c=>{
+    (c.ideas||[]).forEach(i=>{
+      const soll = ideeBedarf(i);
+      if(!soll) return;
+      const name = ideeText(i);
+      const da = entries.flatMap(e=>e.items||[])
+        .filter(x=>x.cat === c.id && String(x.what).toLowerCase().includes(name.toLowerCase()))
+        .reduce((a,x)=>a+(+x.qty||1),0);
+      bedarf.push({ cat:c.id, name, offen: Math.max(0, soll - da), soll });
+    });
+  });
+
+  if(!bedarf.length){
+    box.innerHTML = "";
+    $("brings-lead").textContent = (EV.categories||[]).length
+      ? "Trag ein, was du beisteuerst — Menge nicht vergessen."
+      : "";
+    return;
+  }
+  const offenSumme = bedarf.reduce((a,b)=>a+b.offen,0);
+  $("brings-lead").textContent = offenSumme
+    ? "Das fehlt noch — antippen übernimmt es in die Zeile darunter:"
+    : "Es ist alles zusammen. Weitere Sachen sind trotzdem willkommen.";
+  box.innerHTML = bedarf.map((b,i)=>
+    '<button type="button" data-bedarf="'+i+'" class="'+(b.offen?"":"voll")+'">'+
+    esc(b.name)+' <span class="zahl">'+(b.offen ? "noch "+b.offen : "komplett")+'</span></button>').join("");
+  box.querySelectorAll("[data-bedarf]").forEach(el=>{
+    el.onclick = () => {
+      const b = bedarf[+el.dataset.bedarf];
+      let zeile = [...document.querySelectorAll(".bring")]
+        .find(d=>!d.querySelector(".b-what").value.trim());
+      if(!zeile){ zeile = bringRow(); $("brings").appendChild(zeile); }
+      zeile.querySelector(".b-cat").value = b.cat;
+      zeile.querySelector(".b-what").value = b.name;
+      zeile.querySelector(".b-qty").value = Math.max(1, b.offen || 1);
+      zeile.querySelector(".b-cat").dispatchEvent(new Event("change"));
+      zeile.querySelector(".b-what").focus();
+    };
+  });
+}
+
+function renderBoard(){
+  const V = vis(EV);
+  $("board").innerHTML = (EV.categories||[]).map(c=>{
+    const items = entries.flatMap(e=>(e.items||[]).filter(i=>i.cat===c.id)
+      .map(i=>({what:i.what, qty:+i.qty || 1, who:shortName(e.name)})));
+    const menge = items.reduce((a,i)=>a+i.qty, 0);
+    const bedarf = (c.ideas||[]).filter(i=>ideeBedarf(i) > 0);
+    const bedarfSumme = bedarf.reduce((a,i)=>a + ideeBedarf(i), 0);
+    const ziel = c.target || bedarfSumme;
+    const pct = ziel ? Math.min(100, Math.round(menge/ziel*100)) : 100;
+    const low = ziel && menge < ziel*0.6;
+    const count = ziel ? menge+" von "+ziel : menge+" "+(c.unit||"");
+    return '<div class="cat"><div class="cat-head"><h3>'+esc(c.label)+'</h3>'+
+      '<span class="cat-count'+(low?" low":"")+'">'+count+'</span></div>'+
+      (ziel?'<div class="bar"><span class="'+(low?"low":"")+'" style="width:'+pct+'%"></span></div>':"")+
+      (bedarf.length ? '<ul class="bedarf">' + bedarf.map(i=>{
+        const text = ideeText(i), soll = ideeBedarf(i), ist = zugesagt(c.id, text);
+        const voll = ist >= soll;
+        return '<li class="'+(voll?"voll":"")+'"><b>'+esc(text)+'</b>'+
+          '<span class="stand">'+(voll ? "haben wir" : ist + " von " + soll)+'</span></li>';
+      }).join("") + '</ul>' : "")+
+      (!V.items ? ""
+        : items.length
+        ? '<ul class="items">'+items.map(i=>'<li><b>'+(i.qty>1 ? i.qty+"× " : "")+esc(i.what)+'</b>'+
+            (V.itemNames ? ' <span>· '+esc(i.who)+'</span>' : "")+'</li>').join("")+'</ul>'
+        : '<p class="empty">Noch nichts eingetragen.</p>')+'</div>';
+  }).join("");
+
+  const offen = (EV.categories||[])
+    .map(c=>{
+      const bedarfSumme = (c.ideas||[]).reduce((a,i)=>a + ideeBedarf(i), 0);
+      const ziel = c.target || bedarfSumme;
+      return { c, ziel, fehlt: ziel - entries.flatMap(e=>e.items||[]).filter(i=>i.cat===c.id)
+        .reduce((a,i)=>a+(+i.qty||1),0) };
+    })
+    .filter(x=>x.ziel)
+    .filter(x=>x.fehlt>0).sort((a,b)=>b.fehlt-a.fehlt)[0];
+  const V3 = vis(EV);
+  const nachher = $("board-nachher");
+  if(nachher) nachher.textContent = V3.items
+    ? "Nur zur Übersicht — eintragen kannst du dich oben im Formular."
+    : "";
+  $("board-lead").textContent = offen
+    ? "Am dringendsten fehlt gerade: " + offen.c.label.toLowerCase() + " (" + offen.fehlt + " offen)."
+    : "Alles zusammen. Wer noch etwas mitbringt, macht das Buffet nur besser.";
+}
+
+const ideeText = i => typeof i === "string" ? i : (i && i.text) || "";
+const ideeBedarf = i => typeof i === "string" ? 0 : (+(i && i.need) || 0);
+
+/* Wie viel ist für einen konkreten Gegenstand schon zugesagt? */
+function zugesagt(catId, text){
+  const suche = String(text).toLowerCase();
+  return entries.flatMap(e=>e.items||[])
+    .filter(i=>i.cat === catId && String(i.what).toLowerCase().includes(suche))
+    .reduce((a,i)=>a + (+i.qty || 1), 0);
+}
+
+const taskCount = id => entries.filter(e=>(e.tasks||[]).includes(id)).length;
+
+async function claimsNeu(){
+  try{ BELEGT = await api.claims(); }catch(e){}
+  renderTasks();
+}
+
+document.addEventListener("click", ev => {
+  const knopf = ev.target.closest("[data-info]");
+  if(knopf){
+    const box = document.getElementById("info-" + knopf.dataset.info);
+    if(box){
+      const zu = box.classList.toggle("hidden");
+      knopf.textContent = zu ? "Was ist zu tun?" : "weniger";
+    }
+  }
+});
+
+document.addEventListener("click", async ev => {
+  const nehmen = ev.target.closest("[data-nehmen]");
+  if(nehmen){
+    const id = nehmen.dataset.nehmen;
+    const feld = document.querySelector('[data-name="'+CSS.escape(id)+'"]');
+    const name = feld ? feld.value.trim() : "";
+    if(!name){ if(feld) feld.focus(); return; }
+    nehmen.disabled = true;
+    try{ await api.claimAdd(id, name); await claimsNeu(); }
+    catch(err){ alert(err.message); nehmen.disabled = false; }
+    return;
+  }
+  const weg = ev.target.closest("[data-weg]");
+  if(weg){
+    if(!confirm("Eintrag entfernen?")) return;
+    try{ await api.claimDel(weg.dataset.weg); await claimsNeu(); }
+    catch(err){ alert(err.message); }
+    return;
+  }
+  if(ev.target.closest(".task-shots img")){
+    const gross = document.createElement("div");
+    gross.className = "lupe";
+    const img = document.createElement("img");
+    img.src = bildUrl(ev.target.getAttribute("src"));
+    img.alt = "";
+    gross.appendChild(img);
+    gross.onclick = () => gross.remove();
+    document.body.appendChild(gross);
+  }
+});
+
+document.addEventListener("change", async ev => {
+  const h = ev.target.closest("[data-done]");
+  if(!h) return;
+  h.disabled = true;
+  try{ await api.claimDone(h.dataset.done, h.checked); await claimsNeu(); }
+  catch(err){ alert(err.message); h.checked = !h.checked; h.disabled = false; }
+});
+
+let BILDER = [];
+
+function renderTasks(){
+  const verteilen = (EV.visibility||{}).taskSignup !== false;
+  $("tasks").innerHTML = (EV.tasks||[]).map(t=>{
+    const taken = taskCount(t.id);
+    const free = t.needed - taken;
+    const who = entries.filter(e=>(e.tasks||[]).includes(t.id)).map(e=>shortName(e.name));
+    const shots = BILDER.filter(b=>b.task_id === t.id);
+    const extra = (t.info ? '<span class="task-info">'+esc(t.info)+'</span>' : "") +
+      (shots.length ? '<div class="task-shots">'+shots.map(b=>
+        '<img src="'+bildUrl(b.data)+'" alt="Foto zu '+esc(t.label)+'" loading="lazy">').join("")+'</div>' : "");
+    if(!verteilen){
+      const meine = BELEGT.filter(c=>c.task_id === t.id);
+      const alleFertig = meine.length && meine.every(c=>c.done);
+      const zeilen = meine.map(c=>
+        '<div class="wer-zeile'+(c.done?" fertig":"")+'">'+
+        '<input type="checkbox" data-done="'+esc(c.id)+'" '+(c.done?"checked":"")+' title="erledigt">'+
+        '<span class="t-name">'+esc(c.name)+'</span>'+
+        '<button type="button" class="weg" data-weg="'+esc(c.id)+'">entfernen</button></div>').join("");
+      const frei = Math.max(0, t.needed - meine.length);
+      return '<div class="task block'+(alleFertig?" fertig":"")+'">'+
+        '<strong class="t-name">'+esc(t.label)+'</strong>'+
+        (alleFertig ? ' <span class="task-free">erledigt</span>'
+                    : (frei ? ' <span class="task-free">'+frei+' von '+t.needed+' noch frei</span>' : ""))+
+        extra +
+        (zeilen ? '<div class="wer">'+zeilen+'</div>' : "") +
+        '<div class="claim"><input type="text" placeholder="Dein Name" data-name="'+esc(t.id)+'">'+
+        '<button type="button" data-nehmen="'+esc(t.id)+'">Ich mach das</button></div></div>';
+    }
+    const wer = vis(EV).taskNames
+      ? (who.length ? esc(who.join(", ")) : "noch niemand")
+      : (taken ? taken + " von " + t.needed + " belegt" : "noch niemand");
+    return '<div class="task"><div><strong>'+esc(t.label)+'</strong> '+
+      '<span style="color:var(--ink-soft)">'+esc(t.when||"")+'</span>'+
+      '<span class="task-people">'+wer+'</span>'+extra+'</div>'+
+      '<span class="task-free'+(free<=0?" full":"")+'">'+(free>0?free+" frei":"voll")+'</span></div>';
+  }).join("");
+}
+
+function renderTaskChecks(pre){
+  pre = pre || [];
+  const V = vis(EV);
+  $("task-checks").innerHTML = (EV.tasks||[]).map(t=>{
+    const free = t.needed - taskCount(t.id) + (pre.includes(t.id)?1:0);
+    const off = free<=0 && !pre.includes(t.id);
+    const wer = entries.filter(e=>(e.tasks||[]).includes(t.id)).map(e=>shortName(e.name));
+    const shots = BILDER.filter(b=>b.task_id === t.id);
+    const hatDetails = !!(t.info || shots.length);
+    return '<div><label class="check'+(off?" off":"")+'">'+
+      '<input type="checkbox" value="'+t.id+'" '+(pre.includes(t.id)?"checked":"")+
+      ' '+(off?"disabled":"")+'><span>'+esc(t.label)+
+      (t.when?", "+esc(t.when):"")+
+      ' <span class="frei">'+(off ? "belegt" : free + " von " + t.needed + " frei")+'</span>'+
+      (V.taskNames && wer.length ? '<span class="dabei">dabei: '+esc(wer.join(", "))+'</span>' : "")+
+      (hatDetails ? '<button type="button" class="details" data-info="'+t.id+'">Was ist zu tun?</button>' : "")+
+      '</span></label>'+
+      (hatDetails ? '<div class="aufgabe-info hidden" id="info-'+t.id+'">'+
+        (t.info ? esc(t.info) : "")+
+        (shots.length ? '<div>'+shots.map(b=>'<img src="'+bildUrl(b.data)+'" alt="" loading="lazy">').join("")+'</div>' : "")+
+        '</div>' : "")+
+      '</div>';
+  }).join("");
+}
+
+function renderFields(pre){
+  pre = pre || {};
+  $("extra-fields").innerHTML = (EV.fields||[]).map(f=>{
+    const v = pre[f.label] ?? "";
+    const req = f.required ? ' <span style="color:var(--berry)">*</span>' : "";
+    let input;
+    if(f.type==="textarea") input = '<textarea data-f="'+esc(f.label)+'">'+esc(v)+'</textarea>';
+    else if(f.type==="select") input = '<select data-f="'+esc(f.label)+'"><option value="">bitte wählen</option>'+
+      (f.options||[]).map(o=>'<option '+(o===v?"selected":"")+'>'+esc(o)+'</option>').join("")+'</select>';
+    else if(f.type==="checkbox") input = '<label class="check"><input type="checkbox" data-f="'+esc(f.label)+
+      '" '+(v==="ja"?"checked":"")+'><span>ja</span></label>';
+    else if(f.type==="number") input = '<input type="number" data-f="'+esc(f.label)+'" value="'+esc(v)+'">';
+    else input = '<input type="text" data-f="'+esc(f.label)+'" value="'+esc(v)+'">';
+    return '<label>'+esc(f.label)+req+'</label>'+input;
+  }).join("");
+}
+
+/* ---------- Mitbringsel-Zeilen ---------- */
+function bringRow(pre){
+  pre = pre || {cat:(EV.categories[0]||{}).id, what:"", qty:1};
+  const div = document.createElement("div");
+  div.className = "bring";
+  div.innerHTML = '<button type="button" class="drop" title="Zeile entfernen">×</button>'+
+    '<select class="b-cat">'+(EV.categories||[]).map(c=>
+      '<option value="'+c.id+'" '+(c.id===pre.cat?"selected":"")+'>'+esc(c.label)+'</option>').join("")+
+    '</select><div class="row" style="margin-top:8px">'+
+    '<div style="flex:3"><input type="text" class="b-what" placeholder="Was genau?" value="'+esc(pre.what)+'"></div>'+
+    '<div style="flex:1;min-width:74px"><input type="number" class="b-qty" min="1" max="99" '+
+    'value="'+(+pre.qty||1)+'" title="Wie viele davon?"></div></div>'+
+    '<p class="hint">Rechts die Menge — drei Bleche Kuchen sind drei, nicht eins.</p>'+
+    '<div class="chips"></div><p class="dupe hidden"></p>';
+  const sel = div.querySelector(".b-cat"), what = div.querySelector(".b-what");
+  const chips = div.querySelector(".chips"), dupe = div.querySelector(".dupe");
+  const fillChips = () => {
+    const c = cat(sel.value) || {ideas:[]};
+    chips.innerHTML = (c.ideas||[]).map(i=>{
+      const text = ideeText(i), soll = ideeBedarf(i);
+      if(!soll) return '<button type="button" class="chip" data-text="'+esc(text)+'">'+esc(text)+'</button>';
+      const offen = Math.max(0, soll - zugesagt(c.id, text));
+      return '<button type="button" class="chip" data-text="'+esc(text)+'" data-offen="'+offen+'"'+
+        (offen ? "" : ' style="opacity:.5"')+'>'+esc(text)+
+        (offen ? " · noch " + offen : " · komplett")+'</button>';
+    }).join("");
+    chips.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+      what.value = b.dataset.text;
+      const offen = +b.dataset.offen;
+      if(offen > 0) div.querySelector(".b-qty").value = offen;
+      checkDupe();
+    });
+  };
+  const checkDupe = () => {
+    const v = what.value.trim().toLowerCase();
+    if(v.length<3){ dupe.classList.add("hidden"); return; }
+    const same = entries.flatMap(e=>e.items||[])
+      .filter(i=>i.cat===sel.value && i.what.toLowerCase().includes(v.split(" ")[0])).length;
+    if(same>0){ dupe.textContent = same+"× schon dabei. Kein Problem — aber vielleicht magst du etwas anderes?";
+      dupe.classList.remove("hidden"); }
+    else dupe.classList.add("hidden");
+  };
+  div._chips = fillChips;
+  sel.onchange = () => { fillChips(); checkDupe(); };
+  what.oninput = checkDupe;
+  div.querySelector(".drop").onclick = () => {
+    div.remove();
+    if(!$("brings").children.length) $("brings").appendChild(bringRow());
+  };
+  fillChips();
+  return div;
+}
+
+/* ---------- Formular ---------- */
+function readForm(){
+  const items = [...document.querySelectorAll(".bring")]
+    .map(d=>({ cat:d.querySelector(".b-cat").value, what:d.querySelector(".b-what").value.trim(),
+               qty: Math.max(1, +d.querySelector(".b-qty").value || 1) }))
+    .filter(i=>i.what);
+  const fields = {};
+  document.querySelectorAll("#extra-fields [data-f]").forEach(el=>{
+    const v = el.type==="checkbox" ? (el.checked?"ja":"nein") : el.value.trim();
+    if(v) fields[el.dataset.f] = v;
+  });
+  if(absage){
+    return { name:$("f-name").value.trim(), adults:0, kids:0, items:[], tasks:[], fields:{},
+             status:"absage", note:$("f-grund").value.trim() || null };
+  }
+  return {
+    status: "zusage",
+    name: $("f-name").value.trim(),
+    adults: groups(EV).adults.on ? (+$("f-adults").value || 0) : 0,
+    kids: groups(EV).kids.on ? (+$("f-kids").value || 0) : 0,
+    items,
+    tasks: [...document.querySelectorAll("#task-checks input:checked")].map(c=>c.value),
+    fields,
+    note: $("f-note").value.trim() || null
+  };
+}
+
+function fillForm(e){
+  $("f-name").value = e.name;
+  if([...$("f-adults").options].some(o=>+o.value === +e.adults)) $("f-adults").value = e.adults;
+  if([...$("f-kids").options].some(o=>+o.value === +e.kids)) $("f-kids").value = e.kids;
+  $("f-note").value = e.note || "";
+  $("brings").innerHTML = "";
+  (e.items||[]).forEach(i=>$("brings").appendChild(bringRow(i)));
+  if(!$("brings").children.length) $("brings").appendChild(bringRow());
+  absage = e.status === "absage";
+  if(absage) $("f-grund").value = e.note || "";
+  wahlAnzeigen();
+  renderTaskChecks(e.tasks||[]);
+  renderFields(e.fields||{});
+  $("f-consent").checked = true;
+  $("form-title").textContent = "Deine Anmeldung ändern";
+  $("form-lead").textContent = "Änderungen sind sofort für alle sichtbar.";
+  $("submit").textContent = "Änderungen speichern";
+}
+
+function showError(m){ const b=$("error"); b.textContent=m; b.classList.remove("hidden"); }
+
+$("form").addEventListener("submit", async ev=>{
+  ev.preventDefault();
+  $("error").classList.add("hidden");
+  const data = readForm();
+  if(!data.name){ showError("Bitte trag deinen Namen ein."); return; }
+  if(absage && !data.note){
+    showError("Bitte schreib kurz dazu, warum ihr nicht könnt.");
+    return;
+  }
+  const missing = absage ? [] : (EV.fields||[]).filter(f=>f.required && !data.fields[f.label]);
+  if(missing.length){ showError("Bitte noch beantworten: " + missing.map(f=>f.label).join(", ")); return; }
+  if(!$("f-consent").checked){ showError("Ohne Häkchen beim Datenschutzhinweis geht es leider nicht."); return; }
+  $("submit").disabled = true; $("submit").textContent = "Wird gespeichert …";
+  try{
+    let token = myToken;
+    if(myToken && mySid) await api.update(myToken, data, mySid);
+    else { const rec = await api.create(data); token = rec.token; mySid = rec.id; }
+    myToken = token;
+    await load();
+    const link = location.origin + location.pathname + "?event=" + slug +
+      "&entry=" + token + "&sid=" + mySid;
+    $("form").classList.add("hidden");
+    $("form-title").textContent = "Du bist angemeldet";
+    $("form-lead").textContent = "";
+    $("done").classList.remove("hidden");
+    $("done").innerHTML = '<p style="margin-top:0"><strong>Danke, '+esc(shortName(data.name))+
+      (absage ? ".</strong> Die Abmeldung ist beim Orgateam angekommen. "
+              : ".</strong> ") + "Über diesen Link kannst du deine Angaben später ändern" +
+      (absage ? " oder doch noch zusagen. " : " oder dich abmelden. ")+
+      'Speicher ihn dir — ohne ihn kommst du nicht mehr an deinen Eintrag.</p><code>'+esc(link)+'</code>'+
+      '<div class="row" style="gap:8px"><button type="button" class="ghost" id="copy">Link kopieren</button>'+
+      '<button type="button" class="ghost danger" id="remove">Abmelden</button></div>';
+    $("copy").onclick = async () => {
+      try{ await navigator.clipboard.writeText(link); $("copy").textContent="Kopiert"; }
+      catch{ $("copy").textContent="Bitte manuell markieren"; }
+    };
+    $("remove").onclick = async () => {
+      if(!confirm("Anmeldung wirklich löschen?")) return;
+      await api.remove(myToken, mySid);
+      location.href = location.pathname + "?event=" + slug;
+    };
+    $("done").scrollIntoView({behavior:"smooth", block:"center"});
+  }catch(err){ showError(err.message + " Versuch es bitte nochmal."); }
+  finally{ $("submit").disabled = false; $("submit").textContent = "Anmeldung abschicken"; }
+});
+
+$("w-ja").onclick = () => { absage = false; wahlAnzeigen(); };
+$("w-nein").onclick = () => { absage = true; wahlAnzeigen(); };
+
+$("add-bring").onclick = () => {
+  if((EV.categories||[]).length) $("brings").appendChild(bringRow());
+};
+
+/* ---------- Laden ---------- */
+async function load(){
+  entries = await api.list();
+  try{ BELEGT = await api.claims(); }catch(e){}
+  renderHead(); renderBoard(); renderTasks(); renderGesucht();
+  document.querySelectorAll(".bring").forEach(d=>{ if(d._chips) d._chips(); });
+  // Auswahl der Person bleibt, Belegung und Namen werden frisch gerechnet
+  renderTaskChecks([...document.querySelectorAll("#task-checks input:checked")].map(c=>c.value));
+  $("status").textContent = (live
+    ? "Zuletzt aktualisiert: " + new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}) + ". "
+    : "Demo-Modus: Einträge verschwinden beim Neuladen. ") + (EV.retention_note ||
+    ("Alle Angaben werden " + (EV.retention_days || 14) + " Tage nach der Veranstaltung gelöscht."));
+}
+
+(async function init(){
+  try{
+    EV = await api.event();
+  }catch(err){
+    $("ev-title").textContent = "Veranstaltung nicht gefunden";
+    $("ev-meta").innerHTML = esc(err.message) +
+      ' <a href="' + CONFIG.startPage + '">Hier stehen alle offenen Veranstaltungen.</a>';
+    return;
+  }
+  $("main").classList.remove("hidden");
+  wahlAnzeigen();
+  if((EV.categories||[]).length) $("brings").appendChild(bringRow());
+  renderTaskChecks();
+  renderFields();
+  await load();
+  try{ BILDER = await api.images(); }catch(e){}
+  try{ BELEGT = await api.claims(); }catch(e){}
+  renderTasks();
+  renderTaskChecks([...document.querySelectorAll("#task-checks input:checked")].map(c=>c.value));
+  if(myToken){
+    try{ const mine = await api.mine(myToken, mySid); if(mine) fillForm(mine); }catch(e){}
+    if(myToken && !mySid) showError("Dieser Änderungslink stammt aus einer früheren Fassung und " +
+      "funktioniert nicht mehr. Melde dich einfach neu an — das Orgateam räumt den alten Eintrag weg.");
+  }
+  setInterval(load, 30000);
+})();
+</script>
+</body>
+</html>

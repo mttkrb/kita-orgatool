@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anmeldungen</title>
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=fraunces:600,700|work-sans:400,500,600" rel="stylesheet">
+<style>
+  :root{
+    --sand:#EFEAE0;--paper:#F8F5EF;--ink:#2A2724;--ink-soft:#6B655C;
+    --line:#DCD5C7;--moss:#3F5540;--moss-soft:#E3E8DE;--berry:#8C4A5C;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--sand);color:var(--ink);
+    font-family:'Work Sans',system-ui,sans-serif;font-size:16px;line-height:1.55}
+  .wrap{max-width:620px;margin:0 auto;padding:24px 18px 64px}
+  h1{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:2rem;
+    letter-spacing:-.015em;line-height:1.15;margin:0}
+  h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.25rem;margin:0}
+  header{padding:8px 0 20px;border-bottom:2px solid var(--ink);margin-bottom:26px}
+  .lead{color:var(--ink-soft);font-size:.95rem;margin:8px 0 0}
+
+  a.card{display:block;text-decoration:none;color:inherit;background:var(--paper);
+    border:1px solid var(--line);border-radius:6px;padding:18px 16px;margin-bottom:12px}
+  a.card:hover,a.card:focus-visible{border-color:var(--moss);outline:none}
+  .when{color:var(--ink-soft);font-size:.92rem;margin:5px 0 0}
+  .stats{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .pill{font-size:.82rem;border-radius:13px;padding:4px 10px;
+    background:var(--moss-soft);color:var(--moss)}
+  .pill.need{background:#F6E6E9;color:var(--berry)}
+  .go{display:inline-block;margin-top:12px;font-size:.9rem;font-weight:600;color:var(--moss)}
+  .note{font-size:.85rem;color:var(--ink-soft);margin-top:26px;
+    border-top:1px solid var(--line);padding-top:14px}
+  .empty{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px 16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="head">Anmeldungen</h1>
+    <p class="lead" id="sub">Lädt …</p>
+  </header>
+
+  <div id="list"></div>
+
+  <p class="note" id="note"></p>
+</div>
+
+<script>
+/* Dieselben zwei Werte wie in den anderen Dateien. */
+const CONFIG = {
+  supabase: { url:"", anonKey:"" },
+  publicPage: "fest-anmeldung.html",
+  intro: "Hier laufen alle Anmeldungen der Elterninitiative zusammen. Such dir deine Veranstaltung aus."
+};
+
+const live = !!(CONFIG.supabase.url && CONFIG.supabase.anonKey);
+const $ = id => document.getElementById(id);
+const esc = s => String(s??"").replace(/[<>&"']/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[c]));
+const headers = () => ({ apikey:CONFIG.supabase.anonKey,
+  Authorization:"Bearer " + CONFIG.supabase.anonKey });
+
+const DEMO = {
+  events:[
+    { slug:"sommerfest-2026", title:"Sommerfest", event_date:"Samstag, 26. September 2026",
+      event_time:"14–19 Uhr", place:"Kita-Außengelände", archived:false,
+      categories:[{id:"kuchen",label:"Kuchen & Süßes",target:12},{id:"salat",label:"Salate",target:6}],
+      tasks:[{id:"aufbau",label:"Aufbau",needed:6}] },
+    { slug:"laternenfest-2026", title:"Laternenfest", event_date:"Mittwoch, 11. November 2026",
+      event_time:"17–19 Uhr", place:"Treffpunkt Kita-Tor", archived:false,
+      categories:[{id:"punsch",label:"Punsch & Heißes",target:6}],
+      tasks:[{id:"fackeln",label:"Fackeln tragen",needed:4}] }
+  ],
+  signups:[
+    { event:"sommerfest-2026", adults:2, kids:2, items:[{cat:"kuchen"},{cat:"salat"}], tasks:["aufbau"] },
+    { event:"sommerfest-2026", adults:2, kids:1, items:[{cat:"kuchen"}], tasks:[] },
+    { event:"laternenfest-2026", adults:1, kids:2, items:[{cat:"punsch"}], tasks:["fackeln"] }
+  ]
+};
+
+const fmtDate = iso => {
+  if(!iso) return "";
+  const d = new Date(iso + "T12:00:00");
+  if(isNaN(d)) return "";
+  return d.toLocaleDateString("de-DE", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+};
+
+async function loadEvents(){
+  if(!live) return DEMO.events;
+  const r = await fetch(CONFIG.supabase.url +
+    "/rest/v1/events?select=*&archived=eq.false&order=created_at.asc", { headers: headers() });
+  if(!r.ok) throw new Error("Die Übersicht ist gerade nicht erreichbar.");
+  return r.json();
+}
+
+async function loadSignups(slugs){
+  if(!slugs.length) return [];
+  if(!live) return DEMO.signups;
+  const list = slugs.map(s=>'"'+s+'"').join(",");
+  const r = await fetch(CONFIG.supabase.url +
+    "/rest/v1/signups?select=event,adults,kids,items,tasks&event=in.(" + encodeURIComponent(list) + ")",
+    { headers: headers() });
+  if(!r.ok) return [];
+  return r.json();
+}
+
+function stats(ev, rows){
+  const mine = rows.filter(s=>s.event===ev.slug);
+  const people = mine.reduce((a,s)=>a+(+s.adults||0)+(+s.kids||0),0);
+  const items = mine.flatMap(s=>s.items||[]);
+  const gaps = (ev.categories||[]).filter(c=>c.target)
+    .map(c=>({label:c.label,
+      fehlt:c.target - items.filter(i=>i.cat===c.id).reduce((a,i)=>a+(+i.qty||1),0)}))
+    .filter(g=>g.fehlt>0).sort((a,b)=>b.fehlt-a.fehlt).slice(0,2);
+  const helperGap = (ev.tasks||[]).reduce((a,t)=>
+    a + Math.max(0, t.needed - mine.filter(s=>(s.tasks||[]).includes(t.id)).length), 0);
+  return { count:mine.length, people, gaps, helperGap };
+}
+
+(async function(){
+  let events, rows;
+  try{
+    events = await loadEvents();
+    const heute = new Date().toISOString().slice(0,10);
+    events = events
+      .filter(e=>!e.event_on || e.event_on >= heute)
+      .sort((a,b)=>String(a.event_on||"9999").localeCompare(String(b.event_on||"9999")));
+    rows = await loadSignups(events.map(e=>e.slug));
+  }catch(err){
+    $("sub").textContent = err.message + " Lade die Seite gleich nochmal.";
+    return;
+  }
+
+  $("sub").textContent = events.length ? CONFIG.intro : "";
+
+  $("list").innerHTML = events.length ? events.map(ev=>{
+    const s = stats(ev, rows);
+    const heuteIso = new Date().toISOString().slice(0,10);
+    const nichtFrei = ev.signup_released === false;
+    const nochNicht = ev.signup_from && ev.signup_from > heuteIso;
+    const zu = ev.signup_until && ev.signup_until < heuteIso;
+    const pills = [
+      nichtFrei ? '<span class="pill need">Anmeldung folgt</span>' : "",
+      (!nichtFrei && nochNicht) ? '<span class="pill need">Anmeldung ab ' +
+        new Date(ev.signup_from+"T12:00:00").toLocaleDateString("de-DE") + "</span>" : "",
+      zu ? '<span class="pill need">Anmeldung geschlossen</span>' : "",
+      '<span class="pill">' + s.count + (s.count===1?" Anmeldung":" Anmeldungen") + "</span>",
+      s.people ? '<span class="pill">' + s.people + " Personen</span>" : "",
+      ...s.gaps.map(g=>'<span class="pill need">' + g.fehlt + " × " + esc(g.label) + " gesucht</span>"),
+      s.helperGap ? '<span class="pill need">' + s.helperGap + " Helferplätze offen</span>" : ""
+    ].filter(Boolean).join("");
+    return '<a class="card" href="' + CONFIG.publicPage + "?event=" + encodeURIComponent(ev.slug) + '">' +
+      "<h2>" + esc(ev.title) + "</h2>" +
+      '<p class="when">' + [esc(ev.event_date || fmtDate(ev.event_on)), esc(ev.event_time||""), esc(ev.place||"")]
+        .filter(Boolean).join(" · ") + "</p>" +
+      '<div class="stats">' + pills + "</div>" +
+      '<span class="go">' + ((nichtFrei || nochNicht) ? "Ansehen →" : zu ? "Ansehen →"
+        : "Anmelden und Mitbringsel eintragen →") + "</span></a>";
+  }).join("")
+  : '<div class="empty"><p style="margin:0">Gerade steht nichts an. Sobald das Orgateam eine Veranstaltung ' +
+    'anlegt, taucht es hier auf.</p></div>';
+
+  $("note").textContent = live
+    ? "Du siehst hier nur Veranstaltungen, die das Orgateam freigegeben hat."
+    : "Demo-Modus: zwei Beispielfeste, ohne Datenbank.";
+})();
+</script>
+</body>
+</html>
