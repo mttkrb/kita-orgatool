@@ -13,7 +13,9 @@
 <meta name="apple-mobile-web-app-title" content="Kita">
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=fraunces:600,700|work-sans:400,500,600" rel="stylesheet">
-<!-- Das SQL-Setup steht im Kopf von orga.html. Hier unten nur url + anonKey eintragen. -->
+<!-- Das SQL-Setup steht im Kopf von orga.html. Zugang und Aussehen stehen in config.js. -->
+<script src="config.js"></script>
+<script src="common.js"></script>
 <link rel="stylesheet" href="common.css">
 <link rel="stylesheet" href="eltern.css">
 <style>
@@ -228,8 +230,6 @@
   <p class="status" id="status"></p>
 </div>
 
-<script src="config.js"></script>
-<script src="common.js"></script>
 <script>
 /* ============================================================
    CONFIG — Zugang steht in config.js. Alles Weitere kommt aus dem Orga-Bereich.
@@ -428,7 +428,7 @@ const cat = id => (EV.categories||[]).find(c=>c.id===id);
 
 /* ---------- Rendern ---------- */
 function renderHead(){
-  document.title = "Anmeldung — " + EV.title;
+  titel("Anmeldung — " + EV.title);
   $("ev-title").textContent = EV.title;
   const datum = EV.event_date || fmtDate(EV.event_on);
   const bits = [datum && "<strong>"+esc(datum)+"</strong>", esc(EV.event_time||""),

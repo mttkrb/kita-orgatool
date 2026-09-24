@@ -123,6 +123,8 @@ create policy "eigene loeschen" on signups for delete to anon
   using (token = (current_setting('request.headers',true)::json ->> 'x-entry-token') or is_orga());
 ================================================================
 -->
+<script src="config.js"></script>
+<script src="common.js"></script>
 <link rel="stylesheet" href="common.css">
 <style>
   body{line-height:1.5}
@@ -192,7 +194,7 @@ create policy "eigene loeschen" on signups for delete to anon
     font-size:1rem;padding:3px 7px;line-height:1;border-radius:4px}
   .item .tools button:hover{color:var(--ink);background:var(--sand)}
   .item .tools .drop{font-size:1.15rem}
-  .item .tools .drop:hover{color:var(--berry);background:#F6E6E9}
+  .item .tools .drop:hover{color:var(--berry);background:var(--berry-soft)}
   .item .tools button:disabled{opacity:.25;cursor:default;background:none}
   .check{display:flex;gap:8px;align-items:flex-start;font-size:.92rem;font-weight:400;margin-top:10px}
   .check input{margin:3px 0 0;width:18px;height:18px;flex:none;accent-color:var(--moss)}
@@ -235,7 +237,7 @@ create policy "eigene loeschen" on signups for delete to anon
   .zurueck button{border:1px solid var(--moss);background:none;color:var(--moss);
     border-radius:5px;padding:5px 11px;font:inherit;font-size:.84rem}
   .todo.kritisch{border-left:3px solid var(--berry);padding-left:9px;margin-left:-12px}
-  .ohne{display:inline-block;background:#F6E6E9;color:var(--berry);border-radius:9px;
+  .ohne{display:inline-block;background:var(--berry-soft);color:var(--berry);border-radius:9px;
     padding:1px 8px;font-size:.76rem;margin-left:6px;white-space:nowrap}
   #loesch-dialog{position:fixed;inset:0;background:rgba(42,39,36,.55);z-index:60;
     display:flex;align-items:center;justify-content:center;padding:16px}
@@ -621,8 +623,6 @@ create policy "eigene loeschen" on signups for delete to anon
 
 </div>
 
-<script src="config.js"></script>
-<script src="common.js"></script>
 <script>
 /* ============================================================
    CONFIG
@@ -637,6 +637,8 @@ const CONFIG = {
 const slugify = s => String(s).toLowerCase().trim()
   .replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss")
   .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+// Dateinamen der Exporte beginnen mit dem Kitanamen, sonst mit "kita"
+const dateiName = art => (slugify(kitaName) || "kita") + "-" + art + "-";
 const uid = () => "x" + Math.random().toString(36).slice(2,8);
 
 function fillGroups(prefix, o){
@@ -1034,7 +1036,7 @@ async function loadList(){
     '<p class="card-meta">'+esc(e.event_date || fmtDate(e.event_on) || "ohne Datum")+" · "+esc(e.place||"ohne Ort")+
     (tplName(e.template_id)?'<br><span class="tag ochre">Vorlage: '+esc(tplName(e.template_id))+'</span>':"")+
     '</p></div>'+
-    (e.mandatory ? '<br><span class="tag" style="background:#F6E6E9;color:var(--berry)">Pflicht</span>' : "")+
+    (e.mandatory ? '<br><span class="tag" style="background:var(--berry-soft);color:var(--berry)">Pflicht</span>' : "")+
     '<span class="tag'+(e.archived||vorbei(e)?" grey":"")+'">'+
     (e.archived ? "archiviert"
       : vorbei(e) ? "Nachbereitung"
@@ -1504,7 +1506,7 @@ $("dump-json").onclick = async () => {
     ]);
     const daten = { gesichert_am:new Date().toISOString(), version:1,
                     templates:tpl, events:ev, planning:plan, signups:su };
-    download("kita-sicherung-" + heute() + ".json",
+    download(dateiName("sicherung") + heute() + ".json",
              JSON.stringify(daten, null, 2), "application/json");
     $("dump-msg").textContent = tpl.length + " Vorlagen, " + ev.length + " Veranstaltungen, " +
       su.length + " Anmeldungen gesichert. Enthält Namen — entsprechend ablegen.";
@@ -1538,7 +1540,7 @@ $("dump-csv").onclick = async () => {
       s.note || "",
       new Date(s.created_at).toLocaleString("de-DE")
     ].map(cell).join(";"));
-    download("kita-anmeldungen-alle-" + heute() + ".csv",
+    download(dateiName("anmeldungen-alle") + heute() + ".csv",
       "\uFEFF" + [kopf.map(cell).join(";"), ...zeilen].join("\r\n"), "text/csv;charset=utf-8");
     $("dump-msg").textContent = su.length + " Anmeldungen aus " + ev.length + " Veranstaltungen exportiert.";
   }catch(err){ $("dump-msg").textContent = "Fehlgeschlagen: " + err.message; }
@@ -2662,7 +2664,7 @@ async function loadSignups(){
   $("su-table").innerHTML = standBox + (signups.length
     ? "<table><tr><th>Wer</th><th>Bringt mit</th><th>Hilft bei</th><th></th></tr>"+
       signups.map(s=>"<tr><td><strong>"+esc(s.name)+"</strong>"+
-        (s.status === "absage" ? ' <span class="tag" style="background:#F6E6E9;color:var(--berry)">abgemeldet</span>' : "")+
+        (s.status === "absage" ? ' <span class="tag" style="background:var(--berry-soft);color:var(--berry)">abgemeldet</span>' : "")+
         "<br>"+
         '<span style="color:var(--ink-soft)">'+[
           g.adults.on ? (+s.adults||0)+" "+esc(g.adults.label) : "",

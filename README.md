@@ -87,7 +87,9 @@ Der `service_role`-Schlüssel von Supabase gehört **nie** in eine der Dateien.
    `feedback`) und die Aufräumfunktion `daten_aufraeumen()` kommen aus den
    Migrationsdateien, die noch nicht im Repo liegen.
 3. **Zugangsdaten eintragen:** In `config.js` unter `SUPABASE` die Projekt-URL und den
-   `anonKey` eintragen. Das gilt für alle Seiten.
+   `anonKey` eintragen. Das gilt für alle Seiten. Darunter unter `SETTINGS` optional
+   Kitaname, Logo, Favicon und zwei Farben; leer lassen heißt Standardaussehen.
+   Logo und Favicon als Pfad neben die HTML-Dateien legen (z. B. `icons/logo.png`).
 4. **Hochladen:** Die HTML-Dateien zusammen mit `config.js`, `common.js`, `common.css` und
    `eltern.css` per SFTP in einen Unterordner des Webspace laden,
    zum Beispiel `/orga/`.

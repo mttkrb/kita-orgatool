@@ -6,6 +6,8 @@
 <title>Rückmeldung</title>
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=fraunces:600,700|work-sans:400,500,600" rel="stylesheet">
+<script src="config.js"></script>
+<script src="common.js"></script>
 <link rel="stylesheet" href="common.css">
 <link rel="stylesheet" href="eltern.css">
 <style>
@@ -49,8 +51,6 @@
   <div id="done" class="done hidden"></div>
 </div>
 
-<script src="config.js"></script>
-<script src="common.js"></script>
 <script>
 const CONFIG = { supabase: SUPABASE };
 const kopf = () => anonHead({ "Content-Type":"application/json" });
@@ -72,7 +72,7 @@ $("noten").addEventListener("click", ev => {
     const [ev] = await r.json();
     if(ev){
       $("titel").textContent = "Wie war " + ev.title + "?";
-      document.title = "Rückmeldung — " + ev.title;
+      titel("Rückmeldung — " + ev.title);
     }
   }catch(e){}
 })();

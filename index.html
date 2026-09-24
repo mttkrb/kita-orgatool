@@ -6,6 +6,8 @@
 <title>Anmeldungen</title>
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=fraunces:600,700|work-sans:400,500,600" rel="stylesheet">
+<script src="config.js"></script>
+<script src="common.js"></script>
 <link rel="stylesheet" href="common.css">
 <link rel="stylesheet" href="eltern.css">
 <style>
@@ -18,7 +20,7 @@
   .stats{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
   .pill{font-size:.82rem;border-radius:13px;padding:4px 10px;
     background:var(--moss-soft);color:var(--moss)}
-  .pill.need{background:#F6E6E9;color:var(--berry)}
+  .pill.need{background:var(--berry-soft);color:var(--berry)}
   .go{display:inline-block;margin-top:12px;font-size:.9rem;font-weight:600;color:var(--moss)}
   .note{font-size:.85rem;color:var(--ink-soft);margin-top:26px;
     border-top:1px solid var(--line);padding-top:14px}
@@ -37,8 +39,6 @@
   <p class="note" id="note"></p>
 </div>
 
-<script src="config.js"></script>
-<script src="common.js"></script>
 <script>
 const CONFIG = {
   supabase: SUPABASE,                   // Zugang steht in config.js

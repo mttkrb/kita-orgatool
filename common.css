@@ -2,12 +2,17 @@
    Wird vor dem <style> der Seite geladen; die Seite darf alles überschreiben. */
 :root{
   --sand:#EFEAE0;--paper:#F8F5EF;--ink:#2A2724;--ink-soft:#6B655C;
-  --line:#DCD5C7;--moss:#3F5540;--moss-soft:#E3E8DE;--ochre:#C98A21;--berry:#8C4A5C;
+  --line:#DCD5C7;--moss:#3F5540;--moss-soft:#E3E8DE;--ochre:#C98A21;
+  --berry:#8C4A5C;--berry-soft:#F6E6E9;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--sand);color:var(--ink);
   font-family:'Work Sans',system-ui,sans-serif;font-size:16px;line-height:1.55}
 input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--moss);outline-offset:1px}
+/* Kitaname und Logo über dem Kopf, nur wenn in config.js gesetzt */
+.marke{display:flex;align-items:center;gap:10px;margin:0 0 14px;
+  font-weight:600;font-size:.95rem;color:var(--ink-soft)}
+.marke img{height:40px;width:auto;max-width:160px;object-fit:contain;display:block}
 /* Versteckt bleibt versteckt, auch gegen spätere Klassen mit display */
 .hidden{display:none!important}

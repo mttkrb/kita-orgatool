@@ -1,5 +1,5 @@
 // Gemeinsame Hilfsfunktionen aller Seiten.
-// Wird nach config.js und vor dem Skript der Seite geladen.
+// Wird nach config.js und vor dem Skript der Seite geladen, im <head>.
 
 const live = !!(SUPABASE.url && SUPABASE.anonKey);
 const $ = id => document.getElementById(id);
@@ -72,3 +72,76 @@ function verkleinern(datei, kante=1000, guete=0.72){
     leser.readAsDataURL(datei);
   });
 }
+
+/* ============================================================
+   Aussehen aus SETTINGS (config.js)
+   ============================================================ */
+// Ältere config.js ohne SETTINGS sollen weiter funktionieren.
+const EINSTELLUNG = (typeof SETTINGS === "object" && SETTINGS) || {};
+const kitaName = String(EINSTELLUNG.name || "").trim();
+
+// Nur Adressen auf der eigenen Domain zulassen (Grundregel: keine Fremdquellen).
+const eigeneAdresse = pfad => {
+  if(!pfad) return "";
+  try{
+    const u = new URL(pfad, location.href);
+    return u.origin === location.origin ? u.href : "";
+  }catch(e){ return ""; }
+};
+const farbe = f => /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(f||"").trim()) ? String(f).trim() : "";
+
+// Seitentitel mit Kitanamen, auch für Titel, die erst nach dem Laden feststehen.
+const titel = t => {
+  const zusatz = kitaName ? " · " + kitaName : "";
+  document.title = String(t).endsWith(zusatz) ? t : t + zusatz;
+};
+
+(function(){
+  // Farben sofort setzen, damit nichts in den Standardfarben aufblitzt
+  const c = EINSTELLUNG.colors || {};
+  const haupt = farbe(c.main), akzent = farbe(c.accent);
+  const root = document.documentElement.style;
+  if(haupt){
+    root.setProperty("--moss", haupt);
+    root.setProperty("--moss-soft", "color-mix(in srgb, " + haupt + " 15%, #fff)");
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if(meta) meta.setAttribute("content", haupt);
+  }
+  if(akzent){
+    root.setProperty("--berry", akzent);
+    root.setProperty("--berry-soft", "color-mix(in srgb, " + akzent + " 13%, #fff)");
+  }
+
+  const favicon = eigeneAdresse(EINSTELLUNG.favicon);
+  if(favicon){
+    let link = document.querySelector('link[rel="icon"]');
+    if(!link){ link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
+    link.href = favicon;
+  }
+  if(kitaName){
+    const app = document.querySelector('meta[name="apple-mobile-web-app-title"][content="Kita"]');
+    if(app) app.setAttribute("content", kitaName);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    titel(document.title);
+    const logo = eigeneAdresse(EINSTELLUNG.logo);
+    if(!kitaName && !logo) return;
+    const ziel = document.querySelector(".wrap > header, .wrap > .bar-top");
+    if(!ziel) return;
+    const marke = document.createElement("div");
+    marke.className = "marke";
+    if(logo){
+      const img = document.createElement("img");
+      img.src = logo; img.alt = kitaName ? "Logo " + kitaName : "Logo";
+      img.onerror = () => img.remove();
+      marke.appendChild(img);
+    }
+    if(kitaName){
+      const span = document.createElement("span");
+      span.textContent = kitaName;
+      marke.appendChild(span);
+    }
+    ziel.parentNode.insertBefore(marke, ziel);
+  });
+})();

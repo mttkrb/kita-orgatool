@@ -12,7 +12,7 @@ Diese Regeln sind bewusst gewählt. Nicht ohne Rückfrage davon abweichen.
 
 1. **Kein Build, kein Framework, kein npm im Auslieferungsstand.** Fünf HTML-Dateien
    mit eingebettetem CSS und JavaScript, dazu wenige gemeinsame Dateien:
-   `config.js` (Supabase-Zugang), `common.js` (Hilfsfunktionen), `common.css`
+   `config.js` (Supabase-Zugang, Aussehen), `common.js` (Hilfsfunktionen), `common.css`
    (Farben, Schrift, Fokus, `.hidden` für alle Seiten) und `eltern.css` (Formulare und
    Kopf der vier Elternseiten). Eingebunden als einfache `<script src>` und
    `<link rel="stylesheet">`, ohne Module und ohne Bündeln. Nur was in mehreren Seiten
@@ -37,7 +37,7 @@ fest-anmeldung.html     Anmeldung, Mitbringsel, Aufgaben (Eltern)
 orga.html               To-dos, Veranstaltungen, Vorlagen, Planung, Auswertung (Orgateam)
 vorschlag.html          Aufgaben melden (Leitung, Vorstand, Teams)
 feedback.html           Rückmeldung nach der Veranstaltung (Eltern)
-config.js               Supabase-URL und anonKey für alle Seiten
+config.js               Supabase-Zugang und Aussehen (Kitaname, Logo, Farben, Favicon)
 common.js               Gemeinsame Hilfsfunktionen (esc, fmtDate, groups, vis, …)
 common.css              Grundlage aller Seiten: Farben, Schrift, Fokus, .hidden
 eltern.css              Kopf und Formulare der Elternseiten (nicht orga.html)
@@ -56,9 +56,20 @@ Einstellungen, etwa die Dateinamen der öffentlichen Seiten, stehen oben im Skri
 jeweiligen HTML-Datei (`CONFIG`, mit `supabase: SUPABASE`). Leere Supabase-URL schaltet
 den Demo-Modus mit Beispieldaten ein.
 
-Reihenfolge der Einbindung: `config.js`, dann `common.js`, dann das Skript der Seite.
+Aussehen steht ebenfalls in `config.js` (`SETTINGS`): Kitaname, Logo, Favicon und zwei
+Farben. Leere Werte bedeuten Standard. `common.js` setzt daraus Seitentitel, die Zeile
+mit Logo und Name über dem Kopf, die Farbvariablen `--moss`/`--berry` samt hellen
+Tönen und `theme-color`. Logo und Favicon nur von der eigenen Domain (Grundregel 2);
+fremde Adressen werden stillschweigend ignoriert. Die Manifeste bleiben davon
+unberührt. Eine ältere `config.js` ohne `SETTINGS` muss weiter funktionieren.
+
+`config.js` und `common.js` stehen im `<head>`, damit die Farben vor dem ersten Zeichnen
+gesetzt sind; das Skript der Seite steht am Ende von `<body>`. `common.js` fasst beim
+Laden das DOM nicht an, außer über `DOMContentLoaded`. Seitentitel, die erst nach dem
+Laden feststehen, über `titel(text)` setzen, nicht über `document.title`.
 Namen aus `common.js` (`live`, `$`, `esc`, `bildUrl`, `SIGNUP_COLS`, `anonHead`,
-`isoDatum`, `heute`, `fmtDate`, `vis`, `groups`, `verkleinern`) in den Seiten nicht
+`isoDatum`, `heute`, `fmtDate`, `vis`, `groups`, `verkleinern`, `EINSTELLUNG`,
+`kitaName`, `eigeneAdresse`, `farbe`, `titel`) in den Seiten nicht auf oberster Ebene
 neu deklarieren — das ergibt einen SyntaxError und die ganze Seite bleibt stehen.
 
 Im Repo steht in `SUPABASE.url` in `config.js` ein Platzhalter. Die echte Projektadresse wird
