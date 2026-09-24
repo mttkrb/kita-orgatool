@@ -11,7 +11,12 @@ Diese Datei ist die Kurzfassung für die Arbeit am Code.
 Diese Regeln sind bewusst gewählt. Nicht ohne Rückfrage davon abweichen.
 
 1. **Kein Build, kein Framework, kein npm im Auslieferungsstand.** Fünf HTML-Dateien
-   mit eingebettetem CSS und JavaScript. Wer sie lesen kann, soll sie ändern können.
+   mit eingebettetem CSS und JavaScript, dazu wenige gemeinsame Dateien:
+   `config.js` (Supabase-Zugang), `common.js` (Hilfsfunktionen), `common.css`
+   (Farben, Schrift, Fokus, `.hidden` für alle Seiten) und `eltern.css` (Formulare und
+   Kopf der vier Elternseiten). Eingebunden als einfache `<script src>` und
+   `<link rel="stylesheet">`, ohne Module und ohne Bündeln. Nur was in mehreren Seiten
+   gleich ist, gehört in die gemeinsamen Dateien; alles andere bleibt in der Seite. Wer sie lesen kann, soll sie ändern können.
    Node wird nur für die Tests benutzt.
 2. **Keine neuen Fremdquellen.** Erlaubt sind die eigene Supabase-Instanz und
    Bunny Fonts. Keine CDNs, keine Bibliotheken, keine Tracker, keine Google Fonts.
@@ -32,6 +37,10 @@ fest-anmeldung.html     Anmeldung, Mitbringsel, Aufgaben (Eltern)
 orga.html               To-dos, Veranstaltungen, Vorlagen, Planung, Auswertung (Orgateam)
 vorschlag.html          Aufgaben melden (Leitung, Vorstand, Teams)
 feedback.html           Rückmeldung nach der Veranstaltung (Eltern)
+config.js               Supabase-URL und anonKey für alle Seiten
+common.js               Gemeinsame Hilfsfunktionen (esc, fmtDate, groups, vis, …)
+common.css              Grundlage aller Seiten: Farben, Schrift, Fokus, .hidden
+eltern.css              Kopf und Formulare der Elternseiten (nicht orga.html)
 manifest-eltern.json    Installation Startbildschirm, helles Symbol
 manifest-orga.json      Installation Startbildschirm, dunkles Symbol
 icons/                  App-Symbole
@@ -42,11 +51,17 @@ nas/                    Backup- und Keep-alive-Skripte für das Vereins-NAS
 docs/                   Projekthandbuch, Migrationsanleitung, Aufgabenliste
 ```
 
-Konfiguration steht oben im Skript jeder HTML-Datei (`CONFIG`): Supabase-URL und
-anonKey, dazu die Dateinamen der öffentlichen Seiten. Leere Supabase-URL schaltet den
-Demo-Modus mit Beispieldaten ein.
+Supabase-URL und anonKey stehen einmal in `config.js` (`SUPABASE`). Seitenspezifische
+Einstellungen, etwa die Dateinamen der öffentlichen Seiten, stehen oben im Skript der
+jeweiligen HTML-Datei (`CONFIG`, mit `supabase: SUPABASE`). Leere Supabase-URL schaltet
+den Demo-Modus mit Beispieldaten ein.
 
-Im Repo steht in `CONFIG.supabase.url` ein Platzhalter. Die echte Projektadresse wird
+Reihenfolge der Einbindung: `config.js`, dann `common.js`, dann das Skript der Seite.
+Namen aus `common.js` (`live`, `$`, `esc`, `bildUrl`, `anonHead`, `fmtDate`, `vis`,
+`groups`, `verkleinern`) in den Seiten nicht neu deklarieren — das ergibt einen
+SyntaxError und die ganze Seite bleibt stehen.
+
+Im Repo steht in `SUPABASE.url` in `config.js` ein Platzhalter. Die echte Projektadresse wird
 erst beim Deployment eingetragen und nie committet.
 
 ## Datenmodell
@@ -122,7 +137,10 @@ Daraus folgt:
 - Fremde Eingaben nur über `textContent` ausgeben, nie über `innerHTML`.
 - Listen, die aus Anmeldungen rechnen, nach dem Laden neu aufbauen, sonst zeigen sie Null.
 - Keine Darstellungsangaben direkt im Element, wenn das Element über eine Klasse
-  versteckt wird — die Angabe im Element schlägt die Klasse.
+  versteckt wird. `.hidden` steht in `common.css` mit `!important` und gewinnt
+  deshalb immer; eine Angabe im Element wirkt erst, wenn die Klasse weg ist.
+- Stylesheets in der Reihenfolge `common.css`, `eltern.css`, dann `<style>` der Seite.
+  Die Seite überschreibt, was sie anders braucht. `orga.html` lädt `eltern.css` nicht.
 - Keine typografischen Anführungszeichen in JavaScript-Zeichenketten.
 
 **Tests**
@@ -137,7 +155,8 @@ Daraus folgt:
 **Deployment**
 
 Dateien per SFTP in den Ordner `/orga/` des Webspace. Kein Build, keine Pipeline.
-`deploy/.htaccess` gehört dazu. Erst SQL, dann Dateien.
+`config.js`, `common.js`, `common.css`, `eltern.css` und `deploy/.htaccess`
+gehören dazu. Erst SQL, dann Dateien.
 
 ## Nicht ins Repo
 

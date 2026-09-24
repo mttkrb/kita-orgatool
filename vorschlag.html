@@ -6,35 +6,15 @@
 <title>Aufgabe melden</title>
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=fraunces:600,700|work-sans:400,500,600" rel="stylesheet">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="eltern.css">
 <style>
-  :root{--sand:#EFEAE0;--paper:#F8F5EF;--ink:#2A2724;--ink-soft:#6B655C;
-    --line:#DCD5C7;--moss:#3F5540;--moss-soft:#E3E8DE;--berry:#8C4A5C}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--sand);color:var(--ink);
-    font-family:'Work Sans',system-ui,sans-serif;font-size:16px;line-height:1.55}
-  .wrap{max-width:600px;margin:0 auto;padding:24px 18px 64px}
-  h1{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.9rem;margin:0;line-height:1.15}
-  header{padding:8px 0 20px;border-bottom:2px solid var(--ink);margin-bottom:24px}
-  .lead{color:var(--ink-soft);font-size:.95rem;margin:8px 0 0}
-  form{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px 16px}
-  label{display:block;font-size:.9rem;font-weight:500;margin:14px 0 5px}
-  label:first-child{margin-top:0}
-  input[type=text],input[type=file],select,textarea{width:100%;padding:10px 11px;
-    border:1px solid var(--line);border-radius:5px;background:#fff;font:inherit;font-size:16px;color:var(--ink)}
-  textarea{min-height:84px;resize:vertical}
-  input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--moss);outline-offset:1px}
-  .hint{font-size:.83rem;color:var(--ink-soft);margin:5px 0 0}
-  button.primary{width:100%;margin-top:20px;padding:14px;border:none;border-radius:5px;
-    background:var(--moss);color:#fff;font:inherit;font-weight:600;font-size:1rem;cursor:pointer}
-  button.primary:disabled{background:var(--ink-soft)}
   .shots{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
   .shot{position:relative;width:82px;height:82px;border:1px solid var(--line);
     border-radius:5px;overflow:hidden}
   .shot img{width:100%;height:100%;object-fit:cover;display:block}
   .shot button{position:absolute;top:1px;right:1px;border:none;background:rgba(255,255,255,.9);
     color:var(--berry);border-radius:3px;font-size:.8rem;padding:1px 6px;cursor:pointer}
-  .error{background:#fff;border-left:3px solid var(--berry);padding:10px 12px;font-size:.9rem;margin-top:14px}
-  .done{background:var(--moss-soft);border:1px solid var(--moss);border-radius:6px;padding:18px 16px}
   .schon{background:var(--paper);border:1px solid var(--line);border-radius:6px;
     padding:14px 16px;margin-bottom:18px}
   .schon h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.1rem;margin:0 0 4px}
@@ -46,7 +26,6 @@
     background:var(--moss-soft);color:var(--moss)}
   .m .tag.neu{background:var(--line);color:var(--ink-soft)}
   .dupe{font-size:.85rem;color:var(--berry);margin:6px 0 0}
-  .hidden{display:none}
 </style>
 </head>
 <body>
@@ -92,18 +71,11 @@
   <div id="done" class="done hidden"></div>
 </div>
 
+<script src="config.js"></script>
+<script src="common.js"></script>
 <script>
-const CONFIG = { supabase: { url:"", anonKey:"" } };
-const live = !!(CONFIG.supabase.url && CONFIG.supabase.anonKey);
-const $ = id => document.getElementById(id);
-const kopf = () => ({ apikey:CONFIG.supabase.anonKey,
-  Authorization:"Bearer " + CONFIG.supabase.anonKey, "Content-Type":"application/json" });
-const fmtDate = iso => {
-  if(!iso) return "";
-  const d = new Date(iso + "T12:00:00");
-  return isNaN(d) ? "" : d.toLocaleDateString("de-DE",
-    { weekday:"long", day:"numeric", month:"long", year:"numeric" });
-};
+const CONFIG = { supabase: SUPABASE };
+const kopf = () => anonHead({ "Content-Type":"application/json" });
 
 let bild = null;
 let gemeldet = [];
@@ -136,8 +108,6 @@ async function ladeGemeldet(eventId){
   box.classList.remove("hidden");
 }
 
-const esc = t => String(t??"").replace(/[<>&"']/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[c]));
-
 /* Hinweis beim Tippen, wenn etwas Ähnliches schon dasteht */
 function aehnliche(text){
   const worte = text.toLowerCase().split(/\W+/).filter(w=>w.length > 3);
@@ -145,26 +115,6 @@ function aehnliche(text){
   return gemeldet.filter(p=>{
     const t = (p.title + " " + (p.info||"")).toLowerCase();
     return worte.some(w=>t.includes(w));
-  });
-}
-
-function verkleinern(datei, kante=1000, guete=0.72){
-  return new Promise((ok, fehler)=>{
-    const leser = new FileReader();
-    leser.onerror = () => fehler(new Error("Lesefehler"));
-    leser.onload = () => {
-      const b = new Image();
-      b.onerror = () => fehler(new Error("Kein Bild"));
-      b.onload = () => {
-        const f = Math.min(1, kante / Math.max(b.width, b.height));
-        const c = document.createElement("canvas");
-        c.width = Math.round(b.width * f); c.height = Math.round(b.height * f);
-        c.getContext("2d").drawImage(b, 0, 0, c.width, c.height);
-        ok(c.toDataURL("image/jpeg", guete));
-      };
-      b.src = leser.result;
-    };
-    leser.readAsDataURL(datei);
   });
 }
 

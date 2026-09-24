@@ -1,0 +1,13 @@
+/* Grundlage aller Seiten: Farben, Schrift, Fokus, Verstecken.
+   Wird vor dem <style> der Seite geladen; die Seite darf alles überschreiben. */
+:root{
+  --sand:#EFEAE0;--paper:#F8F5EF;--ink:#2A2724;--ink-soft:#6B655C;
+  --line:#DCD5C7;--moss:#3F5540;--moss-soft:#E3E8DE;--ochre:#C98A21;--berry:#8C4A5C;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--sand);color:var(--ink);
+  font-family:'Work Sans',system-ui,sans-serif;font-size:16px;line-height:1.55}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--moss);outline-offset:1px}
+/* Versteckt bleibt versteckt, auch gegen spätere Klassen mit display */
+.hidden{display:none!important}

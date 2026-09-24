@@ -4,8 +4,8 @@ Anmeldungen, Planung und Auswertung für die Veranstaltungen einer Elterninitiat
 Sommerfest, Laternenfest, Arbeitseinsatz und alles, was sonst ansteht.
 
 Das Tool wird von ehrenamtlichen Eltern betrieben und an nachfolgende Vorstände
-weitergegeben. Deshalb ist es bewusst einfach gehalten: ein paar HTML-Dateien, kein
-Build, kein Framework. Wer HTML lesen kann, soll es ändern können.
+weitergegeben. Deshalb ist es bewusst einfach gehalten: ein paar HTML-Dateien mit wenigen
+gemeinsamen Skript- und Stildateien, kein Build, kein Framework. Wer HTML lesen kann, soll es ändern können.
 
 ## Was es kann
 
@@ -38,13 +38,15 @@ Build, kein Framework. Wer HTML lesen kann, soll es ändern können.
 
 ## Ausprobieren
 
-Eine der HTML-Dateien im Browser öffnen. Solange in `CONFIG.supabase` keine Adresse
+Eine der HTML-Dateien im Browser öffnen. Solange in `config.js` keine Adresse
 eingetragen ist, laufen die Seiten im **Demo-Modus** mit Beispieldaten. Im Orga-Bereich
 reicht dann ein beliebiges Passwort.
 
 ## Technik
 
-- Reines HTML mit eingebettetem CSS und JavaScript, keine Abhängigkeiten
+- Reines HTML mit eingebettetem CSS und JavaScript, keine Abhängigkeiten;
+  gemeinsame Hilfsfunktionen in `common.js`, Zugangsdaten in `config.js`,
+  gemeinsames Aussehen in `common.css` und `eltern.css`
 - Datenbank: [Supabase](https://supabase.com) (Postgres), angesprochen über die REST-API
 - Schriften von [Bunny Fonts](https://fonts.bunny.net), sonst keine fremden Quellen
 - Keine Benutzerkonten, keine Cookies, kein Tracking
@@ -84,16 +86,17 @@ Der `service_role`-Schlüssel von Supabase gehört **nie** in eine der Dateien.
    `orga_keys` ab. Die übrigen Tabellen (`task_claims`, `task_images`, `proposals`,
    `feedback`) und die Aufräumfunktion `daten_aufraeumen()` kommen aus den
    Migrationsdateien, die noch nicht im Repo liegen.
-3. **Zugangsdaten eintragen:** In allen fünf HTML-Dateien oben im Skript unter
-   `CONFIG.supabase` die Projekt-URL und den `anonKey` eintragen.
-4. **Hochladen:** Die Dateien per SFTP in einen Unterordner des Webspace laden,
+3. **Zugangsdaten eintragen:** In `config.js` unter `SUPABASE` die Projekt-URL und den
+   `anonKey` eintragen. Das gilt für alle Seiten.
+4. **Hochladen:** Die HTML-Dateien zusammen mit `config.js`, `common.js`, `common.css` und
+   `eltern.css` per SFTP in einen Unterordner des Webspace laden,
    zum Beispiel `/orga/`.
 
 Bei Updates gilt: **erst SQL, dann HTML.** Sonst sucht die Seite nach Spalten, die es
 in der Datenbank noch nicht gibt.
 
 > **Hinweis:** Die echten Zugangsdaten werden nie committet. Im Repo bleiben die Felder
-> in `CONFIG.supabase` leer. Lokal kann man die Werte in einer `supabase.env` ablegen,
+> in `config.js` leer. Lokal kann man die Werte in einer `supabase.env` ablegen,
 > die über `.gitignore` ausgeschlossen ist.
 
 ## Mitarbeiten

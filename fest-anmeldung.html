@@ -14,22 +14,14 @@
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=fraunces:600,700|work-sans:400,500,600" rel="stylesheet">
 <!-- Das SQL-Setup steht im Kopf von orga.html. Hier unten nur url + anonKey eintragen. -->
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="eltern.css">
 <style>
-  :root{
-    --sand:#EFEAE0;--paper:#F8F5EF;--ink:#2A2724;--ink-soft:#6B655C;
-    --line:#DCD5C7;--moss:#3F5540;--moss-soft:#E3E8DE;--berry:#8C4A5C;
-  }
-  *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
-  body{margin:0;background:var(--sand);color:var(--ink);
-    font-family:'Work Sans',system-ui,sans-serif;font-size:16px;line-height:1.55}
-  .wrap{max-width:620px;margin:0 auto;padding:24px 18px 64px}
   h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;line-height:1.15;margin:0}
-  h1{font-size:2rem;letter-spacing:-.015em}
   h2{font-size:1.3rem;margin-bottom:4px}
   h3{font-size:1.02rem;font-family:'Work Sans',sans-serif;font-weight:600}
   p{margin:.5em 0}
-  header.hero{padding:8px 0 22px;border-bottom:2px solid var(--ink)}
+  header.hero{padding-bottom:22px;margin-bottom:0}
   .meta{color:var(--ink-soft);font-size:.95rem;margin-top:8px}
   .meta strong{color:var(--ink);font-weight:600}
   section{margin-top:34px}
@@ -104,17 +96,8 @@
   .wer-zeile input[type=checkbox]{width:19px;height:19px;accent-color:var(--moss);flex:none}
   .wer-zeile .t-name{flex:1}
   .wer-zeile.fertig .t-name{text-decoration:line-through;color:var(--ink-soft)}
-  form{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px 16px}
-  label{display:block;font-size:.9rem;font-weight:500;margin:14px 0 5px}
-  label:first-child{margin-top:0}
-  input[type=text],input[type=number],select,textarea{
-    width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:5px;
-    background:#fff;font:inherit;font-size:16px;color:var(--ink)}
-  textarea{min-height:70px;resize:vertical}
-  input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--moss);outline-offset:1px}
   .row{display:flex;gap:12px}
   .row>div{flex:1}
-  .hint{font-size:.83rem;color:var(--ink-soft);margin:5px 0 0}
   .bring{border:1px dashed var(--line);border-radius:5px;padding:12px;margin-bottom:10px;position:relative}
   .bring .drop{position:absolute;top:8px;right:8px;border:none;background:none;
     color:var(--ink-soft);font-size:1.1rem;cursor:pointer;padding:2px 6px;line-height:1}
@@ -126,20 +109,14 @@
   .check{display:flex;gap:9px;align-items:flex-start;font-size:.93rem;font-weight:400}
   .check input{margin:3px 0 0;width:18px;height:18px;flex:none;accent-color:var(--moss)}
   .check.off{color:var(--ink-soft)}
-  button.primary{width:100%;margin-top:20px;padding:14px;border:none;border-radius:5px;
-    background:var(--moss);color:#fff;font:inherit;font-weight:600;font-size:1rem;cursor:pointer}
-  button.primary:disabled{background:var(--ink-soft);cursor:not-allowed}
   button.ghost{background:none;border:1px solid var(--line);border-radius:5px;
     padding:10px 14px;font:inherit;font-size:.9rem;cursor:pointer;color:var(--ink)}
   button.danger{color:var(--berry);border-color:var(--berry)}
   .privacy{font-size:.83rem;color:var(--ink-soft);margin-top:14px;
     border-top:1px solid var(--line);padding-top:12px}
-  .done{background:var(--moss-soft);border:1px solid var(--moss);border-radius:6px;padding:18px 16px}
   .done code{display:block;background:#fff;border:1px solid var(--line);border-radius:4px;
     padding:10px;margin:10px 0;font-size:.82rem;word-break:break-all}
-  .error{background:#fff;border-left:3px solid var(--berry);padding:10px 12px;font-size:.9rem;margin-top:14px}
   .status{font-size:.83rem;color:var(--ink-soft);margin-top:8px}
-  .hidden{display:none}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -251,33 +228,25 @@
   <p class="status" id="status"></p>
 </div>
 
+<script src="config.js"></script>
+<script src="common.js"></script>
 <script>
 /* ============================================================
-   CONFIG — nur diese zwei Werte. Alles Weitere kommt aus dem Orga-Bereich.
+   CONFIG — Zugang steht in config.js. Alles Weitere kommt aus dem Orga-Bereich.
    ============================================================ */
 const CONFIG = {
-  supabase: { url:"", anonKey:"" },     // leer = Demo-Modus
+  supabase: SUPABASE,                   // leer = Demo-Modus
   defaultEvent: "sommerfest-2026",      // Fallback, falls kein ?event=… im Link steht
   startPage: "index.html",              // Übersicht aller offenen Veranstaltungen
   showStart: false                      // true = ohne ?event=… direkt zur Übersicht springen
 };
 
-const live = !!(CONFIG.supabase.url && CONFIG.supabase.anonKey);
 const params = new URLSearchParams(location.search);
 const slug = params.get("event") || CONFIG.defaultEvent;
 if(!params.get("event") && CONFIG.startPage && CONFIG.showStart) location.replace(CONFIG.startPage);
 let myToken = params.get("entry") || null;
 let mySid = params.get("sid") || null;
 
-const $ = id => document.getElementById(id);
-const esc = s => String(s??"").replace(/[<>&"']/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[c]));
-/* Fotos nur als eingebettetes Bild zulassen, sonst leer (schuetzt src="..." vor Fremdcode) */
-const bildUrl = s => /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(String(s||"")) ? s : "";
-const vis = ev => {
-  const v = (ev && ev.visibility) || {};
-  const on = k => v[k] !== false;
-  return { totals:on("totals"), items:on("items"), itemNames:on("itemNames"), taskNames:on("taskNames") };
-};
 let absage = false;
 
 function wahlAnzeigen(){
@@ -299,23 +268,6 @@ function wahlAnzeigen(){
   $("submit").textContent = absage ? "Abmeldung abschicken" : "Anmeldung abschicken";
 }
 
-const fmtDate = iso => {
-  if(!iso) return "";
-  const d = new Date(iso + "T12:00:00");
-  if(isNaN(d)) return "";
-  return d.toLocaleDateString("de-DE",
-    { weekday:"long", day:"numeric", month:"long", year:"numeric" });
-};
-const groups = ev => {
-  const p = (ev && ev.people) || {};
-  const on = (ev && ev.ask_people) !== false;
-  return {
-    adults: { on: p.adults ? !!p.adults.on : on, label: (p.adults && p.adults.label) || "Erwachsene",
-              max: (p.adults && +p.adults.max) || 6 },
-    kids:   { on: p.kids   ? !!p.kids.on   : on, label: (p.kids   && p.kids.label)   || "Kinder",
-              max: (p.kids   && +p.kids.max)   || 6 }
-  };
-};
 const shortName = n => {
   const p = String(n).trim().split(/\s+/);
   return p.length<2 ? p[0] : p[0] + " " + p[p.length-1][0] + ".";
@@ -372,14 +324,11 @@ const fehlertext = async r => {
   try{ t = (await r.text()).slice(0,160); }catch(e){}
   return t ? " (" + t + ")" : "";
 };
-const baseHead = () => ({ apikey:CONFIG.supabase.anonKey,
-  Authorization:"Bearer " + CONFIG.supabase.anonKey });
-
 const api = {
   async event(){
     if(!live) return DEMO_EVENT;
     const r = await fetch(CONFIG.supabase.url + "/rest/v1/events?select=*&slug=eq." + slug,
-      { headers: baseHead() });
+      { headers: anonHead() });
     if(!r.ok) throw new Error("Veranstaltung konnte nicht geladen werden.");
     const [ev] = await r.json();
     if(!ev) throw new Error("Diese Veranstaltung gibt es nicht mehr.");
@@ -389,7 +338,7 @@ const api = {
   async list(){
     if(!live) return demo.map(e=>({...e}));
     const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?select=" + COLS +
-      "&event=eq." + slug + "&order=created_at.asc", { headers: baseHead() });
+      "&event=eq." + slug + "&order=created_at.asc", { headers: anonHead() });
     if(!r.ok) throw new Error("Liste konnte nicht geladen werden." + await fehlertext(r));
     return r.json();
   },
@@ -400,7 +349,7 @@ const api = {
       demo.push(rec); return rec; }
     const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups",{
       method:"POST",
-      headers:Object.assign(baseHead(),{ "Content-Type":"application/json", Prefer:"return=minimal" }),
+      headers:anonHead({ "Content-Type":"application/json", Prefer:"return=minimal" }),
       body: JSON.stringify({...entry, id, event:slug, token})
     });
     if(!r.ok) throw new Error("Anmeldung konnte nicht gespeichert werden." + await fehlertext(r));
@@ -411,7 +360,7 @@ const api = {
       if(i>-1) demo[i] = {...demo[i], ...entry}; return; }
     const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?id=eq." + id,{
       method:"PATCH",
-      headers:Object.assign(baseHead(),{ "Content-Type":"application/json", "X-Entry-Token":token }),
+      headers:anonHead({ "Content-Type":"application/json", "X-Entry-Token":token }),
       body: JSON.stringify(entry)
     });
     if(!r.ok) throw new Error("Änderung konnte nicht gespeichert werden." + await fehlertext(r));
@@ -419,7 +368,7 @@ const api = {
   async remove(token, id){
     if(!live){ demo = demo.filter(e=>e.token!==token); return; }
     const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?id=eq." + id,{
-      method:"DELETE", headers:Object.assign(baseHead(),{ "X-Entry-Token":token })
+      method:"DELETE", headers:anonHead({ "X-Entry-Token":token })
     });
     if(!r.ok) throw new Error("Abmeldung hat nicht geklappt." + await fehlertext(r));
   },
@@ -427,7 +376,7 @@ const api = {
     if(!live || !EVENT_ID) return DEMO_CLAIMS;
     const r = await fetch(CONFIG.supabase.url +
       "/rest/v1/task_claims?select=id,task_id,name,done&event_id=eq." + EVENT_ID +
-      "&order=created_at.asc", { headers: baseHead() });
+      "&order=created_at.asc", { headers: anonHead() });
     if(!r.ok) return [];
     return r.json();
   },
@@ -435,7 +384,7 @@ const api = {
     if(!live || !EVENT_ID){ DEMO_CLAIMS.push({id:"c"+Date.now(), task_id:taskId, name, done:false}); return; }
     const r = await fetch(CONFIG.supabase.url + "/rest/v1/task_claims",{
       method:"POST",
-      headers:Object.assign(baseHead(),{ "Content-Type":"application/json", Prefer:"return=minimal" }),
+      headers:anonHead({ "Content-Type":"application/json", Prefer:"return=minimal" }),
       body: JSON.stringify({ event_id:EVENT_ID, task_id:taskId, name })
     });
     if(!r.ok) throw new Error("Konnte nicht eingetragen werden." + await fehlertext(r));
@@ -444,7 +393,7 @@ const api = {
     if(!live || !EVENT_ID){ const c = DEMO_CLAIMS.find(x=>x.id===id); if(c) c.done = done; return; }
     const r = await fetch(CONFIG.supabase.url + "/rest/v1/task_claims?id=eq." + id,{
       method:"PATCH",
-      headers:Object.assign(baseHead(),{ "Content-Type":"application/json" }),
+      headers:anonHead({ "Content-Type":"application/json" }),
       body: JSON.stringify({ done })
     });
     if(!r.ok) throw new Error("Konnte nicht gespeichert werden." + await fehlertext(r));
@@ -452,13 +401,13 @@ const api = {
   async claimDel(id){
     if(!live || !EVENT_ID){ DEMO_CLAIMS = DEMO_CLAIMS.filter(x=>x.id!==id); return; }
     const r = await fetch(CONFIG.supabase.url + "/rest/v1/task_claims?id=eq." + id,
-      { method:"DELETE", headers: baseHead() });
+      { method:"DELETE", headers: anonHead() });
     if(!r.ok) throw new Error("Konnte nicht entfernt werden." + await fehlertext(r));
   },
   async images(){
     if(!live || !EVENT_ID) return [];
     const r = await fetch(CONFIG.supabase.url +
-      "/rest/v1/task_images?select=task_id,data&event_id=eq." + EVENT_ID, { headers: baseHead() });
+      "/rest/v1/task_images?select=task_id,data&event_id=eq." + EVENT_ID, { headers: anonHead() });
     if(!r.ok) return [];
     return r.json();
   },
@@ -466,7 +415,7 @@ const api = {
     if(!live) return demo.find(e=>e.token===token) || null;
     if(!id) return null;
     const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?select=" + COLS +
-      "&id=eq." + id, { headers: baseHead() });
+      "&id=eq." + id, { headers: anonHead() });
     if(!r.ok) return null;
     const [mine] = await r.json();
     return mine || null;

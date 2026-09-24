@@ -6,20 +6,10 @@
 <title>Anmeldungen</title>
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=fraunces:600,700|work-sans:400,500,600" rel="stylesheet">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="eltern.css">
 <style>
-  :root{
-    --sand:#EFEAE0;--paper:#F8F5EF;--ink:#2A2724;--ink-soft:#6B655C;
-    --line:#DCD5C7;--moss:#3F5540;--moss-soft:#E3E8DE;--berry:#8C4A5C;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--sand);color:var(--ink);
-    font-family:'Work Sans',system-ui,sans-serif;font-size:16px;line-height:1.55}
-  .wrap{max-width:620px;margin:0 auto;padding:24px 18px 64px}
-  h1{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:2rem;
-    letter-spacing:-.015em;line-height:1.15;margin:0}
   h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.25rem;margin:0}
-  header{padding:8px 0 20px;border-bottom:2px solid var(--ink);margin-bottom:26px}
-  .lead{color:var(--ink-soft);font-size:.95rem;margin:8px 0 0}
 
   a.card{display:block;text-decoration:none;color:inherit;background:var(--paper);
     border:1px solid var(--line);border-radius:6px;padding:18px 16px;margin-bottom:12px}
@@ -47,19 +37,14 @@
   <p class="note" id="note"></p>
 </div>
 
+<script src="config.js"></script>
+<script src="common.js"></script>
 <script>
-/* Dieselben zwei Werte wie in den anderen Dateien. */
 const CONFIG = {
-  supabase: { url:"", anonKey:"" },
+  supabase: SUPABASE,                   // Zugang steht in config.js
   publicPage: "fest-anmeldung.html",
   intro: "Hier laufen alle Anmeldungen der Elterninitiative zusammen. Such dir deine Veranstaltung aus."
 };
-
-const live = !!(CONFIG.supabase.url && CONFIG.supabase.anonKey);
-const $ = id => document.getElementById(id);
-const esc = s => String(s??"").replace(/[<>&"']/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[c]));
-const headers = () => ({ apikey:CONFIG.supabase.anonKey,
-  Authorization:"Bearer " + CONFIG.supabase.anonKey });
 
 const DEMO = {
   events:[
@@ -79,17 +64,11 @@ const DEMO = {
   ]
 };
 
-const fmtDate = iso => {
-  if(!iso) return "";
-  const d = new Date(iso + "T12:00:00");
-  if(isNaN(d)) return "";
-  return d.toLocaleDateString("de-DE", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
-};
 
 async function loadEvents(){
   if(!live) return DEMO.events;
   const r = await fetch(CONFIG.supabase.url +
-    "/rest/v1/events?select=*&archived=eq.false&order=created_at.asc", { headers: headers() });
+    "/rest/v1/events?select=*&archived=eq.false&order=created_at.asc", { headers: anonHead() });
   if(!r.ok) throw new Error("Die Übersicht ist gerade nicht erreichbar.");
   return r.json();
 }
@@ -100,7 +79,7 @@ async function loadSignups(slugs){
   const list = slugs.map(s=>'"'+s+'"').join(",");
   const r = await fetch(CONFIG.supabase.url +
     "/rest/v1/signups?select=event,adults,kids,items,tasks&event=in.(" + encodeURIComponent(list) + ")",
-    { headers: headers() });
+    { headers: anonHead() });
   if(!r.ok) return [];
   return r.json();
 }

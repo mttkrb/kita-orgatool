@@ -123,14 +123,9 @@ create policy "eigene loeschen" on signups for delete to anon
   using (token = (current_setting('request.headers',true)::json ->> 'x-entry-token') or is_orga());
 ================================================================
 -->
+<link rel="stylesheet" href="common.css">
 <style>
-  :root{
-    --sand:#EFEAE0;--paper:#F8F5EF;--ink:#2A2724;--ink-soft:#6B655C;
-    --line:#DCD5C7;--moss:#3F5540;--moss-soft:#E3E8DE;--ochre:#C98A21;--berry:#8C4A5C;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--sand);color:var(--ink);
-    font-family:'Work Sans',system-ui,sans-serif;font-size:16px;line-height:1.5}
+  body{line-height:1.5}
   .wrap{max-width:760px;margin:0 auto;padding:22px 16px 80px}
   h1,h2{font-family:'Fraunces',Georgia,serif;font-weight:600;line-height:1.15;margin:0}
   h1{font-size:1.7rem}
@@ -151,7 +146,6 @@ create policy "eigene loeschen" on signups for delete to anon
     width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:5px;
     background:#fff;font:inherit;font-size:16px;color:var(--ink)}
   textarea{min-height:60px;resize:vertical}
-  input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--moss);outline-offset:1px}
   .row{display:flex;gap:10px;flex-wrap:wrap}
   .row>div{flex:1;min-width:120px}
   .hint{font-size:.8rem;color:var(--ink-soft);margin:4px 0 0}
@@ -245,8 +239,7 @@ create policy "eigene loeschen" on signups for delete to anon
     padding:1px 8px;font-size:.76rem;margin-left:6px;white-space:nowrap}
   #loesch-dialog{position:fixed;inset:0;background:rgba(42,39,36,.55);z-index:60;
     display:flex;align-items:center;justify-content:center;padding:16px}
-  #loesch-dialog.hidden{display:none}
-  .dialog-karte{background:var(--sand);border-radius:8px;max-width:460px;width:100%;
+  #loesch-dialog  .dialog-karte{background:var(--sand);border-radius:8px;max-width:460px;width:100%;
     max-height:88vh;overflow:auto;padding:20px 18px}
   .hidden{display:none}
   code{background:#fff;border:1px solid var(--line);border-radius:4px;padding:2px 5px;
@@ -628,41 +621,23 @@ create policy "eigene loeschen" on signups for delete to anon
 
 </div>
 
+<script src="config.js"></script>
+<script src="common.js"></script>
 <script>
 /* ============================================================
    CONFIG
    ============================================================ */
 const CONFIG = {
-  supabase: { url:"", anonKey:"" },     // leer = Demo-Modus
+  supabase: SUPABASE,                   // Zugang steht in config.js
   publicPage: "fest-anmeldung.html",
   proposalPage: "vorschlag.html",
   feedbackPage: "feedback.html"
 };
 
-const live = !!(CONFIG.supabase.url && CONFIG.supabase.anonKey);
-const $ = id => document.getElementById(id);
-const esc = s => String(s??"").replace(/[<>&"']/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[c]));
-/* Fotos nur als eingebettetes Bild zulassen, sonst leer (schuetzt src="..." vor Fremdcode) */
-const bildUrl = s => /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(String(s||"")) ? s : "";
 const slugify = s => String(s).toLowerCase().trim()
   .replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss")
   .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
 const uid = () => "x" + Math.random().toString(36).slice(2,8);
-const groups = o => {
-  const p = (o && o.people) || {};
-  const on = (o && o.ask_people) !== false;
-  return {
-    adults: { on: p.adults ? !!p.adults.on : on, label: (p.adults && p.adults.label) || "Erwachsene",
-              max: (p.adults && +p.adults.max) || 6 },
-    kids:   { on: p.kids   ? !!p.kids.on   : on, label: (p.kids   && p.kids.label)   || "Kinder",
-              max: (p.kids   && +p.kids.max)   || 6 }
-  };
-};
-const vis = ev => {
-  const v = (ev && ev.visibility) || {};
-  const on = k => v[k] !== false;
-  return { totals:on("totals"), items:on("items"), itemNames:on("itemNames"), taskNames:on("taskNames") };
-};
 
 function fillGroups(prefix, o){
   const g = groups(o);
@@ -736,11 +711,8 @@ let demoSignups = [
 /* ============================================================
    Datenzugriff
    ============================================================ */
-const head = extra => Object.assign({
-  apikey: CONFIG.supabase.anonKey,
-  Authorization: "Bearer " + CONFIG.supabase.anonKey,
-  "Content-Type": "application/json"
-}, orgaKey ? {"X-Orga-Key": orgaKey} : {}, extra||{});
+const head = extra => anonHead(Object.assign({ "Content-Type": "application/json" },
+  orgaKey ? {"X-Orga-Key": orgaKey} : {}, extra||{}));
 
 async function req(path, opts){
   const r = await fetch(CONFIG.supabase.url + "/rest/v1/" + path, opts);
@@ -1000,12 +972,6 @@ $("tab-templates").onclick = () => tab("templates");
 
 /* ---------- Übersicht ---------- */
 const tplName = id => (templates.find(t=>t.id===id)||{}).name;
-const fmtDate = iso => {
-  if(!iso) return "";
-  const d = new Date(iso + "T12:00:00");
-  if(isNaN(d)) return "";
-  return d.toLocaleDateString("de-DE", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
-};
 const heute = () => new Date().toISOString().slice(0,10);
 const vorbei = e => !!(e.event_on && e.event_on < heute());
 
@@ -1743,27 +1709,6 @@ function catRow(c){
   });
   d._auf(!c.label);
   return d;
-}
-/* Bild im Browser verkleinern, damit die Datenbank klein bleibt */
-function verkleinern(datei, kante=1000, guete=0.72){
-  return new Promise((ok, fehler)=>{
-    const leser = new FileReader();
-    leser.onerror = () => fehler(new Error("Lesefehler"));
-    leser.onload = () => {
-      const bild = new Image();
-      bild.onerror = () => fehler(new Error("Kein Bild"));
-      bild.onload = () => {
-        const f = Math.min(1, kante / Math.max(bild.width, bild.height));
-        const c = document.createElement("canvas");
-        c.width = Math.round(bild.width * f);
-        c.height = Math.round(bild.height * f);
-        c.getContext("2d").drawImage(bild, 0, 0, c.width, c.height);
-        ok(c.toDataURL("image/jpeg", guete));
-      };
-      bild.src = leser.result;
-    };
-    leser.readAsDataURL(datei);
-  });
 }
 
 function taskRow(t, bilder){
