@@ -57,9 +57,9 @@ jeweiligen HTML-Datei (`CONFIG`, mit `supabase: SUPABASE`). Leere Supabase-URL s
 den Demo-Modus mit Beispieldaten ein.
 
 Reihenfolge der Einbindung: `config.js`, dann `common.js`, dann das Skript der Seite.
-Namen aus `common.js` (`live`, `$`, `esc`, `bildUrl`, `anonHead`, `isoDatum`, `heute`,
-`fmtDate`, `vis`, `groups`, `verkleinern`) in den Seiten nicht neu deklarieren — das ergibt einen
-SyntaxError und die ganze Seite bleibt stehen.
+Namen aus `common.js` (`live`, `$`, `esc`, `bildUrl`, `SIGNUP_COLS`, `anonHead`,
+`isoDatum`, `heute`, `fmtDate`, `vis`, `groups`, `verkleinern`) in den Seiten nicht
+neu deklarieren — das ergibt einen SyntaxError und die ganze Seite bleibt stehen.
 
 Im Repo steht in `SUPABASE.url` in `config.js` ein Platzhalter. Die echte Projektadresse wird
 erst beim Deployment eingetragen und nie committet.

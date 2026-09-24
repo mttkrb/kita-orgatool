@@ -9,6 +9,10 @@ const esc = s => String(s??"").replace(/[<>&"']/g,c=>({"<":"&lt;",">":"&gt;","&"
 // Nur eingebettete Bilder durchlassen, keine fremden Adressen.
 const bildUrl = s => /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(String(s||"")) ? s : "";
 
+// Lesbare Spalten der Anmeldungen, ohne token (dafür fehlt anon das Leserecht).
+// Überall dieselbe Liste, damit Export und Sicherung nichts verlieren.
+const SIGNUP_COLS = "id,event,created_at,name,adults,kids,items,tasks,fields,note,status";
+
 // Kopfzeilen für die REST-API mit dem anonKey, extra ergänzt oder überschreibt.
 const anonHead = extra => Object.assign({
   apikey: SUPABASE.anonKey,

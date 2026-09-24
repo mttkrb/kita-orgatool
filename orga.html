@@ -855,8 +855,7 @@ const db = {
   },
   async listSignups(slug){
     if(!live) return demoSignups.filter(s=>s.event===slug).map(s=>({...s}));
-    const cols = "id,event,created_at,name,adults,kids,items,tasks,fields,note,status";
-    return req("signups?select="+cols+"&event=eq."+slug+"&order=created_at.asc", { headers: head() });
+    return req("signups?select="+SIGNUP_COLS+"&event=eq."+slug+"&order=created_at.asc", { headers: head() });
   },
   async signupsFor(slugs){
     if(!slugs.length) return [];
@@ -1302,9 +1301,8 @@ async function sicherungZiehen(ev, art){
   const hol = async pfad => {
     try{ return await req(pfad, { headers: head() }) || []; }catch(e){ return []; }
   };
-  const cols = "id,event,created_at,name,adults,kids,items,tasks,fields,note";
   const [signups, planung, claims, bilder, meldungen, feedbackListe] = await Promise.all([
-    hol("signups?select=" + cols + "&event=eq." + ev.slug),
+    hol("signups?select=" + SIGNUP_COLS + "&event=eq." + ev.slug),
     hol("planning?select=*&event_id=eq." + ev.id),
     hol("task_claims?select=*&event_id=eq." + ev.id),
     hol("task_images?select=*&event_id=eq." + ev.id),
@@ -1315,20 +1313,23 @@ async function sicherungZiehen(ev, art){
     event:ev, planning:planung, signups, task_claims:claims, task_images:bilder,
     proposals:meldungen, feedback:feedbackListe };
   if(art === "zahlen"){
+    // Absagen zählen nicht mit, sie stehen nur als Anzahl daneben
+    const zusagen = signups.filter(s=>s.status !== "absage");
     const proKat = {};
-    signups.flatMap(s=>s.items||[]).forEach(i=>{
+    zusagen.flatMap(s=>s.items||[]).forEach(i=>{
       proKat[i.cat] = (proKat[i.cat] || 0) + (+i.qty || 1);
     });
     const proAufgabe = {};
-    signups.flatMap(s=>s.tasks||[]).forEach(t=>{ proAufgabe[t] = (proAufgabe[t] || 0) + 1; });
+    zusagen.flatMap(s=>s.tasks||[]).forEach(t=>{ proAufgabe[t] = (proAufgabe[t] || 0) + 1; });
     const knapp = {
       gesichert_am:new Date().toISOString(), grund:"vor dem Löschen, ohne Personenbezug",
       event:{ slug:ev.slug, title:ev.title, event_on:ev.event_on, place:ev.place,
               categories:ev.categories, tasks:ev.tasks },
       zahlen:{
-        anmeldungen: signups.length,
-        erwachsene: signups.reduce((a,s)=>a+(+s.adults||0),0),
-        kinder: signups.reduce((a,s)=>a+(+s.kids||0),0),
+        anmeldungen: zusagen.length,
+        absagen: signups.length - zusagen.length,
+        erwachsene: zusagen.reduce((a,s)=>a+(+s.adults||0),0),
+        kinder: zusagen.reduce((a,s)=>a+(+s.kids||0),0),
         kategorien: proKat, aufgaben: proAufgabe,
         aufgabenzusagen: claims.length,
         rueckmeldungen: feedbackListe.length
@@ -1492,8 +1493,7 @@ function download(name, text, typ){
 
 async function alleAnmeldungen(){
   if(!live) return demoSignups.map(x=>({...x}));
-  const cols = "id,event,created_at,name,adults,kids,items,tasks,fields,note";
-  return req("signups?select=" + cols + "&order=created_at.asc", { headers: head() });
+  return req("signups?select=" + SIGNUP_COLS + "&order=created_at.asc", { headers: head() });
 }
 
 $("dump-json").onclick = async () => {
@@ -1525,12 +1525,12 @@ $("dump-csv").onclick = async () => {
       return ((e.tasks||[]).find(t=>t.id===id)||{}).label || id;
     };
     const cell = v => '"' + String(v??"").replace(/"/g,'""') + '"';
-    const kopf = ["Veranstaltung","Datum","Name","Erwachsene","Kinder","Mitbringsel","Aufgaben",
+    const kopf = ["Veranstaltung","Datum","Name","Status","Erwachsene","Kinder","Mitbringsel","Aufgaben",
                   "Zusatzangaben","Anmerkung","Angemeldet am"];
     const zeilen = su.map(s=>[
       titel(s.event),
       ((ev.find(e=>e.slug===s.event)||{}).event_on) || "",
-      s.name, s.adults, s.kids,
+      s.name, s.status === "absage" ? "abgemeldet" : "zugesagt", s.adults, s.kids,
       (s.items||[]).map(i=>((+i.qty||1)>1 ? (+i.qty)+"x " : "") + i.what +
         " (" + katLabel(s.event, i.cat) + ")").join(" | "),
       (s.tasks||[]).map(id=>aufLabel(s.event, id)).join(" | "),

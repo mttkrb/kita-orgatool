@@ -308,7 +308,6 @@ let demo = [
     items:[{cat:"kuchen",what:"Muffins, 24 Stück"},{cat:"sonst",what:"Pavillon"}], tasks:["aufbau","abbau"] }
 ];
 
-const COLS = "id,event,created_at,name,adults,kids,items,tasks,fields,note,status";
 const neueId = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
   : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c=>{
       const r = Math.random()*16|0;
@@ -337,7 +336,7 @@ const api = {
   },
   async list(){
     if(!live) return demo.map(e=>({...e}));
-    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?select=" + COLS +
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?select=" + SIGNUP_COLS +
       "&event=eq." + slug + "&order=created_at.asc", { headers: anonHead() });
     if(!r.ok) throw new Error("Liste konnte nicht geladen werden." + await fehlertext(r));
     return r.json();
@@ -414,7 +413,7 @@ const api = {
   async mine(token, id){
     if(!live) return demo.find(e=>e.token===token) || null;
     if(!id) return null;
-    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?select=" + COLS +
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?select=" + SIGNUP_COLS +
       "&id=eq." + id, { headers: anonHead() });
     if(!r.ok) return null;
     const [mine] = await r.json();
