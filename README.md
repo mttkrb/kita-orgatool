@@ -102,6 +102,35 @@ in der Datenbank noch nicht gibt.
 > in `config.js` leer. Lokal kann man die Werte in einer `supabase.env` ablegen,
 > die über `.gitignore` ausgeschlossen ist.
 
+## Umzug in ein anderes Supabase-Projekt
+
+Soll das Tool samt Daten in ein anderes Supabase-Projekt oder Konto wechseln, etwa vom
+privaten Konto eines Vorstands in das des Vereins, liegen dafür im Ordner
+[`umzug/`](umzug/) Skripte für Windows, macOS und Linux und eine Schritt-für-Schritt-
+[Anleitung](umzug/ANLEITUNG.md).
+
+- Umgezogen werden alle Tabellen im Schema `public` mit Daten, Funktionen, Policies,
+  Rechten und Cron-Aufträgen. Die persönlichen Links der Eltern und das Orga-Passwort
+  bleiben gültig.
+- Das alte Projekt wird nur gelesen. Ein Probelauf ist deshalb gefahrlos.
+- Am Ende vergleicht das Skript Zeilenzahlen, Struktur und Rechte zwischen alt und neu
+  und prüft über die Schnittstelle, dass die Token der Anmeldungen gesperrt sind.
+- Gebraucht werden die PostgreSQL-Kommandozeilenwerkzeuge (`pg_dump`, `pg_restore`,
+  `psql`) oder Docker.
+
+Kurzfassung:
+
+```bash
+cd umzug
+cp umzug.env.example umzug.env   # Zugangsdaten beider Projekte eintragen
+./umzug.sh pruefen
+./umzug.sh alles                 # Windows: umzug-windows.cmd alles
+```
+
+Danach in `config.js` URL und anonKey des neuen Projekts eintragen und hochladen.
+Der Ordner `umzug/arbeit/` enthält dann eine vollständige Sicherung mit Elterndaten
+und wird nach dem Umzug mit `./umzug.sh aufraeumen` gelöscht.
+
 ## Mitarbeiten
 
 Die Regeln für Änderungen am Code stehen in [`CLAUDE.md`](CLAUDE.md), unter anderem:

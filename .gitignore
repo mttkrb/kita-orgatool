@@ -19,6 +19,9 @@ exporte/
 *.csv
 !*.example.csv
 
+# Arbeitsordner des Umzugsskripts: Sicherungen mit Elterndaten und Orga-Passwort
+umzug/arbeit/
+
 # Einwilligungstexte mit echten Namen
 einwilligung*
 !einwilligung*.example*

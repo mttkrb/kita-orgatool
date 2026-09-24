@@ -51,6 +51,7 @@ tests/                  Node mit jsdom, Nachbau der Datenbank inkl. Rechteprüfu
 deploy/.htaccess        Für den Zielordner /orga/ auf dem Webspace
 nas/                    Backup- und Keep-alive-Skripte für das Vereins-NAS
 docs/                   Projekthandbuch, Migrationsanleitung, Aufgabenliste
+umzug/                  Umzug in ein anderes Supabase-Projekt: Skripte (sh, ps1) und Anleitung
 ```
 
 Supabase-URL und anonKey stehen einmal in `config.js` (`SUPABASE`). Seitenspezifische

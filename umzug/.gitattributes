@@ -1,0 +1,5 @@
+# Bash-Skript braucht LF, sonst läuft es unter Linux und macOS nicht.
+*.sh  text eol=lf
+# Windows-Dateien mit CRLF; umzug.ps1 bleibt UTF-8 mit BOM (für PowerShell 5.1).
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
