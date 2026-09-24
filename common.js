@@ -15,6 +15,12 @@ const anonHead = extra => Object.assign({
   Authorization: "Bearer " + SUPABASE.anonKey
 }, extra||{});
 
+// Datum als JJJJ-MM-TT in Ortszeit. Nicht toISOString nehmen: das rechnet in UTC
+// und liefert zwischen Mitternacht und 1 bzw. 2 Uhr noch den Vortag.
+const isoDatum = d => d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") +
+  "-" + String(d.getDate()).padStart(2,"0");
+const heute = () => isoDatum(new Date());
+
 const fmtDate = iso => {
   if(!iso) return "";
   const d = new Date(iso + "T12:00:00");

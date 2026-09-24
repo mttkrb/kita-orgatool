@@ -473,13 +473,12 @@ function renderHead(){
   $("grp-adults").classList.toggle("hidden", !g.adults.on);
   $("grp-kids").classList.toggle("hidden", !g.kids.on);
   $("people-row").classList.toggle("hidden", !g.adults.on && !g.kids.on);
-  const heute = new Date().toISOString().slice(0,10);
-  const vorbei = EV.event_on && EV.event_on < heute;
+  const vorbei = EV.event_on && EV.event_on < heute();
   if(vorbei && (EV.visibility||{}).feedback === true && EVENT_ID){
     $("rueckblick-link").href = "feedback.html?event=" + EVENT_ID;
     $("rueckblick-hinweis").classList.remove("hidden");
   }
-  const heuteIso = new Date().toISOString().slice(0,10);
+  const heuteIso = heute();
   const nichtFrei = EV.signup_released === false;
   const nochNicht = EV.signup_from && EV.signup_from > heuteIso;
   const schonVorbei = (EV.signup_until && EV.signup_until < heuteIso) ||
@@ -512,8 +511,7 @@ function renderHead(){
   // nie beides — das war doppelt und verwirrend
   // Liste für den Tag: auf Wunsch erst am Veranstaltungstag selbst
   const erstAmTag = (EV.visibility||{}).tasksOnDay === true;
-  const heuteJetzt = new Date().toISOString().slice(0,10);
-  const nochZu = erstAmTag && EV.event_on && heuteJetzt < EV.event_on;
+  const nochZu = erstAmTag && EV.event_on && heute() < EV.event_on;
   $("tasks-section").classList.toggle("hidden", !hatAufgaben || !vorOrt || nochZu);
 
   if(hatAufgaben && vorOrt && nochZu){

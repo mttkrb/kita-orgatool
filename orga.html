@@ -972,7 +972,6 @@ $("tab-templates").onclick = () => tab("templates");
 
 /* ---------- Übersicht ---------- */
 const tplName = id => (templates.find(t=>t.id===id)||{}).name;
-const heute = () => new Date().toISOString().slice(0,10);
 const vorbei = e => !!(e.event_on && e.event_on < heute());
 
 /* Prueft, ob die Datenbank alle Spalten hat, die diese Version braucht.
@@ -1490,7 +1489,6 @@ function download(name, text, typ){
   a.click();
   URL.revokeObjectURL(a.href);
 }
-const heuteDatei = () => new Date().toISOString().slice(0,10);
 
 async function alleAnmeldungen(){
   if(!live) return demoSignups.map(x=>({...x}));
@@ -1506,7 +1504,7 @@ $("dump-json").onclick = async () => {
     ]);
     const daten = { gesichert_am:new Date().toISOString(), version:1,
                     templates:tpl, events:ev, planning:plan, signups:su };
-    download("kita-sicherung-" + heuteDatei() + ".json",
+    download("kita-sicherung-" + heute() + ".json",
              JSON.stringify(daten, null, 2), "application/json");
     $("dump-msg").textContent = tpl.length + " Vorlagen, " + ev.length + " Veranstaltungen, " +
       su.length + " Anmeldungen gesichert. Enthält Namen — entsprechend ablegen.";
@@ -1540,7 +1538,7 @@ $("dump-csv").onclick = async () => {
       s.note || "",
       new Date(s.created_at).toLocaleString("de-DE")
     ].map(cell).join(";"));
-    download("kita-anmeldungen-alle-" + heuteDatei() + ".csv",
+    download("kita-anmeldungen-alle-" + heute() + ".csv",
       "\uFEFF" + [kopf.map(cell).join(";"), ...zeilen].join("\r\n"), "text/csv;charset=utf-8");
     $("dump-msg").textContent = su.length + " Anmeldungen aus " + ev.length + " Veranstaltungen exportiert.";
   }catch(err){ $("dump-msg").textContent = "Fehlgeschlagen: " + err.message; }
@@ -1845,7 +1843,7 @@ function faelligAm(eventOn, offset){
   const d = new Date(eventOn + "T12:00:00");
   if(isNaN(d)) return null;
   d.setDate(d.getDate() - offset);
-  return d.toISOString().slice(0,10);
+  return isoDatum(d);
 }
 
 function tageBis(iso){

@@ -101,9 +101,8 @@ function stats(ev, rows){
   let events, rows;
   try{
     events = await loadEvents();
-    const heute = new Date().toISOString().slice(0,10);
     events = events
-      .filter(e=>!e.event_on || e.event_on >= heute)
+      .filter(e=>!e.event_on || e.event_on >= heute())
       .sort((a,b)=>String(a.event_on||"9999").localeCompare(String(b.event_on||"9999")));
     rows = await loadSignups(events.map(e=>e.slug));
   }catch(err){
@@ -115,7 +114,7 @@ function stats(ev, rows){
 
   $("list").innerHTML = events.length ? events.map(ev=>{
     const s = stats(ev, rows);
-    const heuteIso = new Date().toISOString().slice(0,10);
+    const heuteIso = heute();
     const nichtFrei = ev.signup_released === false;
     const nochNicht = ev.signup_from && ev.signup_from > heuteIso;
     const zu = ev.signup_until && ev.signup_until < heuteIso;

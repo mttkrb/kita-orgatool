@@ -57,8 +57,8 @@ jeweiligen HTML-Datei (`CONFIG`, mit `supabase: SUPABASE`). Leere Supabase-URL s
 den Demo-Modus mit Beispieldaten ein.
 
 Reihenfolge der Einbindung: `config.js`, dann `common.js`, dann das Skript der Seite.
-Namen aus `common.js` (`live`, `$`, `esc`, `bildUrl`, `anonHead`, `fmtDate`, `vis`,
-`groups`, `verkleinern`) in den Seiten nicht neu deklarieren — das ergibt einen
+Namen aus `common.js` (`live`, `$`, `esc`, `bildUrl`, `anonHead`, `isoDatum`, `heute`,
+`fmtDate`, `vis`, `groups`, `verkleinern`) in den Seiten nicht neu deklarieren — das ergibt einen
 SyntaxError und die ganze Seite bleibt stehen.
 
 Im Repo steht in `SUPABASE.url` in `config.js` ein Platzhalter. Die echte Projektadresse wird
@@ -142,6 +142,8 @@ Daraus folgt:
 - Stylesheets in der Reihenfolge `common.css`, `eltern.css`, dann `<style>` der Seite.
   Die Seite überschreibt, was sie anders braucht. `orga.html` lädt `eltern.css` nicht.
 - Keine typografischen Anführungszeichen in JavaScript-Zeichenketten.
+- Tagesdatum immer über `heute()` bzw. `isoDatum(d)` aus `common.js`, nie über
+  `toISOString().slice(0,10)` — das ist UTC und liefert nach Mitternacht den Vortag.
 
 **Tests**
 
