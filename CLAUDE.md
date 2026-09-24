@@ -52,6 +52,7 @@ deploy/.htaccess        Für den Zielordner /orga/ auf dem Webspace
 nas/                    Backup- und Keep-alive-Skripte für das Vereins-NAS
 docs/                   Projekthandbuch, Migrationsanleitung, Aufgabenliste
 umzug/                  Umzug in ein anderes Supabase-Projekt: Skripte (sh, ps1) und Anleitung
+einrichtung/            Neuinstallation: Anleitung, SQL-Vorlage und Skript, das sie erzeugt
 ```
 
 Supabase-URL und anonKey stehen einmal in `config.js` (`SUPABASE`). Seitenspezifische
@@ -141,6 +142,9 @@ Daraus folgt:
 3. Reihenfolge ist verbindlich; spätere Migrationen ersetzen Funktionen aus früheren.
 4. Die Versionsprüfung im Orga-Bereich erwartet neue Spalten — beim Erweitern
    mitpflegen, damit sie fehlende Spalten beim Namen nennt.
+5. Nach dem Einspielen `einrichtung/vorlage-erzeugen.sh` laufen lassen und
+   `einrichtung/sql/` mit committen. Die Vorlage für Neuinstallationen wird nur so
+   erzeugt, nie von Hand geändert.
 
 **Änderungen am Frontend**
 

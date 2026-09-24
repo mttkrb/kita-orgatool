@@ -1,0 +1,2 @@
+# Bash-Skript braucht LF, sonst läuft es unter Linux und macOS nicht.
+*.sh  text eol=lf

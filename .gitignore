@@ -21,6 +21,8 @@ exporte/
 
 # Arbeitsordner des Umzugsskripts: Sicherungen mit Elterndaten und Orga-Passwort
 umzug/arbeit/
+# Arbeitsordner des Vorlagenskripts (nur Struktur, trotzdem nicht einchecken)
+einrichtung/arbeit/
 
 # Einwilligungstexte mit echten Namen
 einwilligung*

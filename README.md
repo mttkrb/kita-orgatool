@@ -78,22 +78,25 @@ Der `service_role`-Schlüssel von Supabase gehört **nie** in eine der Dateien.
 
 ## Einrichten
 
-1. **Supabase-Projekt anlegen.**
-2. **Datenbank einrichten:** Das Grundschema steht als Kommentar im Kopf von
-   `orga.html` und wird im SQL-Editor von Supabase ausgeführt. Dabei den Platzhalter
-   `HIER-EIN-LANGES-ZUFALLS-PASSWORT` durch ein langes Zufallspasswort ersetzen
-   (mindestens 24 Zeichen) und dieses im Passwortsafe des Vereins ablegen.
-   Das Grundschema deckt nur `events`, `signups`, `templates`, `planning` und
-   `orga_keys` ab. Die übrigen Tabellen (`task_claims`, `task_images`, `proposals`,
-   `feedback`) und die Aufräumfunktion `daten_aufraeumen()` kommen aus den
-   Migrationsdateien, die noch nicht im Repo liegen.
+Die Schritt-für-Schritt-[Anleitung](einrichtung/ANLEITUNG.md) im Ordner
+[`einrichtung/`](einrichtung/) führt durch die Neuinstallation. Programme braucht es
+dafür nicht, nur ein Supabase-Konto, den SFTP-Zugang zum Webspace und einen Browser.
+
+1. **Supabase-Projekt anlegen**, Region Frankfurt, Konto auf den Verein.
+2. **Datenbank einrichten:** `einrichtung/sql/neuinstallation.sql` im SQL-Editor von
+   Supabase ausführen. Das legt alle Tabellen, Rechte und das nächtliche Aufräumen an
+   und zeigt einmalig ein neu erzeugtes Orga-Passwort für den Passwortsafe.
+   Danach `einrichtung/sql/pruefen.sql` ausführen; jede Zeile muss mit OK beginnen.
 3. **Zugangsdaten eintragen:** In `config.js` unter `SUPABASE` die Projekt-URL und den
    `anonKey` eintragen. Das gilt für alle Seiten. Darunter unter `SETTINGS` optional
    Kitaname, Logo, Favicon und zwei Farben; leer lassen heißt Standardaussehen.
-   Logo und Favicon als Pfad neben die HTML-Dateien legen (z. B. `icons/logo.png`).
-4. **Hochladen:** Die HTML-Dateien zusammen mit `config.js`, `common.js`, `common.css` und
-   `eltern.css` per SFTP in einen Unterordner des Webspace laden,
-   zum Beispiel `/orga/`.
+4. **Hochladen:** Die HTML-Dateien zusammen mit `config.js`, `common.js`, `common.css`,
+   `eltern.css` und den Ordnern `fonts/` und `icons/` per SFTP in einen Unterordner des
+   Webspace laden, zum Beispiel `/orga/`.
+
+Die beiden SQL-Dateien werden mit `einrichtung/vorlage-erzeugen.sh` aus dem laufenden
+Projekt erzeugt, nur Struktur, keine Daten, und nach jeder Migration neu mitgeliefert
+(Anleitung, Abschnitt 10).
 
 Bei Updates gilt: **erst SQL, dann HTML.** Sonst sucht die Seite nach Spalten, die es
 in der Datenbank noch nicht gibt.
