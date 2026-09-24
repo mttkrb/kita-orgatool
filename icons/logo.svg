@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80" role="img" aria-label="Kita-Logo">
+  <!-- Standard-Logo des Kita-Orgatools: Haus mit Sonne in den Farben aus common.css -->
+  <rect width="80" height="80" rx="18" fill="#3F5540"/>
+  <circle cx="58" cy="23" r="9" fill="#C98A21"/>
+  <path d="M15 41 L40 19 L65 41 V62 a4 4 0 0 1 -4 4 H19 a4 4 0 0 1 -4 -4 Z" fill="#EFEAE0"/>
+  <circle cx="40" cy="41" r="4.5" fill="#8C4A5C"/>
+  <path d="M33 66 V56 a7 7 0 0 1 14 0 V66 Z" fill="#3F5540"/>
+</svg>

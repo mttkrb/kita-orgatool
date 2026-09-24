@@ -4,14 +4,16 @@
 const SUPABASE = { url:"", anonKey:"" };
 
 // Aussehen, gilt für alle Seiten. Leere Werte = Standard.
+// Logo und Favicon in icons/ sind die mitgelieferten Standardbilder; zum Austauschen
+// eigene Dateien daneben legen und hier eintragen, oder leer lassen für kein Logo.
 // Logo und Favicon nur als Pfad relativ zu den Seiten (z. B. "icons/logo.png")
 // oder auf derselben Domain — fremde Adressen werden ignoriert.
 const SETTINGS = {
-  name: "",            // Name der Kita, z. B. "Kita Sonnenschein"; erscheint im Kopf und im Seitentitel
-  logo: "",            // Bild im Kopf aller Seiten, am besten PNG oder SVG, etwa 80 px hoch
-  favicon: "",         // Symbol im Browser-Tab; leer = Symbol aus icons/
+  name: "",                     // Name der Kita, z. B. "Kita Sonnenschein"; erscheint im Kopf und im Seitentitel
+  logo: "icons/logo.svg",       // Bild im Kopf aller Seiten, PNG oder SVG, quadratisch, etwa 80 px
+  favicon: "icons/favicon.png", // Symbol im Browser-Tab, PNG 64 × 64 px
   colors: {
-    main: "",          // Hauptfarbe für Knöpfe, Haken, Balken, z. B. "#3F5540"
-    accent: ""         // Farbe für Warnungen, Absagen, Fehlendes, z. B. "#8C4A5C"
+    main: "",                   // Hauptfarbe für Knöpfe, Haken, Balken, z. B. "#3F5540"
+    accent: ""                  // Farbe für Warnungen, Absagen, Fehlendes, z. B. "#8C4A5C"
   }
 };

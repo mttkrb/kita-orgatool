@@ -43,7 +43,7 @@ common.css              Grundlage aller Seiten: Farben, Schrift, Fokus, .hidden
 eltern.css              Kopf und Formulare der Elternseiten (nicht orga.html)
 manifest-eltern.json    Installation Startbildschirm, helles Symbol
 manifest-orga.json      Installation Startbildschirm, dunkles Symbol
-icons/                  App-Symbole
+icons/                  App-Symbole, Standard-Logo (logo.svg) und -Favicon (favicon.svg/.png)
 sql/                    schema.sql, migration-2.sql … migration-N.sql, Importe
 tests/                  Node mit jsdom, Nachbau der Datenbank inkl. Rechteprüfung
 deploy/.htaccess        Für den Zielordner /orga/ auf dem Webspace
