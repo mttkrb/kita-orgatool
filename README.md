@@ -105,6 +105,12 @@ Die Regeln für Änderungen am Code stehen in [`CLAUDE.md`](CLAUDE.md), unter an
 - Fremde Eingaben nie ungeschützt über `innerHTML` ausgeben
 - Oberfläche, Kommentare und Commit-Nachrichten auf Deutsch
 
+## Entstehung
+
+Das Tool wurde mithilfe eines KI-Programmierassistenten entwickelt. Die Vorgaben
+dafür stehen in [`CLAUDE.md`](CLAUDE.md). Die KI steckt nur in der Entwicklung, nicht im
+Tool selbst: Beim Betrieb werden keine Daten an einen KI-Dienst geschickt.
+
 ## Lizenz
 
 [MIT](LICENSE) © 2026 janabyromi-del, mttkrb
