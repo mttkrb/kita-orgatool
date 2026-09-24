@@ -48,7 +48,8 @@ reicht dann ein beliebiges Passwort.
   gemeinsame Hilfsfunktionen in `common.js`, Zugangsdaten in `config.js`,
   gemeinsames Aussehen in `common.css` und `eltern.css`
 - Datenbank: [Supabase](https://supabase.com) (Postgres), angesprochen über die REST-API
-- Schriften von [Bunny Fonts](https://fonts.bunny.net), sonst keine fremden Quellen
+- Schriften Fraunces und Work Sans lokal in `fonts/` (SIL Open Font License),
+  keine fremden Quellen außer der eigenen Supabase-Instanz
 - Keine Benutzerkonten, keine Cookies, kein Tracking
 
 ### Sicherheitsmodell

@@ -18,8 +18,9 @@ Diese Regeln sind bewusst gewählt. Nicht ohne Rückfrage davon abweichen.
    `<link rel="stylesheet">`, ohne Module und ohne Bündeln. Nur was in mehreren Seiten
    gleich ist, gehört in die gemeinsamen Dateien; alles andere bleibt in der Seite. Wer sie lesen kann, soll sie ändern können.
    Node wird nur für die Tests benutzt.
-2. **Keine neuen Fremdquellen.** Erlaubt sind die eigene Supabase-Instanz und
-   Bunny Fonts. Keine CDNs, keine Bibliotheken, keine Tracker, keine Google Fonts.
+2. **Keine Fremdquellen.** Einzige Verbindung nach außen ist die eigene
+   Supabase-Instanz. Schriften liegen in `fonts/`. Keine CDNs, keine Bibliotheken,
+   keine Tracker, keine Webfont-Dienste.
 3. **Rechte gehören in die Datenbank.** Wer was darf, entscheiden RLS-Policies in
    Postgres, nicht das Frontend. Prüfungen im JavaScript sind Komfort, keine Sicherheit.
 4. **Erst SQL, dann HTML.** Migration einspielen, danach die Seiten hochladen.
@@ -44,6 +45,7 @@ eltern.css              Kopf und Formulare der Elternseiten (nicht orga.html)
 manifest-eltern.json    Installation Startbildschirm, helles Symbol
 manifest-orga.json      Installation Startbildschirm, dunkles Symbol
 icons/                  App-Symbole, Standard-Logo (logo.svg) und -Favicon (favicon.svg/.png)
+fonts/                  Fraunces und Work Sans als woff2, Lizenztexte OFL-*.txt
 sql/                    schema.sql, migration-2.sql … migration-N.sql, Importe
 tests/                  Node mit jsdom, Nachbau der Datenbank inkl. Rechteprüfung
 deploy/.htaccess        Für den Zielordner /orga/ auf dem Webspace
@@ -168,8 +170,8 @@ Daraus folgt:
 **Deployment**
 
 Dateien per SFTP in den Ordner `/orga/` des Webspace. Kein Build, keine Pipeline.
-`config.js`, `common.js`, `common.css`, `eltern.css` und `deploy/.htaccess`
-gehören dazu. Erst SQL, dann Dateien.
+`config.js`, `common.js`, `common.css`, `eltern.css`, der Ordner `fonts/` und
+`deploy/.htaccess` gehören dazu. Erst SQL, dann Dateien.
 
 ## Nicht ins Repo
 
