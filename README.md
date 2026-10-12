@@ -28,6 +28,7 @@ gemeinsamen Skript- und Stildateien, kein Build, kein Framework. Wer HTML lesen 
 - Gemeldete Aufgaben übernehmen oder ablehnen
 - Rückblick mit Zahlen und Bewertung, die als Vorschlag ins nächste Mal einfließen
 - Preise je Person und Bestellartikel festlegen, erwartete Einnahmen und Bestellmengen sehen,
+  Zahlungseingang je Anmeldung abhaken, offene Beträge und Differenzen nach Änderungen sehen,
   Ausgaben in der Einkaufsliste erfassen, Saldo im Rückblick
 
 ## Die Seiten

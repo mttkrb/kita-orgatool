@@ -432,8 +432,8 @@ create policy "eigene loeschen" on signups for delete to anon
       <textarea id="e-p-note" maxlength="1000" placeholder="Bitte bis zum … überweisen an Elterninitiative …, IBAN …&#10;Oder bar am Eingang."></textarea>
       <p class="hint">Steht nach dem Anmelden unter dem Betrag, zusammen mit einem Verwendungszweck aus
         Veranstaltung und Name.</p>
-      <label for="e-p-paypal">PayPal.me-Name <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
-      <input type="text" id="e-p-paypal" maxlength="60" placeholder="z. B. kita-sonnenschein">
+      <label for="e-p-paypal">PayPal <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <input type="text" id="e-p-paypal" maxlength="200" placeholder="PayPal-Adresse oder PayPal.me-Name">
       <p class="hint" id="e-p-paypal-hint">Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die
         Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.</p>
     </fieldset>
@@ -581,8 +581,8 @@ create policy "eigene loeschen" on signups for delete to anon
       <textarea id="t-p-note" maxlength="1000" placeholder="Bitte bis zum … überweisen an Elterninitiative …, IBAN …&#10;Oder bar am Eingang."></textarea>
       <p class="hint">Steht nach dem Anmelden unter dem Betrag, zusammen mit einem Verwendungszweck aus
         Veranstaltung und Name.</p>
-      <label for="t-p-paypal">PayPal.me-Name <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
-      <input type="text" id="t-p-paypal" maxlength="60" placeholder="z. B. kita-sonnenschein">
+      <label for="t-p-paypal">PayPal <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <input type="text" id="t-p-paypal" maxlength="200" placeholder="PayPal-Adresse oder PayPal.me-Name">
       <p class="hint" id="t-p-paypal-hint">Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die
         Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.</p>
     </fieldset>
@@ -722,7 +722,8 @@ function readPayment(prefix){
   if(k) p.kids = k;
   const note = $(prefix+"-p-note").value.trim().slice(0, 1000);
   if(note) p.note = note;
-  const pp = paypalName($(prefix+"-p-paypal").value);
+  const roh = $(prefix+"-p-paypal").value;
+  const pp = paypalMail(roh) || paypalName(roh);
   if(pp) p.paypal = pp;
   return p;
 }
@@ -735,11 +736,16 @@ function paymentLabels(prefix){
   });
   const roh = $(prefix+"-p-paypal").value.trim();
   const hinweis = $(prefix+"-p-paypal-hint");
-  hinweis.textContent = roh && !paypalName(roh)
-    ? "Das sieht nicht nach einem PayPal.me-Namen aus. Erlaubt sind Buchstaben, Ziffern, Punkt, Strich und Unterstrich."
-    : "Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die Eltern einen Knopf, der PayPal mit dem " +
-      "richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.";
-  hinweis.style.color = roh && !paypalName(roh) ? "var(--berry)" : "";
+  const falsch = roh && !paypalName(roh) && !paypalMail(roh);
+  hinweis.textContent = falsch
+    ? "Das ist weder eine E-Mail-Adresse noch ein PayPal.me-Name (Buchstaben, Ziffern, Punkt, Strich, Unterstrich)."
+    : paypalMail(roh)
+    ? "Nach dem Anmelden sehen die Eltern diese Adresse mit Betrag und Verwendungszweck zum Kopieren. " +
+      "Die Adresse steht damit für alle mit dem Link sichtbar auf der Anmeldeseite. Nur eintragen, " +
+      "wenn die Person, die sammelt, einverstanden ist."
+    : "PayPal-Adresse der Person, die sammelt, oder ein PayPal.me-Name. Beim PayPal.me-Namen bekommen die " +
+      "Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.";
+  hinweis.style.color = falsch ? "var(--berry)" : "";
 }
 ["e","t"].forEach(prefix=>{
   ["-g1-on","-g1-label","-g2-on","-g2-label","-p-paypal"].forEach(id=>
@@ -785,7 +791,7 @@ let demoEvents = [{
               {id:"salat",label:"Salate",target:6,unit:"Salate",ideas:["Nudelsalat"]}],
   tasks:[{id:"aufbau",label:"Aufbau",when:"ab 12 Uhr",needed:6}],
   fields:[{id:"bratwurst",label:"Bratwurst vorbestellen",type:"order",price:2.5,max:10,required:false,options:[]}],
-  payment:{ adults:3, kids:5, paypal:"beispielkita",
+  payment:{ adults:3, kids:5, paypal:"sammlerin@example.de",
     note:"Bitte bis zum 20. September überweisen:\nElterninitiative Beispiel e. V., IBAN DE00 0000 0000 0000 0000 00" }
 }];
 let demoPlanning = { "e-alt": {
@@ -802,6 +808,7 @@ let demoSignups = [
   { id:"s3", event:"sommerfest-2026", created_at:new Date().toISOString(), name:"Anne Vogt",
     adults:1, kids:2, items:[{cat:"salat",what:"Nudelsalat"}], tasks:[], fields:{}, note:"" }
 ];
+let demoPayments = [{ signup_id:"s2", amount:18.5, paid_at:new Date().toISOString() }];
 demoPlanning["e-neu"] = { checklist:[], review:{}, shopping:[
   {id:"k1",menge:"40",einheit:"Stück",artikel:"Bratwürste",wer:"Nina",preis:32,done:true},
   {id:"k2",menge:"2",einheit:"Pk",artikel:"Grillkohle",wer:"",preis:12.9,done:false}
@@ -883,6 +890,25 @@ const db = {
   async deleteTemplate(id){
     if(!live){ demoTemplates = demoTemplates.filter(t=>t.id!==id); return; }
     await req("templates?id=eq."+id, { method:"DELETE", headers: head() });
+  },
+  // Zahlungseingang, nur fürs Orgateam lesbar. Ohne Tabelle (Migration fehlt) leer.
+  async payments(ids){
+    if(!live) return demoPayments.filter(x=>ids.includes(x.signup_id)).map(x=>({...x}));
+    if(!ids.length) return [];
+    return req("payments?select=signup_id,amount,paid_at&signup_id=in.(" + ids.join(",") + ")",
+      { headers: head() });
+  },
+  async setPaid(signupId, amount){
+    if(!live){
+      demoPayments = demoPayments.filter(x=>x.signup_id !== signupId);
+      if(amount !== null) demoPayments.push({ signup_id:signupId, amount, paid_at:new Date().toISOString() });
+      return;
+    }
+    if(amount === null)
+      return req("payments?signup_id=eq." + signupId, { method:"DELETE", headers: head() });
+    return req("payments", { method:"POST",
+      headers: head({ Prefer:"resolution=merge-duplicates" }),
+      body: JSON.stringify({ signup_id:signupId, amount, paid_at:new Date().toISOString() }) });
   },
   async getPlanning(eventId){
     if(!eventId) return {checklist:[], review:{}, shopping:[]};
@@ -1081,7 +1107,8 @@ const NEEDED = {
   signups: ["fields","status"],
   proposals: ["status","image"],
   planning: ["shopping"],
-  task_claims: ["done"]
+  task_claims: ["done"],
+  payments: ["amount","paid_at"]
 };
 
 async function checkSchema(){
@@ -2797,9 +2824,20 @@ async function openSignups(ev){
   await loadSignups();
 }
 
+let zahlungen = {};
+
 async function loadSignups(){
   try{ signups = await db.listSignups(current.slug); }
   catch(err){ $("su-table").innerHTML = '<div class="msg bad">'+esc(err.message)+'</div>'; return; }
+  zahlungen = {};
+  if(kostetEtwas(current)){
+    try{ (await db.payments(signups.map(s=>s.id))).forEach(x=>{ zahlungen[x.signup_id] = x; }); }catch(e){}
+  }
+  const kostet = kostetEtwas(current);
+  const soll = s => kosten(current, s).summe;
+  const gezahlt = s => zahlungen[s.id] ? +zahlungen[s.id].amount || 0 : 0;
+  const offen = s => s.status === "absage" ? 0 : Math.max(0, Math.round((soll(s) - gezahlt(s))*100)/100);
+  const offeneFamilien = signups.filter(s=>offen(s) > 0).length;
 
   const adults = signups.reduce((a,s)=>a+(+s.adults||0),0);
   const kids   = signups.reduce((a,s)=>a+(+s.kids||0),0);
@@ -2819,8 +2857,13 @@ async function loadSignups(){
     "<div><b>"+items+"</b>Mitbringsel</div>"+
     bestellArtikel(current).map(f=>"<div><b>"+signups.reduce((a,s)=>a+bestellMenge(s.status==="absage"?{}:s, f),0)+
       "</b>"+esc(f.label)+"</div>").join("")+
-    (kostetEtwas(current)
-      ? "<div><b>"+euro(signups.reduce((a,s)=>a+kosten(current, s).summe,0))+"</b>Einnahmen (Soll)</div>" : "");
+    (kostet
+      ? "<div><b>"+euro(signups.reduce((a,s)=>a+soll(s),0))+"</b>Einnahmen (Soll)</div>"+
+        "<div><b>"+euro(signups.reduce((a,s)=>a+gezahlt(s),0))+"</b>bezahlt</div>"+
+        "<div><b"+(offeneFamilien?' style="color:var(--berry)"':"")+">"+
+          euro(signups.reduce((a,s)=>a+offen(s),0))+"</b>offen"+
+          (offeneFamilien ? " ("+offeneFamilien+(offeneFamilien===1?" Familie":" Familien")+")" : "")+"</div>"
+      : "");
 
   const catLabel = id => ((current.categories||[]).find(c=>c.id===id)||{}).label || id;
   const taskLabel = id => ((current.tasks||[]).find(t=>t.id===id)||{}).label || id;
@@ -2849,8 +2892,7 @@ async function loadSignups(){
           g.adults.on ? (+s.adults||0)+" "+esc(g.adults.label) : "",
           g.kids.on ? (+s.kids||0)+" "+esc(g.kids.label) : ""
         ].filter(Boolean).join(", ")+"</span>"+
-        (kostetEtwas(current) && s.status !== "absage"
-          ? '<br><span style="color:var(--ink-soft)">Betrag: '+euro(kosten(current, s).summe)+'</span>' : "")+
+        (kostet ? zahlZelle(s, soll(s), zahlungen[s.id]) : "")+
         (s.note?'<br><span style="color:var(--ink-soft)">„'+esc(s.note)+'"</span>':"")+
         Object.entries(s.fields||{}).map(([k,v])=>
           '<br><span style="color:var(--ink-soft)">'+esc(k)+": "+esc(v)+"</span>").join("")+
@@ -2876,6 +2918,36 @@ async function loadSignups(){
   });
 }
 $("reload").onclick = loadSignups;
+
+// Haken für die Person, die das Geld sammelt. Gespeichert wird der Betrag, der beim
+// Abhaken fällig war; ändert die Familie danach ihre Anmeldung, steht die Differenz da.
+function zahlZelle(s, betrag, z){
+  const datum = z ? new Date(z.paid_at).toLocaleDateString("de-DE") : "";
+  const diff = z ? Math.round((betrag - (+z.amount||0))*100)/100 : 0;
+  if(s.status === "absage")
+    return z ? '<br><span style="color:var(--berry)">abgemeldet, hat aber '+euro(z.amount)+
+      ' bezahlt — zurückzahlen?</span>'+
+      '<label class="check" style="margin-top:4px"><input type="checkbox" checked data-paid="'+esc(s.id)+'">'+
+      '<span>bezahlt (Haken weg, wenn erstattet)</span></label>' : "";
+  if(!betrag && !z) return "";
+  return '<label class="check" style="margin-top:6px"><input type="checkbox" data-paid="'+esc(s.id)+'"'+
+    (z ? " checked" : "")+'><span>'+
+    (z ? '<strong>bezahlt</strong> '+euro(z.amount)+' am '+esc(datum) +
+         (diff ? '<br><span style="color:var(--berry)">Anmeldung geändert, jetzt '+euro(betrag)+
+           (diff > 0 ? ' — noch '+euro(diff)+' offen' : ' — '+euro(-diff)+' zu viel')+'</span>' : "")
+       : euro(betrag)+' <span style="color:var(--berry)">offen</span>')+
+    '</span></label>';
+}
+$("su-table").addEventListener("change", async ev => {
+  const h = ev.target.closest("[data-paid]");
+  if(!h) return;
+  const s = signups.find(x=>x.id === h.dataset.paid);
+  if(!s) return;
+  h.disabled = true;
+  try{ await db.setPaid(s.id, h.checked ? kosten(current, s).summe : null); }
+  catch(err){ alert("Konnte nicht gespeichert werden: " + String(err.message).slice(0,200)); }
+  await loadSignups();
+});
 
 /* ---------- Anmeldung durch das Orgateam ---------- */
 let editingSignup = null;
@@ -2979,13 +3051,15 @@ $("export").onclick = () => {
   const extra = [...new Set(signups.flatMap(s=>Object.keys(s.fields||{})))];
   const g = groups(current);
   const head = ["Name","Status",g.adults.label,g.kids.label,"Mitbringsel","Aufgaben",
-    "Anmerkung",...extra,"Betrag (EUR)","Angemeldet am"];
+    "Anmerkung",...extra,"Betrag (EUR)","Bezahlt (EUR)","Bezahlt am","Angemeldet am"];
   const rows = signups.map(s=>[
     s.name, s.status === "absage" ? "abgemeldet" : "zugesagt", s.adults, s.kids,
     (s.items||[]).map(i=>((+i.qty||1)>1 ? (+i.qty)+"x " : "")+i.what+" ("+catLabel(i.cat)+")").join(" | "),
     (s.tasks||[]).map(taskLabel).join(" | "),
     s.note || "", ...extra.map(k=>(s.fields||{})[k] ?? ""),
     betragCsv(kosten(current, s).summe),
+    zahlungen[s.id] ? betragCsv(zahlungen[s.id].amount) : "",
+    zahlungen[s.id] ? new Date(zahlungen[s.id].paid_at).toLocaleDateString("de-DE") : "",
     new Date(s.created_at).toLocaleString("de-DE")
   ].map(csvCell).join(";"));
   const csv = "\uFEFF" + [head.map(csvCell).join(";"), ...rows].join("\r\n");

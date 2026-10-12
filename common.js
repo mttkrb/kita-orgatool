@@ -96,6 +96,12 @@ const paypalName = s => {
     .replace(/^(www\.)?paypal\.(me|com\/paypalme)\//i, "").replace(/[\/?#].*$/, "");
   return /^[A-Za-z0-9._-]{1,40}$/.test(n) ? n : "";
 };
+// PayPal-Adresse (E-Mail), an die Eltern über Freunde & Familie senden.
+// Dafür gibt es keinen Link mit Betrag; die Seite zeigt Adresse und Betrag zum Kopieren.
+const paypalMail = s => {
+  const m = String(s || "").trim();
+  return /^[^\s@<>"']{1,64}@[^\s@<>"']{1,190}\.[A-Za-z]{2,}$/.test(m) ? m : "";
+};
 // Link zu PayPal.me mit Betrag. Nur ein Link: die Seite selbst lädt nichts von PayPal.
 const paypalLink = (name, betrag) => {
   const n = paypalName(name);

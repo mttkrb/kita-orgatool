@@ -311,7 +311,7 @@ const DEMO_EVENT = {
   fields:[{id:"anfahrt",label:"Wie kommt ihr hin?",type:"select",required:false,
     options:["zu Fuß","Rad","Auto"]},
     {id:"bratwurst",label:"Bratwurst vorbestellen",type:"order",price:2.5,max:10}],
-  payment:{ adults:3, kids:5, paypal:"beispielkita",
+  payment:{ adults:3, kids:5, paypal:"sammlerin@example.de",
     note:"Bitte bis zum 20. September überweisen:\nElterninitiative Beispiel e. V., IBAN DE00 0000 0000 0000 0000 00\nOder bar am Eingang." }
 };
 let demo = [
@@ -461,7 +461,8 @@ function renderHead(){
     ? "Ich bin einverstanden, dass " + sichtbar.join(" und ") +
       " für alle sichtbar sind, die diesen Link haben. "
     : "Meine Angaben sieht nur das Orgateam, nicht die anderen Gäste. ") +
-    "Das Orgateam sieht immer alle Angaben. " + (EV.retention_note ||
+    "Das Orgateam sieht immer alle Angaben" +
+    (kostetEtwas(EV) ? " und hält fest, ob bezahlt ist. " : ". ") + (EV.retention_note ||
       ("Alle Angaben werden " + (EV.retention_days === 1 ? "einen Tag" :
         (EV.retention_days || 14) + " Tage") + " nach der Veranstaltung gelöscht."));
   entries = entries.filter(e=>e.status !== "absage");
@@ -829,14 +830,21 @@ function zahlHtml(summe, name, mitLink){
   const P = EV.payment || {};
   const hinweis = String(P.note || "").trim();
   const pp = mitLink && summe > 0 ? paypalLink(P.paypal, summe) : "";
-  const hatPaypal = !!paypalName(P.paypal);
+  const mail = paypalMail(P.paypal);
+  const hatPaypal = !!(paypalName(P.paypal) || mail);
   if(!hinweis && !hatPaypal) return "";
+  const zweck = EV.title + (name ? " - " + name : "");
   return '<div class="zahlung"><p><strong>So bezahlst du</strong></p>' +
     (hinweis ? '<p class="hinweis">' + esc(hinweis) + '</p>' : "") +
-    (summe > 0 ? '<p class="zweck">Verwendungszweck: ' + esc(EV.title + (name ? " - " + name : "")) + '</p>' : "") +
-    (pp ? '<a class="paypal" href="' + esc(pp) + '" target="_blank" rel="noopener noreferrer">' +
+    (summe > 0 ? '<p class="zweck">Verwendungszweck: ' + esc(zweck) + '</p>' : "") +
+    (mail && mitLink && summe > 0
+      ? '<p style="margin-top:8px">Per PayPal <strong>' + euro(summe) + '</strong> an <strong>' + esc(mail) +
+        '</strong> senden, als Zahlung an Freunde und Familie. Den Verwendungszweck als Nachricht dazuschreiben.</p>' +
+        '<button type="button" class="ghost" data-kopie="' + esc(mail) + '">Adresse kopieren</button> ' +
+        '<button type="button" class="ghost" data-kopie="' + esc(zweck) + '">Verwendungszweck kopieren</button>'
+    : pp ? '<a class="paypal" href="' + esc(pp) + '" target="_blank" rel="noopener noreferrer">' +
           'Mit PayPal ' + euro(summe) + ' bezahlen</a>'
-        : (hatPaypal && summe > 0 ? '<p class="zweck">Den Link zum Bezahlen mit PayPal bekommst du ' +
+        : (hatPaypal && summe > 0 ? '<p class="zweck">Wie du mit PayPal bezahlst, steht hier ' +
           'nach dem Abschicken.</p>' : "")) +
     '</div>';
 }
@@ -1011,6 +1019,13 @@ $("form").addEventListener("submit", async ev=>{
     $("done").scrollIntoView({behavior:"smooth", block:"center"});
   }catch(err){ showError(err.message + " Versuch es bitte nochmal."); }
   finally{ $("submit").disabled = false; $("submit").textContent = "Anmeldung abschicken"; }
+});
+
+document.addEventListener("click", async ev => {
+  const k = ev.target.closest("[data-kopie]");
+  if(!k) return;
+  try{ await navigator.clipboard.writeText(k.dataset.kopie); k.textContent = "Kopiert"; }
+  catch(e){ prompt("Zum Kopieren markieren:", k.dataset.kopie); }
 });
 
 $("form").addEventListener("input", renderKosten);
