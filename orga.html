@@ -635,6 +635,7 @@ create policy "eigene loeschen" on signups for delete to anon
       <button class="ghost" id="manual">+ Anmeldung eintragen</button>
       <button class="ghost" id="export">Als CSV exportieren</button>
       <button class="ghost" id="reload">Aktualisieren</button>
+      <button class="ghost hidden" id="nur-offen" aria-pressed="false">Nur offene Zahlungen</button>
     </div>
 
     <div id="manual-form" class="card hidden" style="margin-top:14px">
@@ -2817,6 +2818,7 @@ $("copy-melde").onclick = async () => {
    ============================================================ */
 async function openSignups(ev){
   current = ev;
+  nurOffen = false;
   $("su-title").textContent = "Anmeldungen — " + ev.title;
   $("manual-form").classList.add("hidden");
   editingSignup = null;
@@ -2825,6 +2827,8 @@ async function openSignups(ev){
 }
 
 let zahlungen = {};
+let nurOffen = false;
+$("nur-offen").onclick = () => { nurOffen = !nurOffen; loadSignups(); };
 
 async function loadSignups(){
   try{ signups = await db.listSignups(current.slug); }
@@ -2883,9 +2887,23 @@ async function loadSignups(){
       }).join("") + '</div>'
     : "";
 
-  $("su-table").innerHTML = standBox + (signups.length
+  // Filter für die Person, die sammelt: offen oder nach Abmeldung zurückzuzahlen
+  $("nur-offen").classList.toggle("hidden", !kostet);
+  if(!kostet) nurOffen = false;
+  $("nur-offen").setAttribute("aria-pressed", String(nurOffen));
+  $("nur-offen").textContent = nurOffen ? "Alle Anmeldungen zeigen" : "Nur offene Zahlungen";
+  const zeilen = nurOffen
+    ? signups.filter(s=>offen(s) > 0 || (s.status === "absage" && zahlungen[s.id]))
+    : signups;
+  const filterHinweis = nurOffen
+    ? '<p class="hint" style="margin-top:12px">' + (zeilen.length
+        ? zeilen.length + " von " + signups.length + " Anmeldungen mit offenem Betrag."
+        : "Alles bezahlt. Niemand ist mehr offen.") + "</p>"
+    : "";
+
+  $("su-table").innerHTML = standBox + filterHinweis + (zeilen.length
     ? "<table><tr><th>Wer</th><th>Bringt mit</th><th>Hilft bei</th><th></th></tr>"+
-      signups.map(s=>"<tr><td><strong>"+esc(s.name)+"</strong>"+
+      zeilen.map(s=>"<tr><td><strong>"+esc(s.name)+"</strong>"+
         (s.status === "absage" ? ' <span class="tag" style="background:var(--berry-soft);color:var(--berry)">abgemeldet</span>' : "")+
         "<br>"+
         '<span style="color:var(--ink-soft)">'+[
@@ -2902,6 +2920,7 @@ async function loadSignups(){
         '</td><td><button class="linkish" data-edit="'+esc(s.id)+'">bearbeiten</button><br>'+
         '<button class="linkish" style="color:var(--berry)" data-del="'+esc(s.id)+'">löschen</button></td></tr>').join("")+
       "</table>"
+    : nurOffen && signups.length ? ""
     : '<div class="card" style="margin-top:14px"><p style="margin:0">Noch keine Anmeldung. '+
       'Teile den Link, dann füllt sich die Liste.</p></div>');
 
