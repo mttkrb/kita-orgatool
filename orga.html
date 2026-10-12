@@ -1492,6 +1492,14 @@ function download(name, text, typ){
   URL.revokeObjectURL(a.href);
 }
 
+// Eine CSV-Zelle. Was mit = + - @ Tab oder Zeilenumbruch beginnt, liest Excel als
+// Formel; ein Apostroph davor macht daraus Text. Negative Zahlen bleiben Zahlen.
+function csvCell(v){
+  let s = String(v ?? "");
+  if(/^[=+\-@\t\r]/.test(s) && !/^-\d+([.,]\d+)?$/.test(s)) s = "'" + s;
+  return '"' + s.replace(/"/g,'""') + '"';
+}
+
 async function alleAnmeldungen(){
   if(!live) return demoSignups.map(x=>({...x}));
   return req("signups?select=" + SIGNUP_COLS + "&order=created_at.asc", { headers: head() });
@@ -1525,7 +1533,6 @@ $("dump-csv").onclick = async () => {
       const e = ev.find(x=>x.slug===slug) || {};
       return ((e.tasks||[]).find(t=>t.id===id)||{}).label || id;
     };
-    const cell = v => '"' + String(v??"").replace(/"/g,'""') + '"';
     const kopf = ["Veranstaltung","Datum","Name","Status","Erwachsene","Kinder","Mitbringsel","Aufgaben",
                   "Zusatzangaben","Anmerkung","Angemeldet am"];
     const zeilen = su.map(s=>[
@@ -1538,9 +1545,9 @@ $("dump-csv").onclick = async () => {
       Object.entries(s.fields||{}).map(([k,v])=>k+": "+v).join(" | "),
       s.note || "",
       new Date(s.created_at).toLocaleString("de-DE")
-    ].map(cell).join(";"));
+    ].map(csvCell).join(";"));
     download(dateiName("anmeldungen-alle") + heute() + ".csv",
-      "\uFEFF" + [kopf.map(cell).join(";"), ...zeilen].join("\r\n"), "text/csv;charset=utf-8");
+      "\uFEFF" + [kopf.map(csvCell).join(";"), ...zeilen].join("\r\n"), "text/csv;charset=utf-8");
     $("dump-msg").textContent = su.length + " Anmeldungen aus " + ev.length + " Veranstaltungen exportiert.";
   }catch(err){ $("dump-msg").textContent = "Fehlgeschlagen: " + err.message; }
 };
@@ -2470,9 +2477,8 @@ $("kauf-text").onclick = async () => {
 
 $("kauf-csv").onclick = () => {
   const liste = readKauf($("einkauf"));
-  const cell = v => '"' + String(v??"").replace(/"/g,'""') + '"';
-  const csv = "\uFEFF" + [["Menge","Einheit","Was","Wer besorgt","gekauft"].map(cell).join(";"),
-    ...liste.map(p=>[p.menge, p.einheit, p.artikel, p.wer, p.done ? "ja" : "nein"].map(cell).join(";"))
+  const csv = "\uFEFF" + [["Menge","Einheit","Was","Wer besorgt","gekauft"].map(csvCell).join(";"),
+    ...liste.map(p=>[p.menge, p.einheit, p.artikel, p.wer, p.done ? "ja" : "nein"].map(csvCell).join(";"))
   ].join("\r\n");
   download("einkauf-" + (current.slug || "liste") + ".csv", csv, "text/csv;charset=utf-8");
 };
@@ -2785,7 +2791,6 @@ $("export").onclick = () => {
   const catLabel = id => ((current.categories||[]).find(c=>c.id===id)||{}).label || id;
   const taskLabel = id => ((current.tasks||[]).find(t=>t.id===id)||{}).label || id;
   const extra = [...new Set(signups.flatMap(s=>Object.keys(s.fields||{})))];
-  const cell = v => '"' + String(v??"").replace(/"/g,'""') + '"';
   const g = groups(current);
   const head = ["Name","Status",g.adults.label,g.kids.label,"Mitbringsel","Aufgaben",
     "Anmerkung",...extra,"Angemeldet am"];
@@ -2795,8 +2800,8 @@ $("export").onclick = () => {
     (s.tasks||[]).map(taskLabel).join(" | "),
     s.note || "", ...extra.map(k=>(s.fields||{})[k] ?? ""),
     new Date(s.created_at).toLocaleString("de-DE")
-  ].map(cell).join(";"));
-  const csv = "\uFEFF" + [head.map(cell).join(";"), ...rows].join("\r\n");
+  ].map(csvCell).join(";"));
+  const csv = "\uFEFF" + [head.map(csvCell).join(";"), ...rows].join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
   a.download = "anmeldungen-" + current.slug + ".csv";
