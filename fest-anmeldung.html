@@ -117,6 +117,18 @@
   .done code{display:block;background:#fff;border:1px solid var(--line);border-radius:4px;
     padding:10px;margin:10px 0;font-size:.82rem;word-break:break-all}
   .status{font-size:.83rem;color:var(--ink-soft);margin-top:8px}
+  .kosten{background:#fff;border:1px solid var(--line);border-left:3px solid var(--moss);
+    border-radius:6px;padding:12px 14px;margin-top:18px;font-size:.92rem}
+  .kosten table{width:100%;border-collapse:collapse}
+  .kosten td{padding:3px 0;vertical-align:top}
+  .kosten td.betrag{text-align:right;white-space:nowrap;padding-left:10px}
+  .kosten tr.summe td{border-top:1px solid var(--line);padding-top:7px;font-weight:600;font-size:1rem}
+  .zahlung{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+  .zahlung p{margin:0 0 6px}
+  .zahlung .hinweis{white-space:pre-line}
+  .zahlung .zweck{color:var(--ink-soft);font-size:.86rem}
+  a.paypal{display:inline-block;margin-top:6px;padding:10px 14px;border-radius:5px;
+    background:var(--moss);color:#fff;font-weight:600;text-decoration:none}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -128,6 +140,7 @@
     <p class="meta" id="ev-meta"></p>
     <p class="meta" id="ev-intro"></p>
     <p class="meta" id="ev-count"></p>
+    <p class="meta hidden" id="ev-preis"></p>
   </header>
 
   <div id="anmelde-hinweis" class="hidden" style="background:var(--paper);
@@ -209,6 +222,8 @@
           <textarea id="f-note" placeholder="Allergien, Kuchen ist vegan, komme später …"></textarea>
         </div>
 
+        <div id="kosten-box" class="kosten hidden" aria-live="polite"></div>
+
         <div class="privacy">
           <label class="check" style="font-weight:400">
             <input type="checkbox" id="f-consent">
@@ -264,6 +279,7 @@ function wahlAnzeigen(){
   });
   $("absage-block").classList.toggle("hidden", !absage);
   $("submit").textContent = absage ? "Abmeldung abschicken" : "Anmeldung abschicken";
+  renderKosten();
 }
 
 const shortName = n => {
@@ -293,7 +309,10 @@ const DEMO_EVENT = {
     {id:"abbau",label:"Abbau",when:"ab 19 Uhr",needed:8}
   ],
   fields:[{id:"anfahrt",label:"Wie kommt ihr hin?",type:"select",required:false,
-    options:["zu Fuß","Rad","Auto"]}]
+    options:["zu Fuß","Rad","Auto"]},
+    {id:"bratwurst",label:"Bratwurst vorbestellen",type:"order",price:2.5,max:10}],
+  payment:{ adults:3, kids:5, paypal:"beispielkita",
+    note:"Bitte bis zum 20. September überweisen:\nElterninitiative Beispiel e. V., IBAN DE00 0000 0000 0000 0000 00\nOder bar am Eingang." }
 };
 let demo = [
   { id:"d1", name:"Sarah Klein", adults:2, kids:2, note:"", fields:{},
@@ -465,8 +484,17 @@ function renderHead(){
   };
   fuellen("f-adults", g.adults.max, 2);
   fuellen("f-kids", g.kids.max, 1);
-  $("lbl-adults").textContent = g.adults.label;
-  $("lbl-kids").textContent = g.kids.label;
+  const P = EV.payment || {};
+  const jePerson = v => preisZahl(v) ? " (je " + euro(preisZahl(v)) + ")" : "";
+  $("lbl-adults").textContent = g.adults.label + jePerson(P.adults);
+  $("lbl-kids").textContent = g.kids.label + jePerson(P.kids);
+  const preise = [];
+  if(g.adults.on && preisZahl(P.adults)) preise.push(g.adults.label + " " + euro(preisZahl(P.adults)));
+  if(g.kids.on && preisZahl(P.kids)) preise.push(g.kids.label + " " + euro(preisZahl(P.kids)));
+  bestellArtikel(EV).filter(f=>preisZahl(f.price))
+    .forEach(f=>preise.push(f.label + " " + euro(preisZahl(f.price)) + " pro Stück"));
+  $("ev-preis").textContent = preise.length ? "Kosten: " + preise.join(" · ") : "";
+  $("ev-preis").classList.toggle("hidden", !preise.length);
   $("grp-adults").classList.toggle("hidden", !g.adults.on);
   $("grp-kids").classList.toggle("hidden", !g.kids.on);
   $("people-row").classList.toggle("hidden", !g.adults.on && !g.kids.on);
@@ -784,9 +812,51 @@ function renderFields(pre){
     else if(f.type==="checkbox") input = '<label class="check"><input type="checkbox" data-f="'+esc(f.label)+
       '" '+(v==="ja"?"checked":"")+'><span>ja</span></label>';
     else if(f.type==="number") input = '<input type="number" data-f="'+esc(f.label)+'" value="'+esc(v)+'">';
+    else if(f.type==="order") input = '<input type="number" data-f="'+esc(f.label)+'" data-order="'+
+      (+f.max || 20)+'" min="0" max="'+(+f.max || 20)+'" step="1" placeholder="0" value="'+esc(v)+'">';
     else input = '<input type="text" data-f="'+esc(f.label)+'" value="'+esc(v)+'">';
-    return '<label>'+esc(f.label)+req+'</label>'+input;
+    const stueck = f.type==="order" && preisZahl(f.price)
+      ? ' <span style="font-weight:400;color:var(--ink-soft)">('+euro(preisZahl(f.price))+' pro Stück)</span>' : "";
+    return '<label>'+esc(f.label)+stueck+(f.type==="order" ? "" : req)+'</label>'+input;
   }).join("");
+  renderKosten();
+}
+
+/* ---------- Kosten und Bezahlung ---------- */
+// Zahlungshinweis. Den PayPal-Knopf gibt es erst nach dem Abschicken, damit niemand
+// bezahlt, ohne angemeldet zu sein.
+function zahlHtml(summe, name, mitLink){
+  const P = EV.payment || {};
+  const hinweis = String(P.note || "").trim();
+  const pp = mitLink && summe > 0 ? paypalLink(P.paypal, summe) : "";
+  const hatPaypal = !!paypalName(P.paypal);
+  if(!hinweis && !hatPaypal) return "";
+  return '<div class="zahlung"><p><strong>So bezahlst du</strong></p>' +
+    (hinweis ? '<p class="hinweis">' + esc(hinweis) + '</p>' : "") +
+    (summe > 0 ? '<p class="zweck">Verwendungszweck: ' + esc(EV.title + (name ? " - " + name : "")) + '</p>' : "") +
+    (pp ? '<a class="paypal" href="' + esc(pp) + '" target="_blank" rel="noopener noreferrer">' +
+          'Mit PayPal ' + euro(summe) + ' bezahlen</a>'
+        : (hatPaypal && summe > 0 ? '<p class="zweck">Den Link zum Bezahlen mit PayPal bekommst du ' +
+          'nach dem Abschicken.</p>' : "")) +
+    '</div>';
+}
+
+function kostenHtml(entry, mitLink){
+  const k = kosten(EV, entry);
+  return '<table>' + (k.zeilen.length
+      ? k.zeilen.map(z=>'<tr><td>' + z.menge + ' × ' + esc(z.label) + ' zu je ' + euro(z.preis) +
+          '</td><td class="betrag">' + euro(z.summe) + '</td></tr>').join("")
+      : '<tr><td colspan="2" style="color:var(--ink-soft)">Noch nichts ausgewählt, das etwas kostet.</td></tr>') +
+    '<tr class="summe"><td>Gesamt</td><td class="betrag">' + euro(k.summe) + '</td></tr></table>' +
+    zahlHtml(k.summe, entry.name, mitLink);
+}
+
+function renderKosten(){
+  const box = $("kosten-box");
+  if(!box) return;
+  if(!EV || absage || !kostetEtwas(EV)){ box.classList.add("hidden"); return; }
+  box.innerHTML = kostenHtml(readForm(), !!(myToken && mySid));
+  box.classList.remove("hidden");
 }
 
 /* ---------- Mitbringsel-Zeilen ---------- */
@@ -850,6 +920,11 @@ function readForm(){
     .filter(i=>i.what);
   const fields = {};
   document.querySelectorAll("#extra-fields [data-f]").forEach(el=>{
+    if(el.dataset.order){
+      const n = Math.min(+el.dataset.order, Math.max(0, Math.floor(+el.value || 0)));
+      if(n > 0) fields[el.dataset.f] = String(n);
+      return;
+    }
     const v = el.type==="checkbox" ? (el.checked?"ja":"nein") : el.value.trim();
     if(v) fields[el.dataset.f] = v;
   });
@@ -921,7 +996,9 @@ $("form").addEventListener("submit", async ev=>{
       (absage ? " oder doch noch zusagen. " : " oder dich abmelden. ")+
       'Speicher ihn dir — ohne ihn kommst du nicht mehr an deinen Eintrag.</p><code>'+esc(link)+'</code>'+
       '<div class="row" style="gap:8px"><button type="button" class="ghost" id="copy">Link kopieren</button>'+
-      '<button type="button" class="ghost danger" id="remove">Abmelden</button></div>';
+      '<button type="button" class="ghost danger" id="remove">Abmelden</button></div>' +
+      (!absage && kostetEtwas(EV) && kosten(EV, data).summe > 0
+        ? '<div class="kosten">' + kostenHtml(data, true) + '</div>' : "");
     $("copy").onclick = async () => {
       try{ await navigator.clipboard.writeText(link); $("copy").textContent="Kopiert"; }
       catch{ $("copy").textContent="Bitte manuell markieren"; }
@@ -935,6 +1012,9 @@ $("form").addEventListener("submit", async ev=>{
   }catch(err){ showError(err.message + " Versuch es bitte nochmal."); }
   finally{ $("submit").disabled = false; $("submit").textContent = "Anmeldung abschicken"; }
 });
+
+$("form").addEventListener("input", renderKosten);
+$("form").addEventListener("change", renderKosten);
 
 $("w-ja").onclick = () => { absage = false; wahlAnzeigen(); };
 $("w-nein").onclick = () => { absage = true; wahlAnzeigen(); };
@@ -951,6 +1031,7 @@ async function load(){
   document.querySelectorAll(".bring").forEach(d=>{ if(d._chips) d._chips(); });
   // Auswahl der Person bleibt, Belegung und Namen werden frisch gerechnet
   renderTaskChecks([...document.querySelectorAll("#task-checks input:checked")].map(c=>c.value));
+  renderKosten();
   $("status").textContent = (live
     ? "Zuletzt aktualisiert: " + new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}) + ". "
     : "Demo-Modus: Einträge verschwinden beim Neuladen. ") + (EV.retention_note ||

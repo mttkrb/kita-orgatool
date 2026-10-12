@@ -417,6 +417,28 @@ create policy "eigene loeschen" on signups for delete to anon
     </fieldset>
 
     <fieldset>
+      <legend>Kosten und Bezahlung</legend>
+      <p class="hint" style="margin:0 0 6px">Leer lassen, wenn die Veranstaltung nichts kostet. Die Eltern
+        sehen beim Anmelden, was es für sie zusammen kostet.</p>
+      <p class="hint" style="margin:0 0 4px">Was man zusätzlich bestellen kann, etwa einen Weckmann, legst du
+        bei den zusätzlichen Fragen an, Art „Bestellung mit Stückpreis".</p>
+      <div class="row">
+        <div><label for="e-p-adults" id="e-p-adults-lbl">Erwachsene: Preis pro Person</label>
+          <input type="text" inputmode="decimal" id="e-p-adults" placeholder="0,00"></div>
+        <div><label for="e-p-kids" id="e-p-kids-lbl">Kinder: Preis pro Person</label>
+          <input type="text" inputmode="decimal" id="e-p-kids" placeholder="0,00"></div>
+      </div>
+      <label for="e-p-note">Zahlungshinweis für die Eltern</label>
+      <textarea id="e-p-note" maxlength="1000" placeholder="Bitte bis zum … überweisen an Elterninitiative …, IBAN …&#10;Oder bar am Eingang."></textarea>
+      <p class="hint">Steht nach dem Anmelden unter dem Betrag, zusammen mit einem Verwendungszweck aus
+        Veranstaltung und Name.</p>
+      <label for="e-p-paypal">PayPal.me-Name <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <input type="text" id="e-p-paypal" maxlength="60" placeholder="z. B. kita-sonnenschein">
+      <p class="hint" id="e-p-paypal-hint">Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die
+        Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.</p>
+    </fieldset>
+
+    <fieldset>
       <legend>Was sehen die Gäste auf der Seite?</legend>
       <p class="hint" style="margin:0 0 10px">Betrifft nur die öffentliche Anmeldeseite. Im Orga-Bereich
         siehst du immer alles.</p>
@@ -478,6 +500,7 @@ create policy "eigene loeschen" on signups for delete to anon
       <p class="hint" style="margin:0 0 10px">Nur fürs Orgateam. Zum Verteilen als Text kopieren
         und in WhatsApp einfügen.</p>
       <div id="einkauf"></div>
+      <p class="hint" id="kauf-summe" style="margin:0 0 8px"></p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
         <button type="button" class="ghost" id="add-kauf">+ Posten</button>
         <button type="button" class="ghost hidden" id="kauf-tpl">+ Standardliste aus der Vorlage</button>
@@ -502,6 +525,7 @@ create policy "eigene loeschen" on signups for delete to anon
           <input type="number" id="r-expected" readonly style="background:var(--sand)"></div>
       </div>
       <div id="review-cats" style="margin-top:12px"></div>
+      <div id="r-geld" class="hidden" style="margin-top:12px"></div>
       <label for="r-notes">Was war gut, was fehlte?</label>
       <textarea id="r-notes" placeholder="Kuchen war um 16 Uhr weg. Nächstes Mal mehr herzhaft, Punsch blieb übrig."></textarea>
     </fieldset>
@@ -539,6 +563,28 @@ create policy "eigene loeschen" on signups for delete to anon
           <input type="text" id="t-g2-label" value="Kinder">
           <label>höchstens</label><input type="number" id="t-g2-max" min="1" max="30" value="6"></div>
       </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Kosten und Bezahlung</legend>
+      <p class="hint" style="margin:0 0 6px">Leer lassen, wenn die Veranstaltung nichts kostet. Die Eltern
+        sehen beim Anmelden, was es für sie zusammen kostet.</p>
+      <p class="hint" style="margin:0 0 4px">Was man zusätzlich bestellen kann, etwa einen Weckmann, legst du
+        bei den zusätzlichen Fragen an, Art „Bestellung mit Stückpreis".</p>
+      <div class="row">
+        <div><label for="t-p-adults" id="t-p-adults-lbl">Erwachsene: Preis pro Person</label>
+          <input type="text" inputmode="decimal" id="t-p-adults" placeholder="0,00"></div>
+        <div><label for="t-p-kids" id="t-p-kids-lbl">Kinder: Preis pro Person</label>
+          <input type="text" inputmode="decimal" id="t-p-kids" placeholder="0,00"></div>
+      </div>
+      <label for="t-p-note">Zahlungshinweis für die Eltern</label>
+      <textarea id="t-p-note" maxlength="1000" placeholder="Bitte bis zum … überweisen an Elterninitiative …, IBAN …&#10;Oder bar am Eingang."></textarea>
+      <p class="hint">Steht nach dem Anmelden unter dem Betrag, zusammen mit einem Verwendungszweck aus
+        Veranstaltung und Name.</p>
+      <label for="t-p-paypal">PayPal.me-Name <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <input type="text" id="t-p-paypal" maxlength="60" placeholder="z. B. kita-sonnenschein">
+      <p class="hint" id="t-p-paypal-hint">Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die
+        Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.</p>
     </fieldset>
 
     <fieldset>
@@ -608,6 +654,7 @@ create policy "eigene loeschen" on signups for delete to anon
       <button type="button" class="ghost" id="m-add-item">+ Mitbringsel</button>
       <label>Hilft bei</label>
       <div class="checks" id="m-tasks"></div>
+      <div id="m-orders"></div>
       <label for="m-note">Anmerkung</label>
       <textarea id="m-note"></textarea>
       <div id="m-msg" class="msg hidden"></div>
@@ -658,6 +705,47 @@ function readGroups(prefix){
   };
 }
 
+// Preise und Zahlungshinweis. Preise als Zahl, leer = kostenlos.
+function fillPayment(prefix, o){
+  const p = (o && o.payment) || {};
+  const zeig = v => preisZahl(v) ? String(preisZahl(v).toFixed(2)).replace(".", ",") : "";
+  $(prefix+"-p-adults").value = zeig(p.adults);
+  $(prefix+"-p-kids").value = zeig(p.kids);
+  $(prefix+"-p-note").value = p.note || "";
+  $(prefix+"-p-paypal").value = p.paypal || "";
+  paymentLabels(prefix);
+}
+function readPayment(prefix){
+  const p = {};
+  const a = preisZahl($(prefix+"-p-adults").value), k = preisZahl($(prefix+"-p-kids").value);
+  if(a) p.adults = a;
+  if(k) p.kids = k;
+  const note = $(prefix+"-p-note").value.trim().slice(0, 1000);
+  if(note) p.note = note;
+  const pp = paypalName($(prefix+"-p-paypal").value);
+  if(pp) p.paypal = pp;
+  return p;
+}
+// Beschriftung der Preisfelder folgt den Gruppennamen; abgeschaltete Gruppen kosten nichts.
+function paymentLabels(prefix){
+  [["g1","adults","Erwachsene"],["g2","kids","Kinder"]].forEach(([g, k, std])=>{
+    const an = $(prefix+"-"+g+"-on").checked;
+    $(prefix+"-p-"+k+"-lbl").textContent = ($(prefix+"-"+g+"-label").value.trim() || std) + ": Preis pro Person";
+    $(prefix+"-p-"+k).disabled = !an;
+  });
+  const roh = $(prefix+"-p-paypal").value.trim();
+  const hinweis = $(prefix+"-p-paypal-hint");
+  hinweis.textContent = roh && !paypalName(roh)
+    ? "Das sieht nicht nach einem PayPal.me-Namen aus. Erlaubt sind Buchstaben, Ziffern, Punkt, Strich und Unterstrich."
+    : "Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die Eltern einen Knopf, der PayPal mit dem " +
+      "richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.";
+  hinweis.style.color = roh && !paypalName(roh) ? "var(--berry)" : "";
+}
+["e","t"].forEach(prefix=>{
+  ["-g1-on","-g1-label","-g2-on","-g2-label","-p-paypal"].forEach(id=>
+    $(prefix+id).addEventListener("input", () => paymentLabels(prefix)));
+});
+
 let orgaKey = null, events = [], templates = [], current = null, currentTpl = null;
 let signups = [], planning = {checklist:[], review:{}};
 
@@ -695,7 +783,10 @@ let demoEvents = [{
   ask_people:true, archived:false,
   categories:[{id:"kuchen",label:"Kuchen & Süßes",target:12,unit:"Kuchen",ideas:["Marmorkuchen"]},
               {id:"salat",label:"Salate",target:6,unit:"Salate",ideas:["Nudelsalat"]}],
-  tasks:[{id:"aufbau",label:"Aufbau",when:"ab 12 Uhr",needed:6}], fields:[]
+  tasks:[{id:"aufbau",label:"Aufbau",when:"ab 12 Uhr",needed:6}],
+  fields:[{id:"bratwurst",label:"Bratwurst vorbestellen",type:"order",price:2.5,max:10,required:false,options:[]}],
+  payment:{ adults:3, kids:5, paypal:"beispielkita",
+    note:"Bitte bis zum 20. September überweisen:\nElterninitiative Beispiel e. V., IBAN DE00 0000 0000 0000 0000 00" }
 }];
 let demoPlanning = { "e-alt": {
   checklist:[{id:"c1",label:"Kaffeemaschine leihen",who:"Nina",due:"2 Wochen vorher",done:true}],
@@ -706,8 +797,15 @@ let demoSignups = [
   { id:"s1", event:"oma-opa-tag-2025", created_at:"2025-10-10T10:00:00Z", name:"Sarah Klein",
     adults:2, kids:2, items:[{cat:"kuchen",what:"Käsekuchen"}], tasks:["theke"], fields:{}, note:"" },
   { id:"s2", event:"sommerfest-2026", created_at:new Date().toISOString(), name:"Tim Bergmann",
-    adults:2, kids:1, items:[{cat:"kuchen",what:"Marmorkuchen"}], tasks:["aufbau"], fields:{}, note:"" }
+    adults:2, kids:1, items:[{cat:"kuchen",what:"Marmorkuchen"}], tasks:["aufbau"],
+    fields:{"Bratwurst vorbestellen":"3"}, note:"" },
+  { id:"s3", event:"sommerfest-2026", created_at:new Date().toISOString(), name:"Anne Vogt",
+    adults:1, kids:2, items:[{cat:"salat",what:"Nudelsalat"}], tasks:[], fields:{}, note:"" }
 ];
+demoPlanning["e-neu"] = { checklist:[], review:{}, shopping:[
+  {id:"k1",menge:"40",einheit:"Stück",artikel:"Bratwürste",wer:"Nina",preis:32,done:true},
+  {id:"k2",menge:"2",einheit:"Pk",artikel:"Grillkohle",wer:"",preis:12.9,done:false}
+]};
 
 /* ============================================================
    Datenzugriff
@@ -978,8 +1076,8 @@ const vorbei = e => !!(e.event_on && e.event_on < heute());
    Verhindert, dass ein Speichern still fehlschlaegt. */
 const NEEDED = {
   events: ["people","visibility","event_on","template_id","signup_from","signup_released",
-           "retention_days","mandatory"],
-  templates: ["people","checklist"],
+           "retention_days","mandatory","payment"],
+  templates: ["people","checklist","payment"],
   signups: ["fields","status"],
   proposals: ["status","image"],
   planning: ["shopping"],
@@ -1474,6 +1572,7 @@ async function handleTemplate(act, id){
       event_date:"", event_time:"", place:"", intro:"",
       retention_note:"Alle Angaben werden zwei Wochen nach der Veranstaltung gelöscht.",
       ask_people:true, people:JSON.parse(JSON.stringify(t.people || {})),
+      payment:JSON.parse(JSON.stringify(t.payment || {})),
       archived:false, template_id:t.id,
       categories:JSON.parse(JSON.stringify(t.categories||[])),
       tasks:JSON.parse(JSON.stringify(t.tasks||[])),
@@ -1494,6 +1593,9 @@ function download(name, text, typ){
 
 // Eine CSV-Zelle. Was mit = + - @ Tab oder Zeilenumbruch beginnt, liest Excel als
 // Formel; ein Apostroph davor macht daraus Text. Negative Zahlen bleiben Zahlen.
+// Betrag für die CSV: Komma als Dezimalzeichen, ohne Eurozeichen, damit Excel rechnen kann.
+const betragCsv = n => (+n || 0).toFixed(2).replace(".", ",");
+
 function csvCell(v){
   let s = String(v ?? "");
   if(/^[=+\-@\t\r]/.test(s) && !/^-\d+([.,]\d+)?$/.test(s)) s = "'" + s;
@@ -1534,7 +1636,7 @@ $("dump-csv").onclick = async () => {
       return ((e.tasks||[]).find(t=>t.id===id)||{}).label || id;
     };
     const kopf = ["Veranstaltung","Datum","Name","Status","Erwachsene","Kinder","Mitbringsel","Aufgaben",
-                  "Zusatzangaben","Anmerkung","Angemeldet am"];
+                  "Zusatzangaben","Betrag (EUR)","Anmerkung","Angemeldet am"];
     const zeilen = su.map(s=>[
       titel(s.event),
       ((ev.find(e=>e.slug===s.event)||{}).event_on) || "",
@@ -1543,6 +1645,7 @@ $("dump-csv").onclick = async () => {
         " (" + katLabel(s.event, i.cat) + ")").join(" | "),
       (s.tasks||[]).map(id=>aufLabel(s.event, id)).join(" | "),
       Object.entries(s.fields||{}).map(([k,v])=>k+": "+v).join(" | "),
+      betragCsv(kosten(ev.find(e=>e.slug===s.event) || {}, s).summe),
       s.note || "",
       new Date(s.created_at).toLocaleString("de-DE")
     ].map(csvCell).join(";"));
@@ -1791,25 +1894,38 @@ function fieldRow(f){
     '<div class="row"><div><label>Art der Antwort</label><select class="f-type">'+
     '<option value="text">Kurzer Text</option><option value="textarea">Langer Text</option>'+
     '<option value="select">Auswahl</option><option value="checkbox">Ja/Nein</option>'+
-    '<option value="number">Zahl</option></select></div>'+
+    '<option value="number">Zahl</option><option value="order">Bestellung mit Stückpreis</option></select></div>'+
     '<div><label>Pflichtfeld</label><select class="f-req"><option value="0">nein</option>'+
     '<option value="1">ja</option></select></div></div>'+
     '<div class="f-opts hidden"><label>Antwortmöglichkeiten</label>'+
     '<input type="text" class="f-options" value="'+esc((f.options||[]).join(", "))+'" placeholder="zu Fuß, Rad, Auto">'+
-    '<p class="hint">Mit Komma trennen.</p></div>';
+    '<p class="hint">Mit Komma trennen.</p></div>'+
+    '<div class="f-order hidden"><div class="row">'+
+    '<div><label>Preis pro Stück (€)</label><input type="text" inputmode="decimal" class="f-price" value="'+
+      esc(preisZahl(f.price) ? String(preisZahl(f.price).toFixed(2)).replace(".", ",") : "")+'" placeholder="2,50"></div>'+
+    '<div><label>höchstens pro Anmeldung</label><input type="number" class="f-max" min="1" max="99" value="'+
+      (+f.max || 10)+'"></div></div>'+
+    '<p class="hint">Die Eltern tragen eine Anzahl ein, der Betrag kommt zum Gesamtpreis dazu.</p></div>';
   d.dataset.id = f.id || "";
   const type = d.querySelector(".f-type"), opts = d.querySelector(".f-opts");
+  const order = d.querySelector(".f-order"), req = d.querySelector(".f-req");
   type.value = f.type || "text";
-  d.querySelector(".f-req").value = f.required ? "1" : "0";
-  const sync = () => opts.classList.toggle("hidden", type.value !== "select");
+  req.value = f.required ? "1" : "0";
+  const sync = () => {
+    opts.classList.toggle("hidden", type.value !== "select");
+    order.classList.toggle("hidden", type.value !== "order");
+    req.closest("div").classList.toggle("hidden", type.value === "order");
+  };
   type.onchange = sync; sync();
   wireTools(d);
   const ARTEN = { text:"kurzer Text", textarea:"langer Text", select:"Auswahl",
-                  checkbox:"Ja/Nein", number:"Zahl" };
+                  checkbox:"Ja/Nein", number:"Zahl", order:"Bestellung" };
   faltbar(d, x=>{
     const label = x.querySelector(".f-label").value.trim();
     if(!label) return "";
-    const art = ARTEN[x.querySelector(".f-type").value] || "";
+    const typ = x.querySelector(".f-type").value;
+    const preis = preisZahl(x.querySelector(".f-price").value);
+    const art = (ARTEN[typ] || "") + (typ === "order" && preis ? ", " + euro(preis) + " pro Stück" : "");
     const pflicht = x.querySelector(".f-req").value === "1" ? " · Pflicht" : "";
     return "<b>"+esc(label)+"</b> <span>" + art + pflicht + "</span>";
   });
@@ -1880,7 +1996,10 @@ function kaufRow(p){
     '<div style="flex:2;min-width:150px"><label>Was</label>'+
     '<input type="text" class="k-artikel" value="'+esc(p.artikel||"")+'" placeholder="Brötchen"></div></div>'+
     '<div class="row"><div><label>Wer besorgt es</label>'+
-    '<input type="text" class="k-wer" value="'+esc(p.wer||"")+'" placeholder="offen"></div></div>'+
+    '<input type="text" class="k-wer" value="'+esc(p.wer||"")+'" placeholder="offen"></div>'+
+    '<div style="flex:0 0 110px;min-width:90px"><label>Preis (€)</label>'+
+    '<input type="text" inputmode="decimal" class="k-preis" value="'+
+      esc(preisZahl(p.preis) ? String(preisZahl(p.preis).toFixed(2)).replace(".", ",") : "")+'" placeholder="0,00"></div></div>'+
     '';
   d.dataset.id = p.id || "";
   wireTools(d);
@@ -1895,8 +2014,9 @@ function kaufRow(p){
     const menge = [x.querySelector(".k-menge").value.trim(),
                    x.querySelector(".k-einheit").value.trim()].filter(Boolean).join(" ");
     const wer = x.querySelector(".k-wer").value.trim();
+    const preis = preisZahl(x.querySelector(".k-preis").value);
     return "<b>" + (menge ? esc(menge) + " " : "") + esc(artikel) + "</b>" +
-      (wer ? ' <span>' + esc(wer) + "</span>" : "");
+      ((wer || preis) ? ' <span>' + [wer && esc(wer), preis && euro(preis)].filter(Boolean).join(" · ") + "</span>" : "");
   }, hakenK);
   d._auf(!p.artikel);
   return d;
@@ -1908,8 +2028,46 @@ const readKauf = box => [...box.children].map(d=>{
     menge:d.querySelector(".k-menge").value.trim(),
     einheit:d.querySelector(".k-einheit").value.trim(),
     wer:d.querySelector(".k-wer").value.trim(),
+    ...(preisZahl(d.querySelector(".k-preis").value) ? { preis:preisZahl(d.querySelector(".k-preis").value) } : {}),
     done:d.querySelector(".k-gekauft").checked } : null;
 }).filter(Boolean);
+
+/* ---------- Geld: Ausgaben laut Einkaufsliste, Einnahmen laut Anmeldungen ---------- */
+function renderKaufSumme(){
+  const liste = readKauf($("einkauf"));
+  const alle = liste.reduce((a,p)=>a + (p.preis||0), 0);
+  const gekauft = liste.filter(p=>p.done).reduce((a,p)=>a + (p.preis||0), 0);
+  $("kauf-summe").textContent = alle
+    ? "Ausgaben: " + euro(alle) + (gekauft && gekauft !== alle ? ", davon schon gekauft " + euro(gekauft) : "")
+    : "";
+  renderGeld();
+}
+// Einnahmen werden aus den Anmeldungen gerechnet. Sind die nach der Frist gelöscht,
+// gilt der beim letzten Speichern festgehaltene Wert aus dem Rückblick.
+function einnahmenJetzt(){
+  if(!signups.length) return ((planning.review||{}).geld || {}).einnahmen ?? null;
+  const ev = collectEvent();
+  return Math.round(signups.reduce((a,s)=>a + kosten(ev, s).summe, 0)*100)/100;
+}
+function renderGeld(){
+  const box = $("r-geld");
+  if(!box || !current) return;
+  const ein = einnahmenJetzt();
+  const aus = Math.round(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0)*100)/100;
+  if(!ein && !aus){ box.classList.add("hidden"); return; }
+  box.classList.remove("hidden");
+  box.innerHTML = '<label style="margin-top:0">Geld</label><div class="totals" style="margin-top:0">' +
+    '<div><b>' + euro(ein || 0) + '</b>Einnahmen laut Anmeldungen</div>' +
+    '<div><b>' + euro(aus) + '</b>Ausgaben laut Einkaufsliste</div>' +
+    '<div><b' + ((ein||0) - aus < 0 ? ' style="color:var(--berry)"' : "") + '>' + euro((ein||0) - aus) +
+    '</b>Saldo</div></div>' +
+    '<p class="hint">Einnahmen sind, was die Anmeldungen kosten — nicht, was schon bezahlt ist.</p>';
+}
+$("einkauf").addEventListener("input", renderKaufSumme);
+$("einkauf").addEventListener("change", renderKaufSumme);
+$("view-edit").addEventListener("input", ev => {
+  if(ev.target.closest("#fields") || /^e-(p-|g\d)/.test(ev.target.id || "")) renderGeld();
+});
 
 function checkRow(c){
   c = c || {};
@@ -1995,8 +2153,11 @@ const readFields = box => [...box.children].map(d=>{
   const label = d.querySelector(".f-label").value.trim();
   return label ? { id:d.dataset.id || slugify(label) || uid(), label,
     type:d.querySelector(".f-type").value,
-    required:d.querySelector(".f-req").value === "1",
-    options:d.querySelector(".f-options").value.split(",").map(s=>s.trim()).filter(Boolean) } : null;
+    required:d.querySelector(".f-type").value !== "order" && d.querySelector(".f-req").value === "1",
+    options:d.querySelector(".f-options").value.split(",").map(s=>s.trim()).filter(Boolean),
+    ...(d.querySelector(".f-type").value === "order"
+      ? { price:preisZahl(d.querySelector(".f-price").value),
+          max:Math.min(99, Math.max(1, +d.querySelector(".f-max").value || 10)) } : {}) } : null;
 }).filter(Boolean);
 
 const readChecks = box => [...box.children].map(d=>{
@@ -2018,6 +2179,7 @@ function openTemplate(t){
   $("t-name").value = currentTpl.name || "";
   $("t-desc").value = currentTpl.description || "";
   fillGroups("t", currentTpl);
+  fillPayment("t", currentTpl);
   $("t-cats").innerHTML = ""; (currentTpl.categories||[]).forEach(c=>$("t-cats").appendChild(catRow(c))); refreshTools($("t-cats"));
   $("t-tasks").innerHTML = ""; (currentTpl.tasks||[]).forEach(x=>$("t-tasks").appendChild(taskRow(x))); refreshTools($("t-tasks"));
   $("t-fields").innerHTML = ""; (currentTpl.fields||[]).forEach(f=>$("t-fields").appendChild(fieldRow(f))); refreshTools($("t-fields"));
@@ -2037,7 +2199,7 @@ $("t-save").onclick = async () => {
   if(!name){ msg($("tpl-msg"),"Die Vorlage braucht einen Namen.",true); return; }
   const tpl = {
     ...(currentTpl.id ? {id:currentTpl.id} : {}),
-    name, description:$("t-desc").value.trim(), people:readGroups("t"),
+    name, description:$("t-desc").value.trim(), people:readGroups("t"), payment:readPayment("t"),
     categories:readCats($("t-cats")), tasks:readTasks($("t-tasks")),
     fields:readFields($("t-fields")), checklist:readChecks($("t-checks")),
     shopping:readKauf($("t-einkauf"))
@@ -2210,6 +2372,7 @@ async function openEditor(ev, opts){
   $("e-on").addEventListener("change", zeigeLoeschtag);
   zeigeLoeschtag();
   fillGroups("e", current);
+  fillPayment("e", current);
   const v = vis(current);
   $("v-totals").checked = v.totals;
   $("v-items").checked = v.items;
@@ -2235,12 +2398,14 @@ async function openEditor(ev, opts){
   $("einkauf").innerHTML = "";
   (planning.shopping||[]).forEach(p=>$("einkauf").appendChild(kaufRow(p)));
   refreshTools($("einkauf"));
+  $("kauf-summe").textContent = "";
   $("kauf-tpl").classList.toggle("hidden",
     !(current.template_id && templates.some(t=>t.id===current.template_id)));
   $("checks").innerHTML = ""; (planning.checklist||[]).forEach(c=>$("checks").appendChild(checkRow(c))); refreshTools($("checks"));
 
   signups = current.slug ? await db.listSignups(current.slug).catch(()=>[]) : [];
   renderReview();
+  renderKaufSumme();
   renderFeedback();
   msg($("edit-msg"), "");
   clearDirty();
@@ -2477,8 +2642,9 @@ $("kauf-text").onclick = async () => {
 
 $("kauf-csv").onclick = () => {
   const liste = readKauf($("einkauf"));
-  const csv = "\uFEFF" + [["Menge","Einheit","Was","Wer besorgt","gekauft"].map(csvCell).join(";"),
-    ...liste.map(p=>[p.menge, p.einheit, p.artikel, p.wer, p.done ? "ja" : "nein"].map(csvCell).join(";"))
+  const csv = "\uFEFF" + [["Menge","Einheit","Was","Wer besorgt","Preis (EUR)","gekauft"].map(csvCell).join(";"),
+    ...liste.map(p=>[p.menge, p.einheit, p.artikel, p.wer, p.preis ? betragCsv(p.preis) : "",
+      p.done ? "ja" : "nein"].map(csvCell).join(";"))
   ].join("\r\n");
   download("einkauf-" + (current.slug || "liste") + ".csv", csv, "text/csv;charset=utf-8");
 };
@@ -2513,6 +2679,7 @@ function collectEvent(){
     retention_note:$("e-retention").value.trim(),
     retention_days:+$("e-days").value || 14,
     people:readGroups("e"),
+    payment:readPayment("e"),
     visibility:{ totals:$("v-totals").checked, items:$("v-items").checked,
                  itemNames:$("v-item-names").checked, taskNames:$("v-task-names").checked,
                  tasksFirst:$("v-tasks-first").checked,
@@ -2536,8 +2703,11 @@ function collectPlanning(){
   return {
     shopping: readKauf($("einkauf")),
     checklist: readChecks($("checks")),
-    review: { guests: guests===""?null:+guests, expected:+$("r-expected").value || 0,
-              notes: $("r-notes").value.trim(), cats }
+    review: { ...(planning.review || {}),
+              guests: guests===""?null:+guests, expected:+$("r-expected").value || 0,
+              notes: $("r-notes").value.trim(), cats,
+              geld: { einnahmen: einnahmenJetzt(),
+                      ausgaben: Math.round(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0)*100)/100 } }
   };
 }
 
@@ -2646,7 +2816,11 @@ async function loadSignups(){
       : "<div><b>"+signups.length+"</b>Anmeldungen</div>")+
     (g.adults.on ? "<div><b>"+adults+"</b>"+esc(g.adults.label)+"</div>" : "")+
     (g.kids.on ? "<div><b>"+kids+"</b>"+esc(g.kids.label)+"</div>" : "")+
-    "<div><b>"+items+"</b>Mitbringsel</div>";
+    "<div><b>"+items+"</b>Mitbringsel</div>"+
+    bestellArtikel(current).map(f=>"<div><b>"+signups.reduce((a,s)=>a+bestellMenge(s.status==="absage"?{}:s, f),0)+
+      "</b>"+esc(f.label)+"</div>").join("")+
+    (kostetEtwas(current)
+      ? "<div><b>"+euro(signups.reduce((a,s)=>a+kosten(current, s).summe,0))+"</b>Einnahmen (Soll)</div>" : "");
 
   const catLabel = id => ((current.categories||[]).find(c=>c.id===id)||{}).label || id;
   const taskLabel = id => ((current.tasks||[]).find(t=>t.id===id)||{}).label || id;
@@ -2675,6 +2849,8 @@ async function loadSignups(){
           g.adults.on ? (+s.adults||0)+" "+esc(g.adults.label) : "",
           g.kids.on ? (+s.kids||0)+" "+esc(g.kids.label) : ""
         ].filter(Boolean).join(", ")+"</span>"+
+        (kostetEtwas(current) && s.status !== "absage"
+          ? '<br><span style="color:var(--ink-soft)">Betrag: '+euro(kosten(current, s).summe)+'</span>' : "")+
         (s.note?'<br><span style="color:var(--ink-soft)">„'+esc(s.note)+'"</span>':"")+
         Object.entries(s.fields||{}).map(([k,v])=>
           '<br><span style="color:var(--ink-soft)">'+esc(k)+": "+esc(v)+"</span>").join("")+
@@ -2749,6 +2925,11 @@ function openManual(entry){
       '<span>'+esc(t.label)+(t.when?", "+esc(t.when):"")+" — "+
       (frei>0 ? frei+" frei" : "voll, geht aber")+'</span></label>';
   }).join("") || '<p class="hint">Für diese Veranstaltung sind keine Aufgaben angelegt.</p>';
+  $("m-orders").innerHTML = bestellArtikel(current).map(f=>
+    '<label>'+esc(f.label)+(preisZahl(f.price) ? ' <span style="font-weight:400;color:var(--ink-soft)">('+
+      euro(preisZahl(f.price))+' pro Stück)</span>' : "")+'</label>'+
+    '<input type="number" min="0" max="'+(+f.max||20)+'" data-order="'+esc(f.label)+'" value="'+
+      (bestellMenge(entry, f) || "")+'" placeholder="0">').join("");
   msg($("m-msg"),"");
   $("manual-form").classList.remove("hidden");
   $("manual-form").scrollIntoView({behavior:"smooth", block:"nearest"});
@@ -2774,9 +2955,14 @@ $("m-save").onclick = async () => {
       qty:Math.max(1, +d.querySelector(".mi-qty").value || 1)
     })).filter(i=>i.what),
     tasks:[...$("m-tasks").querySelectorAll("input:checked")].map(c=>c.value),
-    fields:(editingSignup && editingSignup.fields) || {},
+    fields:{ ...((editingSignup && editingSignup.fields) || {}) },
     note:$("m-note").value.trim() || null
   };
+  $("m-orders").querySelectorAll("[data-order]").forEach(el=>{
+    const n = Math.max(0, Math.floor(+el.value || 0));
+    if(n > 0) data.fields[el.dataset.order] = String(n);
+    else delete data.fields[el.dataset.order];
+  });
   $("m-save").disabled = true;
   try{
     await db.saveSignup(editingSignup ? editingSignup.id : null, data, current.slug);
@@ -2793,12 +2979,13 @@ $("export").onclick = () => {
   const extra = [...new Set(signups.flatMap(s=>Object.keys(s.fields||{})))];
   const g = groups(current);
   const head = ["Name","Status",g.adults.label,g.kids.label,"Mitbringsel","Aufgaben",
-    "Anmerkung",...extra,"Angemeldet am"];
+    "Anmerkung",...extra,"Betrag (EUR)","Angemeldet am"];
   const rows = signups.map(s=>[
     s.name, s.status === "absage" ? "abgemeldet" : "zugesagt", s.adults, s.kids,
     (s.items||[]).map(i=>((+i.qty||1)>1 ? (+i.qty)+"x " : "")+i.what+" ("+catLabel(i.cat)+")").join(" | "),
     (s.tasks||[]).map(taskLabel).join(" | "),
     s.note || "", ...extra.map(k=>(s.fields||{})[k] ?? ""),
+    betragCsv(kosten(current, s).summe),
     new Date(s.created_at).toLocaleString("de-DE")
   ].map(csvCell).join(";"));
   const csv = "\uFEFF" + [head.map(csvCell).join(";"), ...rows].join("\r\n");
