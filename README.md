@@ -17,6 +17,8 @@ gemeinsamen Skript- und Stildateien, kein Build, kein Framework. Wer HTML lesen 
 - Aufgaben übernehmen, vorab oder am Tag selbst
 - Sehen, was die Anmeldung kostet, auch mit Bestellungen wie einem zusätzlichen Weckmann,
   dazu Zahlungshinweis und ein PayPal-Link mit dem richtigen Betrag
+- Am Veranstaltungstag per QR-Code am Eingang einchecken, auf Wunsch beim Gehen auschecken;
+  wer nicht angemeldet ist, meldet sich dabei an
 - Nach der Veranstaltung eine Rückmeldung geben
 
 **Für das Orgateam**
@@ -26,6 +28,8 @@ gemeinsamen Skript- und Stildateien, kein Build, kein Framework. Wer HTML lesen 
 - To-dos über alle Veranstaltungen, Checkliste mit Fristen, Einkaufsliste
 - Anmeldungen einsehen, von Hand eintragen oder bearbeiten
 - Gemeldete Aufgaben übernehmen oder ablehnen
+- Check-in per QR-Code: Aushang drucken, sehen, wer da war und wie lange, von Hand abhaken
+  und Stunden nachtragen
 - Rückblick mit Zahlen und Bewertung, die als Vorschlag ins nächste Mal einfließen
 - Preise je Person und Bestellartikel festlegen, erwartete Einnahmen und Bestellmengen sehen,
   Zahlungseingang je Anmeldung abhaken, offene Beträge und Differenzen nach Änderungen sehen,
@@ -55,7 +59,11 @@ reicht dann ein beliebiges Passwort.
 - Datenbank: [Supabase](https://supabase.com) (Postgres), angesprochen über die REST-API
 - Schriften Fraunces und Work Sans lokal in `fonts/` (SIL Open Font License),
   keine fremden Quellen außer der eigenen Supabase-Instanz
-- Keine Benutzerkonten, keine Cookies, kein Tracking
+- Keine Benutzerkonten, keine Cookies, kein Tracking. Einzige Ausnahme: Bei Veranstaltungen
+  mit Check-in merkt sich das Handy im Browser-Speicher (`localStorage`) Kennung und Token
+  der eigenen Anmeldung, damit der Check-in am Eingang mit einem Tipp geht. Das ist dasselbe,
+  was im persönlichen Link steht. Es bleibt auf dem Handy, wird an niemanden weitergegeben
+  und lässt sich auf der Check-in-Seite mit „Auf diesem Handy vergessen“ löschen.
 
 ### Sicherheitsmodell
 

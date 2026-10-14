@@ -243,6 +243,18 @@ create policy "eigene loeschen" on signups for delete to anon
   #loesch-dialog  .dialog-karte{background:var(--sand);border-radius:8px;max-width:460px;width:100%;
     max-height:88vh;overflow:auto;padding:20px 18px}
   .hidden{display:none}
+  #aushang-ansicht{position:fixed;inset:0;background:#fff;z-index:70;overflow:auto;padding:24px 16px}
+  .aushang{max-width:560px;margin:0 auto;text-align:center}
+  .aushang h1{font-size:2.1rem;margin:6px 0 4px}
+  .aushang .gross{font-family:'Fraunces',Georgia,serif;font-size:1.6rem;margin:18px 0 6px}
+  .aushang svg{width:min(78vw,400px);height:auto;display:block;margin:10px auto}
+  .aushang .klein{font-size:.8rem;color:var(--ink-soft);word-break:break-all}
+  .aushang-knoepfe{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+  @media print{
+    .wrap > *:not(#aushang-ansicht){display:none!important}
+    #aushang-ansicht{position:static;padding:0}
+    .aushang-knoepfe{display:none!important}
+  }
   code{background:#fff;border:1px solid var(--line);border-radius:4px;padding:2px 5px;
     font-size:.82rem;word-break:break-all}
 </style>
@@ -278,6 +290,25 @@ create policy "eigene loeschen" on signups for delete to anon
         <button class="primary" id="ld-los" style="background:var(--berry)">Endgültig löschen</button>
         <button class="ghost" id="ld-abbruch">Abbrechen</button>
       </div>
+    </div>
+  </div>
+
+  <div id="aushang-ansicht" class="hidden">
+    <div class="aushang">
+      <p class="klein" id="ah-kita"></p>
+      <h1 id="ah-titel"></h1>
+      <p id="ah-datum"></p>
+      <p class="gross">Hier einchecken</p>
+      <div id="ah-qr"></div>
+      <p>Mit der Handykamera scannen und auf <strong>Wir sind da</strong> tippen.<br>
+        Wer nicht angemeldet ist, meldet sich dort kurz an.</p>
+      <p class="klein" id="ah-link"></p>
+      <div class="aushang-knoepfe">
+        <button class="primary" id="ah-drucken">Drucken</button>
+        <button class="ghost" id="ah-neu">Neuen Code erzeugen</button>
+        <button class="ghost" id="ah-zu">Schließen</button>
+      </div>
+      <p class="hint aushang-knoepfe" id="ah-msg"></p>
     </div>
   </div>
 
@@ -366,6 +397,14 @@ create policy "eigene loeschen" on signups for delete to anon
       <input type="text" id="e-date" placeholder="leer lassen, dann wird das Datum ausgeschrieben">
       <label class="check" style="margin-top:14px"><input type="checkbox" id="e-mandatory">
         <span><strong>Pflichtveranstaltung</strong> — wer nicht kann, muss sich mit Begründung abmelden</span></label>
+      <label class="check" style="margin-top:14px"><input type="checkbox" id="e-checkin">
+        <span><strong>Check-in per QR-Code</strong> — am Veranstaltungstag scannen die Eltern einen Aushang
+          am Eingang, auf Wunsch auch beim Gehen</span></label>
+      <div id="e-checkin-box" class="hidden" style="margin:6px 0 0 26px">
+        <button type="button" class="ghost" id="aushang">Aushang mit QR-Code</button>
+        <p class="hint">Der Check-in funktioniert nur am Tag der Veranstaltung. Wer da war, siehst du in den
+          Anmeldungen. Erst speichern, dann den Aushang drucken.</p>
+      </div>
       <div class="row" id="e-familien-zeile">
         <div><label for="e-familien">Wie viele Familien insgesamt? <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
           <input type="number" id="e-familien" min="0" max="500" placeholder="z. B. 24"></div>
@@ -432,9 +471,9 @@ create policy "eigene loeschen" on signups for delete to anon
       <textarea id="e-p-note" maxlength="1000" placeholder="Bitte bis zum … überweisen an Elterninitiative …, IBAN …&#10;Oder bar am Eingang."></textarea>
       <p class="hint">Steht nach dem Anmelden unter dem Betrag, zusammen mit einem Verwendungszweck aus
         Veranstaltung und Name.</p>
-      <label for="e-p-paypal">PayPal <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
-      <input type="text" id="e-p-paypal" maxlength="200" placeholder="PayPal-Adresse oder PayPal.me-Name">
-      <p class="hint" id="e-p-paypal-hint">Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die
+      <label for="e-p-link">Zahllink oder PayPal <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <input type="text" id="e-p-link" maxlength="300" placeholder="https://… , PayPal-Adresse oder PayPal.me-Name">
+      <p class="hint" id="e-p-link-hint">Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die
         Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.</p>
     </fieldset>
 
@@ -581,9 +620,9 @@ create policy "eigene loeschen" on signups for delete to anon
       <textarea id="t-p-note" maxlength="1000" placeholder="Bitte bis zum … überweisen an Elterninitiative …, IBAN …&#10;Oder bar am Eingang."></textarea>
       <p class="hint">Steht nach dem Anmelden unter dem Betrag, zusammen mit einem Verwendungszweck aus
         Veranstaltung und Name.</p>
-      <label for="t-p-paypal">PayPal <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
-      <input type="text" id="t-p-paypal" maxlength="200" placeholder="PayPal-Adresse oder PayPal.me-Name">
-      <p class="hint" id="t-p-paypal-hint">Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die
+      <label for="t-p-link">Zahllink oder PayPal <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <input type="text" id="t-p-link" maxlength="300" placeholder="https://… , PayPal-Adresse oder PayPal.me-Name">
+      <p class="hint" id="t-p-link-hint">Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die
         Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.</p>
     </fieldset>
 
@@ -713,7 +752,7 @@ function fillPayment(prefix, o){
   $(prefix+"-p-adults").value = zeig(p.adults);
   $(prefix+"-p-kids").value = zeig(p.kids);
   $(prefix+"-p-note").value = p.note || "";
-  $(prefix+"-p-paypal").value = p.paypal || "";
+  $(prefix+"-p-link").value = p.link || p.paypal || "";
   paymentLabels(prefix);
 }
 function readPayment(prefix){
@@ -723,9 +762,9 @@ function readPayment(prefix){
   if(k) p.kids = k;
   const note = $(prefix+"-p-note").value.trim().slice(0, 1000);
   if(note) p.note = note;
-  const roh = $(prefix+"-p-paypal").value;
-  const pp = paypalMail(roh) || paypalName(roh);
-  if(pp) p.paypal = pp;
+  // Früher payment.paypal; beim Speichern wird daraus payment.link
+  const weg = zahlweg({ link:$(prefix+"-p-link").value });
+  if(weg) p.link = weg.wert;
   return p;
 }
 // Beschriftung der Preisfelder folgt den Gruppennamen; abgeschaltete Gruppen kosten nichts.
@@ -735,21 +774,28 @@ function paymentLabels(prefix){
     $(prefix+"-p-"+k+"-lbl").textContent = ($(prefix+"-"+g+"-label").value.trim() || std) + ": Preis pro Person";
     $(prefix+"-p-"+k).disabled = !an;
   });
-  const roh = $(prefix+"-p-paypal").value.trim();
-  const hinweis = $(prefix+"-p-paypal-hint");
-  const falsch = roh && !paypalName(roh) && !paypalMail(roh);
+  const roh = $(prefix+"-p-link").value.trim();
+  const hinweis = $(prefix+"-p-link-hint");
+  const weg = zahlweg({ link:roh });
+  const falsch = roh && !weg;
   hinweis.textContent = falsch
-    ? "Das ist weder eine E-Mail-Adresse noch ein PayPal.me-Name (Buchstaben, Ziffern, Punkt, Strich, Unterstrich)."
-    : paypalMail(roh)
+    ? "Das ist weder ein Link mit https:// noch eine E-Mail-Adresse noch ein PayPal.me-Name."
+    : !weg
+    ? "Ein Zahllink (etwa von Wero oder der Bank), die PayPal-Adresse der Person, die sammelt, oder ein " +
+      "PayPal.me-Name. Die Seite selbst lädt nichts von dort; die Eltern öffnen den Link selbst."
+    : weg.art === "mail"
     ? "Nach dem Anmelden sehen die Eltern diese Adresse mit Betrag und Verwendungszweck zum Kopieren. " +
       "Die Adresse steht damit für alle mit dem Link sichtbar auf der Anmeldeseite. Nur eintragen, " +
       "wenn die Person, die sammelt, einverstanden ist."
-    : "PayPal-Adresse der Person, die sammelt, oder ein PayPal.me-Name. Beim PayPal.me-Namen bekommen die " +
-      "Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.";
+    : weg.art === "paypalme"
+    ? "PayPal.me-Name: Nach dem Anmelden bekommen die Eltern einen Knopf, der PayPal mit dem richtigen " +
+      "Betrag öffnet."
+    : "Zahllink: Nach dem Anmelden bekommen die Eltern einen Knopf zu diesem Link und sehen den Betrag " +
+      "daneben. Ob der Betrag beim Anbieter schon eingetragen ist, hängt vom Anbieter ab.";
   hinweis.style.color = falsch ? "var(--berry)" : "";
 }
 ["e","t"].forEach(prefix=>{
-  ["-g1-on","-g1-label","-g2-on","-g2-label","-p-paypal"].forEach(id=>
+  ["-g1-on","-g1-label","-g2-on","-g2-label","-p-link"].forEach(id=>
     $(prefix+id).addEventListener("input", () => paymentLabels(prefix)));
 });
 
@@ -785,14 +831,15 @@ let demoEvents = [{
   tasks:demoTemplates[0].tasks, fields:demoTemplates[0].fields
 },{
   id:"e-neu", slug:"sommerfest-2026", title:"Sommerfest", template_id:null,
-  event_date:"Samstag, 26. September 2026", event_time:"14–19 Uhr", place:"Kita-Außengelände",
+  event_date:"", event_on:heute(), event_time:"14–19 Uhr", place:"Kita-Außengelände",
   intro:"", retention_note:"Alle Angaben werden zwei Wochen nach der Veranstaltung gelöscht.",
   ask_people:true, archived:false,
   categories:[{id:"kuchen",label:"Kuchen & Süßes",target:12,unit:"Kuchen",ideas:["Marmorkuchen"]},
               {id:"salat",label:"Salate",target:6,unit:"Salate",ideas:["Nudelsalat"]}],
   tasks:[{id:"aufbau",label:"Aufbau",when:"ab 12 Uhr",needed:6}],
   fields:[{id:"bratwurst",label:"Bratwurst vorbestellen",type:"order",price:2.5,max:10,required:false,options:[]}],
-  payment:{ adults:3, kids:5, paypal:"sammlerin@example.de",
+  checkin:true,
+  payment:{ adults:3, kids:5, link:"sammlerin@example.de",
     note:"Bitte bis zum 20. September überweisen:\nElterninitiative Beispiel e. V., IBAN DE00 0000 0000 0000 0000 00" }
 }];
 let demoPlanning = { "e-alt": {
@@ -809,6 +856,9 @@ let demoSignups = [
   { id:"s3", event:"sommerfest-2026", created_at:new Date().toISOString(), name:"Anne Vogt",
     adults:1, kids:2, items:[{cat:"salat",what:"Nudelsalat"}], tasks:[], fields:{}, note:"" }
 ];
+let demoCodes = {};
+let demoAttendance = [{ signup_id:"s2", checked_in_at:new Date(Date.now()-3*36e5).toISOString(),
+  checked_out_at:new Date(Date.now()-36e5*0.5).toISOString(), hours:null, source:"qr" }];
 let demoPayments = [{ signup_id:"s2", amount:18.5, paid_at:new Date().toISOString() }];
 demoPlanning["e-neu"] = { checklist:[], review:{}, shopping:[
   {id:"k1",menge:"40",einheit:"Stück",artikel:"Bratwürste",wer:"Nina",preis:32,done:true},
@@ -898,6 +948,43 @@ const db = {
     if(!ids.length) return [];
     return req("payments?select=signup_id,amount,paid_at&signup_id=in.(" + ids.join(",") + ")",
       { headers: head() });
+  },
+  // Code vom Aushang; neu = alten verwerfen, gedruckte Aushänge gelten dann nicht mehr
+  async checkinCode(eventId, neu){
+    if(!live){
+      if(neu || !demoCodes[eventId]) demoCodes[eventId] = neu ? "demo-" + Date.now().toString(36) : "demo";
+      return demoCodes[eventId];
+    }
+    if(neu) await req("checkin_codes?event_id=eq." + eventId, { method:"DELETE", headers: head() });
+    const da = await req("checkin_codes?select=code&event_id=eq." + eventId, { headers: head() });
+    if(da && da.length) return da[0].code;
+    const r = await req("checkin_codes", { method:"POST", headers: head({ Prefer:"return=representation" }),
+      body: JSON.stringify({ event_id:eventId }) });
+    return r[0].code;
+  },
+  // Anwesenheit, nur fürs Orgateam lesbar
+  async attendance(ids){
+    if(!live) return demoAttendance.filter(x=>ids.includes(x.signup_id)).map(x=>({...x}));
+    if(!ids.length) return [];
+    return req("attendance?select=signup_id,checked_in_at,checked_out_at,hours,source&signup_id=in.(" +
+      ids.join(",") + ")", { headers: head() });
+  },
+  // daten = null entfernt den Eintrag; sonst ändern oder als vom Orgateam abgehakt anlegen
+  async setAttendance(signupId, daten, vorhanden){
+    if(!live){
+      const i = demoAttendance.findIndex(x=>x.signup_id === signupId);
+      if(daten === null){ if(i > -1) demoAttendance.splice(i, 1); return; }
+      if(i > -1) Object.assign(demoAttendance[i], daten);
+      else demoAttendance.push({ signup_id:signupId, checked_in_at:null, checked_out_at:null, hours:null,
+                                 source:"orga", ...daten });
+      return;
+    }
+    if(daten === null)
+      return req("attendance?signup_id=eq." + signupId, { method:"DELETE", headers: head() });
+    if(vorhanden)
+      return req("attendance?signup_id=eq." + signupId, { method:"PATCH", headers: head(), body: JSON.stringify(daten) });
+    return req("attendance", { method:"POST", headers: head(),
+      body: JSON.stringify({ signup_id:signupId, source:"orga", ...daten }) });
   },
   async setPaid(signupId, amount){
     if(!live){
@@ -1103,13 +1190,15 @@ const vorbei = e => !!(e.event_on && e.event_on < heute());
    Verhindert, dass ein Speichern still fehlschlaegt. */
 const NEEDED = {
   events: ["people","visibility","event_on","template_id","signup_from","signup_released",
-           "retention_days","mandatory","payment"],
+           "retention_days","mandatory","payment","checkin"],
   templates: ["people","checklist","payment"],
   signups: ["fields","status"],
   proposals: ["status","image"],
   planning: ["shopping"],
   task_claims: ["done"],
-  payments: ["amount","paid_at"]
+  payments: ["amount","paid_at"],
+  attendance: ["checked_in_at","hours"],
+  checkin_codes: ["code"]
 };
 
 async function checkSchema(){
@@ -2380,6 +2469,8 @@ async function openEditor(ev, opts){
   $("e-on").value    = current.event_on || "";
   $("e-released").checked = current.id ? current.signup_released !== false : false;
   $("e-mandatory").checked = current.mandatory === true;
+  $("e-checkin").checked = current.checkin === true;
+  $("e-checkin-box").classList.toggle("hidden", !$("e-checkin").checked);
   $("e-familien").value = current.expected_families || "";
   $("e-from").value  = current.signup_from || "";
   $("e-until").value = current.signup_until || "";
@@ -2700,6 +2791,7 @@ function collectEvent(){
     event_on:$("e-on").value || null,
     signup_released:$("e-released").checked,
     mandatory:$("e-mandatory").checked,
+    checkin:$("e-checkin").checked,
     expected_families:+$("e-familien").value || null,
     signup_from:$("e-from").value || null,
     signup_until:$("e-until").value || null,
@@ -2815,6 +2907,194 @@ $("copy-melde").onclick = async () => {
     "die hier im Block Gemeldete Aufgaben ankommen."));
 };
 
+/* ---------- QR-Code für den Aushang ---------- */
+// Ohne Bibliothek (Grundregel 2): Byte-Modus, Fehlerkorrektur M, Version 1 bis 10.
+// Reicht für Links bis gut 200 Zeichen. Aufbau nach ISO/IEC 18004.
+const QR_BLOECKE = [null, // Version: [Korrekturbytes je Block, [[Blöcke, Datenbytes je Block], …]]
+  [10,[[1,16]]], [16,[[1,28]]], [26,[[1,44]]], [18,[[2,32]]], [24,[[2,43]]],
+  [16,[[4,27]]], [18,[[4,31]]], [22,[[2,38],[2,39]]], [22,[[3,36],[2,37]]], [26,[[4,43],[1,44]]]];
+const QR_AUSRICHTUNG = [null, [], [6,18], [6,22], [6,26], [6,30], [6,34],
+  [6,22,38], [6,24,42], [6,26,46], [6,28,50]];
+
+function qrMatrix(text){
+  const bytes = [...new TextEncoder().encode(text)];
+  const kapazitaet = v => QR_BLOECKE[v][1].reduce((a,[n,k])=>a + n*k, 0);
+  let ver = 1;
+  while(ver <= 10 && 4 + (ver < 10 ? 8 : 16) + bytes.length*8 > kapazitaet(ver)*8) ver++;
+  if(ver > 10) throw new Error("Der Link ist zu lang für den QR-Code.");
+
+  // Bitstrom: Modus, Länge, Daten, Abschluss, Füllbytes
+  const bits = [];
+  const schreib = (wert, laenge) => { for(let i = laenge-1; i >= 0; i--) bits.push((wert >>> i) & 1); };
+  schreib(4, 4); schreib(bytes.length, ver < 10 ? 8 : 16); bytes.forEach(b=>schreib(b, 8));
+  const platz = kapazitaet(ver)*8;
+  schreib(0, Math.min(4, platz - bits.length));
+  while(bits.length % 8) bits.push(0);
+  for(let f = 0xEC; bits.length < platz; f ^= 0xEC ^ 0x11) schreib(f, 8);
+  const daten = [];
+  for(let i = 0; i < bits.length; i += 8) daten.push(bits.slice(i, i+8).reduce((a,b)=>a*2 + b, 0));
+
+  // Reed-Solomon über GF(256)
+  const korrLen = QR_BLOECKE[ver][0];
+  const exp = [], log = [];
+  for(let i = 0, x = 1; i < 255; i++){ exp[i] = x; log[x] = i; x <<= 1; if(x & 0x100) x ^= 0x11D; }
+  const mal = (a, b) => a && b ? exp[(log[a] + log[b]) % 255] : 0;
+  let gen = [1];
+  for(let i = 0; i < korrLen; i++){
+    const neu = new Array(gen.length + 1).fill(0);
+    gen.forEach((g, j)=>{ neu[j] ^= g; neu[j+1] ^= mal(g, exp[i]); });
+    gen = neu;
+  }
+  const korrektur = block => {
+    const rest = new Array(korrLen).fill(0);
+    block.forEach(b=>{
+      const f = b ^ rest.shift(); rest.push(0);
+      for(let j = 0; j < korrLen; j++) rest[j] ^= mal(gen[j+1], f);
+    });
+    return rest;
+  };
+  const bloecke = [], korr = [];
+  let pos = 0;
+  QR_BLOECKE[ver][1].forEach(([n, laenge])=>{
+    for(let i = 0; i < n; i++){
+      const b = daten.slice(pos, pos + laenge); pos += laenge;
+      bloecke.push(b); korr.push(korrektur(b));
+    }
+  });
+  const folge = [];
+  for(let i = 0; i < Math.max(...bloecke.map(b=>b.length)); i++)
+    bloecke.forEach(b=>{ if(i < b.length) folge.push(b[i]); });
+  for(let i = 0; i < korrLen; i++) korr.forEach(k=>folge.push(k[i]));
+
+  // Muster setzen
+  const n = ver*4 + 17;
+  const m = [...Array(n)].map(()=>new Array(n).fill(false));
+  const fest = [...Array(n)].map(()=>new Array(n).fill(false));
+  const setz = (x, y, dunkel) => { m[y][x] = dunkel; fest[y][x] = true; };
+  for(let i = 0; i < n; i++){ setz(6, i, i % 2 === 0); setz(i, 6, i % 2 === 0); }
+  [[3,3], [n-4,3], [3,n-4]].forEach(([cx, cy])=>{
+    for(let dy = -4; dy <= 4; dy++) for(let dx = -4; dx <= 4; dx++){
+      const x = cx + dx, y = cy + dy;
+      if(x < 0 || y < 0 || x >= n || y >= n) continue;
+      const d = Math.max(Math.abs(dx), Math.abs(dy));
+      setz(x, y, d !== 2 && d !== 4);
+    }
+  });
+  const al = QR_AUSRICHTUNG[ver], letzte = al.length - 1;
+  al.forEach((ay, i)=>al.forEach((ax, j)=>{
+    if((i === 0 && j === 0) || (i === 0 && j === letzte) || (i === letzte && j === 0)) return;
+    for(let dy = -2; dy <= 2; dy++) for(let dx = -2; dx <= 2; dx++)
+      setz(ax + dx, ay + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+  }));
+  const format = maske => {
+    const d = maske; // Fehlerkorrektur M = 00
+    let r = d;
+    for(let i = 0; i < 10; i++) r = (r << 1) ^ ((r >>> 9) * 0x537);
+    const f = ((d << 10) | r) ^ 0x5412;
+    const b = i => ((f >>> i) & 1) === 1;
+    for(let i = 0; i <= 5; i++) setz(8, i, b(i));
+    setz(8, 7, b(6)); setz(8, 8, b(7)); setz(7, 8, b(8));
+    for(let i = 9; i < 15; i++) setz(14 - i, 8, b(i));
+    for(let i = 0; i < 8; i++) setz(n - 1 - i, 8, b(i));
+    for(let i = 8; i < 15; i++) setz(8, n - 15 + i, b(i));
+    setz(8, n - 8, true);
+  };
+  format(0);
+  if(ver >= 7){
+    let r = ver;
+    for(let i = 0; i < 12; i++) r = (r << 1) ^ ((r >>> 11) * 0x1F25);
+    const v = (ver << 12) | r;
+    for(let i = 0; i < 18; i++){
+      const dunkel = ((v >>> i) & 1) === 1, a = n - 11 + i % 3, b = Math.floor(i / 3);
+      setz(a, b, dunkel); setz(b, a, dunkel);
+    }
+  }
+  // Daten im Zickzack von unten rechts
+  let k = 0;
+  for(let rechts = n - 1; rechts >= 1; rechts -= 2){
+    if(rechts === 6) rechts = 5;
+    for(let v = 0; v < n; v++) for(let j = 0; j < 2; j++){
+      const x = rechts - j, hoch = ((rechts + 1) & 2) === 0, y = hoch ? n - 1 - v : v;
+      if(!fest[y][x] && k < folge.length*8){ m[y][x] = ((folge[k >>> 3] >>> (7 - (k & 7))) & 1) === 1; k++; }
+    }
+  }
+  // Maske mit der geringsten Strafpunktzahl (Regeln 1, 2 und 4)
+  const MASKEN = [
+    (x,y)=>(x+y)%2===0, (x,y)=>y%2===0, (x,y)=>x%3===0, (x,y)=>(x+y)%3===0,
+    (x,y)=>(Math.floor(x/3)+Math.floor(y/2))%2===0, (x,y)=>x*y%2+x*y%3===0,
+    (x,y)=>(x*y%2+x*y%3)%2===0, (x,y)=>((x+y)%2+x*y%3)%2===0];
+  const maskiere = nr => { for(let y = 0; y < n; y++) for(let x = 0; x < n; x++)
+    if(!fest[y][x] && MASKEN[nr](x, y)) m[y][x] = !m[y][x]; };
+  const strafe = () => {
+    let p = 0, dunkel = 0;
+    for(let a = 0; a < n; a++){
+      for(const zeile of [true, false]){
+        let lauf = 1;
+        for(let b = 1; b <= n; b++){
+          const gleich = b < n && (zeile ? m[a][b] === m[a][b-1] : m[b][a] === m[b-1][a]);
+          if(gleich) lauf++; else { if(lauf >= 5) p += lauf - 2; lauf = 1; }
+        }
+      }
+    }
+    for(let y = 0; y < n - 1; y++) for(let x = 0; x < n - 1; x++)
+      if(m[y][x] === m[y][x+1] && m[y][x] === m[y+1][x] && m[y][x] === m[y+1][x+1]) p += 3;
+    m.forEach(z=>z.forEach(d=>{ if(d) dunkel++; }));
+    return p + Math.floor(Math.abs(dunkel*20 - n*n*10) / (n*n)) * 10;
+  };
+  let beste = 0, besteP = Infinity;
+  for(let nr = 0; nr < 8; nr++){
+    maskiere(nr); format(nr);
+    const p = strafe();
+    if(p < besteP){ besteP = p; beste = nr; }
+    maskiere(nr);
+  }
+  maskiere(beste); format(beste);
+  return m;
+}
+
+// QR-Code als SVG mit Ruhezone, skaliert über CSS
+function qrSvg(text){
+  const m = qrMatrix(text), n = m.length, rand = 4;
+  let pfad = "";
+  m.forEach((zeile, y)=>zeile.forEach((d, x)=>{ if(d) pfad += "M" + (x + rand) + " " + (y + rand) + "h1v1h-1z"; }));
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (n + 2*rand) + " " + (n + 2*rand) +
+    '" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/>' +
+    '<path d="' + pfad + '" fill="#000"/></svg>';
+}
+
+/* ---------- Aushang zum Check-in ---------- */
+$("e-checkin").addEventListener("change", () =>
+  $("e-checkin-box").classList.toggle("hidden", !$("e-checkin").checked));
+
+async function zeigeAushang(neu){
+  const code = await db.checkinCode(current.id, neu);
+  const link = publicLink(current.slug) + "&checkin=" + encodeURIComponent(code);
+  $("ah-kita").textContent = kitaName;
+  $("ah-titel").textContent = current.title;
+  $("ah-datum").textContent = [current.event_date || fmtDate(current.event_on), current.event_time, current.place]
+    .filter(Boolean).join(" · ");
+  $("ah-qr").innerHTML = qrSvg(link);
+  $("ah-link").textContent = link;
+  $("aushang-ansicht").classList.remove("hidden");
+}
+$("aushang").onclick = async () => {
+  if(!current || !current.id || current.checkin !== true){
+    msg($("edit-msg"), "Erst mit Haken bei Check-in speichern, dann gibt es den Aushang.", true); return;
+  }
+  if(!current.event_on){
+    msg($("edit-msg"), "Ohne Datum geht der Check-in nicht: er gilt nur am Veranstaltungstag.", true); return;
+  }
+  try{ $("ah-msg").textContent = ""; await zeigeAushang(false); }
+  catch(err){ msg($("edit-msg"), "Aushang ging nicht: " + String(err.message).slice(0,200), true); }
+};
+$("ah-drucken").onclick = () => window.print();
+$("ah-zu").onclick = () => $("aushang-ansicht").classList.add("hidden");
+$("ah-neu").onclick = async () => {
+  if(!confirm("Neuen Code erzeugen? Schon gedruckte Aushänge funktionieren danach nicht mehr.")) return;
+  try{ await zeigeAushang(true); $("ah-msg").textContent = "Neuer Code. Bitte den neuen Aushang aufhängen."; }
+  catch(err){ $("ah-msg").textContent = "Ging nicht: " + String(err.message).slice(0,200); }
+};
+
 /* ============================================================
    Anmeldungen
    ============================================================ */
@@ -2829,6 +3109,44 @@ async function openSignups(ev){
 }
 
 let zahlungen = {};
+let anwesend = {};
+
+// Stunden: von Hand eingetragen, sonst aus Ein- und Auschecken gerechnet
+const stunden = a => !a ? null : a.hours != null ? +a.hours
+  : a.checked_in_at && a.checked_out_at
+    ? Math.max(0, (new Date(a.checked_out_at) - new Date(a.checked_in_at)) / 36e5) : null;
+const dauerText = h => { const min = Math.round(h * 60);
+  return Math.floor(min / 60) + ":" + String(min % 60).padStart(2, "0") + " h"; };
+const zeitText = iso => iso ? new Date(iso).toLocaleTimeString("de-DE", { hour:"2-digit", minute:"2-digit" }) : "";
+
+function daZelle(s, a){
+  if(s.status === "absage" && !a) return "";
+  const h = stunden(a);
+  const wann = !a ? "" : a.checked_in_at
+    ? "da ab " + zeitText(a.checked_in_at) + (a.checked_out_at ? " bis " + zeitText(a.checked_out_at) : "")
+    : "da (vom Orgateam abgehakt)";
+  return '<div class="check" style="margin-top:6px;align-items:center">' +
+    '<input type="checkbox" data-da="' + esc(s.id) + '"' + (a ? " checked" : "") + ' title="war da">' +
+    '<span>' + (a ? esc(wann) : '<span style="color:var(--ink-soft)">nicht eingecheckt</span>') + '</span>' +
+    (a ? ' <input type="text" inputmode="decimal" data-std="' + esc(s.id) + '" value="' +
+      (h != null ? String(Math.round(h*100)/100).replace(".", ",") : "") +
+      '" placeholder="Std." title="Stunden, überschreibt die gerechnete Dauer" style="width:72px;padding:4px 6px;font-size:.85rem">' : "") +
+    '</div>';
+}
+$("su-table").addEventListener("change", async ev => {
+  const da = ev.target.closest("[data-da]"), std = ev.target.closest("[data-std]");
+  if(!da && !std) return;
+  const id = (da || std).dataset.da || (da || std).dataset.std;
+  try{
+    if(da) await db.setAttendance(id, da.checked ? {} : null, !!anwesend[id]);
+    else {
+      const roh = std.value.trim();
+      const h = roh === "" ? null : Math.min(24, Math.max(0, +roh.replace(",", ".") || 0));
+      await db.setAttendance(id, { hours:h }, !!anwesend[id]);
+    }
+  }catch(err){ alert("Konnte nicht gespeichert werden: " + String(err.message).slice(0,200)); }
+  await loadSignups();
+});
 let nurOffen = false;
 $("nur-offen").onclick = () => { nurOffen = !nurOffen; loadSignups(); };
 
@@ -2839,6 +3157,12 @@ async function loadSignups(){
   if(kostetEtwas(current)){
     try{ (await db.payments(signups.map(s=>s.id))).forEach(x=>{ zahlungen[x.signup_id] = x; }); }catch(e){}
   }
+  anwesend = {};
+  if(current.checkin){
+    try{ (await db.attendance(signups.map(s=>s.id))).forEach(x=>{ anwesend[x.signup_id] = x; }); }catch(e){}
+  }
+  const daZahl = Object.keys(anwesend).filter(id=>signups.some(s=>s.id === id)).length;
+  const stundenSumme = signups.reduce((a,s)=>a + (stunden(anwesend[s.id]) || 0), 0);
   const kostet = kostetEtwas(current);
   const soll = s => kosten(current, s).summe;
   const gezahlt = s => zahlungen[s.id] ? +zahlungen[s.id].amount || 0 : 0;
@@ -2861,6 +3185,8 @@ async function loadSignups(){
     (g.adults.on ? "<div><b>"+adults+"</b>"+esc(g.adults.label)+"</div>" : "")+
     (g.kids.on ? "<div><b>"+kids+"</b>"+esc(g.kids.label)+"</div>" : "")+
     "<div><b>"+items+"</b>Mitbringsel</div>"+
+    (current.checkin ? "<div><b>"+daZahl+"</b>da</div>" +
+      (stundenSumme ? "<div><b>"+dauerText(stundenSumme)+"</b>Stunden zusammen</div>" : "") : "")+
     bestellArtikel(current).map(f=>"<div><b>"+signups.reduce((a,s)=>a+bestellMenge(s.status==="absage"?{}:s, f),0)+
       "</b>"+esc(f.label)+"</div>").join("")+
     (kostet
@@ -2912,6 +3238,7 @@ async function loadSignups(){
           g.adults.on ? (+s.adults||0)+" "+esc(g.adults.label) : "",
           g.kids.on ? (+s.kids||0)+" "+esc(g.kids.label) : ""
         ].filter(Boolean).join(", ")+"</span>"+
+        (current.checkin ? daZelle(s, anwesend[s.id]) : "")+
         (kostet ? zahlZelle(s, soll(s), zahlungen[s.id]) : "")+
         (s.note?'<br><span style="color:var(--ink-soft)">„'+esc(s.note)+'"</span>':"")+
         Object.entries(s.fields||{}).map(([k,v])=>
@@ -2932,8 +3259,11 @@ async function loadSignups(){
   $("su-table").querySelectorAll("button[data-del]").forEach(b=>{
     b.onclick = async () => {
       const wer = (signups.find(x=>x.id === b.dataset.del) || {}).name || "diese Anmeldung";
-      if(!confirm("Anmeldung von " + wer + " löschen?\n\nDas wirkt sofort und lässt sich " +
-        "nicht zurückholen.")) return;
+      const z = zahlungen[b.dataset.del];
+      if(!confirm("Anmeldung von " + wer + " löschen?\n\n" +
+        (z ? "Achtung: " + wer + " hat " + euro(z.amount) + " bezahlt. Mit der Anmeldung verschwindet " +
+             "auch der Zahlungseingang. Erst zurückzahlen, dann löschen.\n\n" : "") +
+        "Das wirkt sofort und lässt sich nicht zurückholen.")) return;
       await db.deleteSignup(b.dataset.del); await loadSignups();
     };
   });
@@ -3072,7 +3402,8 @@ $("export").onclick = () => {
   const extra = [...new Set(signups.flatMap(s=>Object.keys(s.fields||{})))];
   const g = groups(current);
   const head = ["Name","Status",g.adults.label,g.kids.label,"Mitbringsel","Aufgaben",
-    "Anmerkung",...extra,"Betrag (EUR)","Bezahlt (EUR)","Bezahlt am","Angemeldet am"];
+    "Anmerkung",...extra,"Betrag (EUR)","Bezahlt (EUR)","Bezahlt am",
+    ...(current.checkin ? ["Da","Gekommen","Gegangen","Stunden"] : []),"Angemeldet am"];
   const rows = signups.map(s=>[
     s.name, s.status === "absage" ? "abgemeldet" : "zugesagt", s.adults, s.kids,
     (s.items||[]).map(i=>((+i.qty||1)>1 ? (+i.qty)+"x " : "")+i.what+" ("+catLabel(i.cat)+")").join(" | "),
@@ -3081,6 +3412,9 @@ $("export").onclick = () => {
     betragCsv(kosten(current, s).summe),
     zahlungen[s.id] ? betragCsv(zahlungen[s.id].amount) : "",
     zahlungen[s.id] ? new Date(zahlungen[s.id].paid_at).toLocaleDateString("de-DE") : "",
+    ...(current.checkin ? [anwesend[s.id] ? "ja" : "nein", zeitText((anwesend[s.id]||{}).checked_in_at),
+      zeitText((anwesend[s.id]||{}).checked_out_at),
+      stunden(anwesend[s.id]) != null ? betragCsv(stunden(anwesend[s.id])) : ""] : []),
     new Date(s.created_at).toLocaleString("de-DE")
   ].map(csvCell).join(";"));
   const csv = "\uFEFF" + [head.map(csvCell).join(";"), ...rows].join("\r\n");

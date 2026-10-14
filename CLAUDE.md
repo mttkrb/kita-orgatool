@@ -46,7 +46,7 @@ manifest-eltern.json    Installation Startbildschirm, helles Symbol
 manifest-orga.json      Installation Startbildschirm, dunkles Symbol
 icons/                  App-Symbole, Standard-Logo (logo.svg) und -Favicon (favicon.svg/.png)
 fonts/                  Fraunces und Work Sans als woff2, Lizenztexte OFL-*.txt
-sql/                    schema.sql, migration-2.sql … migration-N.sql, Importe
+sql/                    schema.sql, migration-2.sql … migration-N.sql (keine Daten)
 tests/                  Node mit jsdom, Nachbau der Datenbank inkl. Rechteprüfung
 deploy/.htaccess        Für den Zielordner /orga/ auf dem Webspace
 nas/                    Backup- und Keep-alive-Skripte für das Vereins-NAS
@@ -75,7 +75,7 @@ Laden feststehen, über `titel(text)` setzen, nicht über `document.title`.
 Namen aus `common.js` (`live`, `$`, `esc`, `bildUrl`, `SIGNUP_COLS`, `anonHead`,
 `isoDatum`, `heute`, `fmtDate`, `vis`, `groups`, `verkleinern`, `EINSTELLUNG`,
 `kitaName`, `eigeneAdresse`, `farbe`, `titel`, `euro`, `preisZahl`, `bestellArtikel`, `bestellMenge`,
-`kostetEtwas`, `kosten`, `paypalName`, `paypalMail`, `paypalLink`) in den Seiten nicht auf oberster Ebene
+`kostetEtwas`, `kosten`, `paypalName`, `paypalMail`, `paypalLink`, `zahlLink`, `zahlweg`) in den Seiten nicht auf oberster Ebene
 neu deklarieren — das ergibt einen SyntaxError und die ganze Seite bleibt stehen.
 
 Im Repo steht in `SUPABASE.url` in `config.js` ein Platzhalter. Die echte Projektadresse wird
@@ -83,7 +83,7 @@ erst beim Deployment eingetragen und nie committet.
 
 ## Datenmodell
 
-Zehn Tabellen. Veränderliche Strukturen liegen als JSON in Spalten, weil sich die
+Zwölf Tabellen. Veränderliche Strukturen liegen als JSON in Spalten, weil sich die
 Felder je Veranstaltung unterscheiden.
 
 | Tabelle | Inhalt | Wer liest |
@@ -97,18 +97,36 @@ Felder je Veranstaltung unterscheiden.
 | `proposals` | Gemeldete Aufgaben | Melder offene, Orga alles |
 | `feedback` | Rückmeldungen der Eltern | nur Orga |
 | `payments` | Zahlungseingang je Anmeldung (Haken, Betrag, Datum), Kaskade mit `signups` | nur Orga |
+| `attendance` | Check-in: gekommen, gegangen, Stunden je Anmeldung, Kaskade mit `signups` | nur Orga |
+| `checkin_codes` | Code vom Aushang je Veranstaltung | nur Orga |
 | `orga_keys` | Orga-Passwort | niemand über die API |
 
 JSON-Strukturen: `categories`, `tasks`, `fields`, `checklist`, `shopping`, `review`,
 `people`, `visibility`, `payment` — Felder siehe Projekthandbuch, Abschnitt 4.
 
-Kosten (ab `migration-21.sql`): `events.payment` und `templates.payment` halten
-`{ adults, kids, note, paypal }` — Preis je Person der beiden Gruppen, Zahlungshinweis,
-PayPal.me-Name oder PayPal-Adresse (Freunde & Familie). Bestellartikel sind Zusatzfragen vom Typ `order` mit `price` und `max`;
+Kosten (ab `migration-22.sql`): `events.payment` und `templates.payment` halten
+`{ adults, kids, note, link }` — Preis je Person der beiden Gruppen, Zahlungshinweis und
+Zahlweg: PayPal.me-Name, PayPal-Adresse (Freunde & Familie) oder ein beliebiger https-Link
+(Wero, Bank). Ältere Einträge heißen `paypal`; `zahlweg()` liest beide, gespeichert wird `link`. Bestellartikel sind Zusatzfragen vom Typ `order` mit `price` und `max`;
 die Menge steht wie jede Antwort in `signups.fields`. Ausgaben stehen als `preis` in
 `planning.shopping`, festgehaltene Summen in `planning.review.geld`. Der Betrag einer
 Anmeldung wird nie gespeichert, sondern immer mit `kosten(ev, signup)` aus `common.js`
-gerechnet. PayPal ist nur ein Link (`paypalLink`), kein Skript und keine Fremdquelle.
+gerechnet. Zahlwege sind nur Links, kein Skript und keine Fremdquelle.
+
+Check-in (ab `migration-23.sql`): `events.checkin` schaltet ihn ein. Der Aushang führt auf
+`fest-anmeldung.html?event=…&checkin=CODE`. Eltern checken über die Datenbankfunktionen
+`checkin()` und `checkin_status()` ein und aus; sie prüfen Token, Code und Tag
+(Europe/Berlin). Direkt in `attendance` schreibt nur das Orgateam. Bei Veranstaltungen mit
+Check-in merkt sich das Handy Kennung und Token unter `localStorage` `kita-anmeldung:<slug>`,
+wiedererkannt wird nur beim Scan am Eingang. Der QR-Code entsteht ohne Bibliothek in
+`orga.html` (`qrMatrix`, `qrSvg`).
+
+Abmelden mit Zahlung (ab `migration-24.sql`): Ist für eine Anmeldung ein Zahlungseingang
+eingetragen, löschen Eltern sie nicht mehr über den persönlichen Link; das Orgateam löscht
+selbst und zahlt vorher zurück. Absagen über das Formular bleiben möglich. Hilfsfunktionen
+für Policies liegen im Schema `intern`, das die Schnittstelle nicht erreicht.
+`intern.anmeldung_betrag()` rechnet wie `kosten()` in `common.js` — wer eines ändert,
+ändert beide.
 
 ## Sicherheitsmodell
 
@@ -137,7 +155,8 @@ Daraus folgt:
 - Namen unter Rückmeldungen und Meldungen: nach 60 Tagen anonymisiert, Texte bleiben.
 - Planung, Rückblick, Fotos und Zahlen: bleiben dauerhaft.
 - `daten_aufraeumen()` schreibt vor dem Löschen eine Zusammenfassung ohne
-  Personenbezug nach `planning.review.zahlen`. Die Historie überlebt die Namen.
+  Personenbezug nach `planning.review.zahlen` (dazu Anwesenheit und Stunden) und die
+  Einnahmen nach `planning.review.geld`. Die Historie überlebt die Namen.
 - Der Einwilligungstext auf der Anmeldeseite wird aus `visibility` und
   `retention_days` erzeugt. **Wer diese Felder ändert, ändert ein Versprechen an die
   Eltern** — Text und Verhalten müssen zusammenpassen.
