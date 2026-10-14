@@ -51,6 +51,68 @@ const groups = ev => {
   };
 };
 
+/* ---------- Kosten ---------- */
+// Betrag als "3,50 €".
+const euro = n => (Math.round((+n||0)*100)/100).toLocaleString("de-DE",
+  { minimumFractionDigits:2, maximumFractionDigits:2 }) + " €";
+
+// Preis aus einer Eingabe wie "3,50" oder einer Zahl. Leer, negativ oder Unsinn = 0.
+const preisZahl = v => {
+  const n = parseFloat(String(v ?? "").replace(",", "."));
+  return isFinite(n) && n > 0 ? Math.round(n*100)/100 : 0;
+};
+
+// Bestellartikel mit Stückpreis sind Zusatzfragen vom Typ "order".
+const bestellArtikel = ev => ((ev && ev.fields) || []).filter(f=>f.type === "order");
+// Die Höchstmenge gilt nur hier im Browser; die Datenbank begrenzt Antworten nicht.
+// Wer über die API mehr einträgt, wird beim Rechnen auf max gekappt, damit der
+// Soll-Betrag im Orga-Bereich nicht ausufert.
+const bestellMenge = (e, f) => Math.min(+f.max || 99,
+  Math.max(0, Math.floor(+(((e && e.fields) || {})[f.label]) || 0)));
+
+// Kostet die Veranstaltung überhaupt etwas?
+const kostetEtwas = ev => {
+  const p = (ev && ev.payment) || {};
+  const g = groups(ev);
+  return (g.adults.on && preisZahl(p.adults) > 0) || (g.kids.on && preisZahl(p.kids) > 0) ||
+    bestellArtikel(ev).some(f=>preisZahl(f.price) > 0);
+};
+
+// Was eine Anmeldung kostet: Personen beider Gruppen plus Bestellungen.
+// Der Betrag wird nie gespeichert, sondern immer hieraus gerechnet. Absagen kosten nichts.
+const kosten = (ev, e) => {
+  const p = (ev && ev.payment) || {};
+  const g = groups(ev);
+  const zeilen = [];
+  if(!e || e.status === "absage") return { zeilen, summe:0 };
+  const dazu = (label, menge, preis) => {
+    if(menge > 0 && preis > 0) zeilen.push({ label, menge, preis, summe:Math.round(menge*preis*100)/100 });
+  };
+  if(g.adults.on) dazu(g.adults.label, +e.adults || 0, preisZahl(p.adults));
+  if(g.kids.on)   dazu(g.kids.label,   +e.kids   || 0, preisZahl(p.kids));
+  bestellArtikel(ev).forEach(f=>dazu(f.label, bestellMenge(e, f), preisZahl(f.price)));
+  return { zeilen, summe:Math.round(zeilen.reduce((a,z)=>a+z.summe, 0)*100)/100 };
+};
+
+// Name bei PayPal.me, auch wenn jemand den ganzen Link einträgt.
+const paypalName = s => {
+  const n = String(s || "").trim().replace(/^https?:\/\//i, "")
+    .replace(/^(www\.)?paypal\.(me|com\/paypalme)\//i, "").replace(/[\/?#].*$/, "");
+  return /^[A-Za-z0-9._-]{1,40}$/.test(n) ? n : "";
+};
+// PayPal-Adresse (E-Mail), an die Eltern über Freunde & Familie senden.
+// Dafür gibt es keinen Link mit Betrag; die Seite zeigt Adresse und Betrag zum Kopieren.
+const paypalMail = s => {
+  const m = String(s || "").trim();
+  return /^[^\s@<>"']{1,64}@[^\s@<>"']{1,190}\.[A-Za-z]{2,}$/.test(m) ? m : "";
+};
+// Link zu PayPal.me mit Betrag. Nur ein Link: die Seite selbst lädt nichts von PayPal.
+const paypalLink = (name, betrag) => {
+  const n = paypalName(name);
+  if(!n) return "";
+  return "https://www.paypal.me/" + encodeURIComponent(n) + (betrag > 0 ? "/" + betrag.toFixed(2) + "EUR" : "");
+};
+
 // Bild im Browser verkleinern, damit die Datenbank klein bleibt (JPEG-Data-URL).
 function verkleinern(datei, kante=1000, guete=0.72){
   return new Promise((ok, fehler)=>{

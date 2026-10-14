@@ -73,7 +73,8 @@ Laden das DOM nicht an, außer über `DOMContentLoaded`. Seitentitel, die erst n
 Laden feststehen, über `titel(text)` setzen, nicht über `document.title`.
 Namen aus `common.js` (`live`, `$`, `esc`, `bildUrl`, `SIGNUP_COLS`, `anonHead`,
 `isoDatum`, `heute`, `fmtDate`, `vis`, `groups`, `verkleinern`, `EINSTELLUNG`,
-`kitaName`, `eigeneAdresse`, `farbe`, `titel`) in den Seiten nicht auf oberster Ebene
+`kitaName`, `eigeneAdresse`, `farbe`, `titel`, `euro`, `preisZahl`, `bestellArtikel`, `bestellMenge`,
+`kostetEtwas`, `kosten`, `paypalName`, `paypalMail`, `paypalLink`) in den Seiten nicht auf oberster Ebene
 neu deklarieren — das ergibt einen SyntaxError und die ganze Seite bleibt stehen.
 
 Im Repo steht in `SUPABASE.url` in `config.js` ein Platzhalter. Die echte Projektadresse wird
@@ -81,7 +82,7 @@ erst beim Deployment eingetragen und nie committet.
 
 ## Datenmodell
 
-Neun Tabellen. Veränderliche Strukturen liegen als JSON in Spalten, weil sich die
+Zehn Tabellen. Veränderliche Strukturen liegen als JSON in Spalten, weil sich die
 Felder je Veranstaltung unterscheiden.
 
 | Tabelle | Inhalt | Wer liest |
@@ -94,10 +95,19 @@ Felder je Veranstaltung unterscheiden.
 | `planning` | Checkliste, Einkaufsliste, Rückblick | nur Orga |
 | `proposals` | Gemeldete Aufgaben | Melder offene, Orga alles |
 | `feedback` | Rückmeldungen der Eltern | nur Orga |
+| `payments` | Zahlungseingang je Anmeldung (Haken, Betrag, Datum), Kaskade mit `signups` | nur Orga |
 | `orga_keys` | Orga-Passwort | niemand über die API |
 
 JSON-Strukturen: `categories`, `tasks`, `fields`, `checklist`, `shopping`, `review`,
-`people`, `visibility` — Felder siehe Projekthandbuch, Abschnitt 4.
+`people`, `visibility`, `payment` — Felder siehe Projekthandbuch, Abschnitt 4.
+
+Kosten (ab `migration-21.sql`): `events.payment` und `templates.payment` halten
+`{ adults, kids, note, paypal }` — Preis je Person der beiden Gruppen, Zahlungshinweis,
+PayPal.me-Name oder PayPal-Adresse (Freunde & Familie). Bestellartikel sind Zusatzfragen vom Typ `order` mit `price` und `max`;
+die Menge steht wie jede Antwort in `signups.fields`. Ausgaben stehen als `preis` in
+`planning.shopping`, festgehaltene Summen in `planning.review.geld`. Der Betrag einer
+Anmeldung wird nie gespeichert, sondern immer mit `kosten(ev, signup)` aus `common.js`
+gerechnet. PayPal ist nur ein Link (`paypalLink`), kein Skript und keine Fremdquelle.
 
 ## Sicherheitsmodell
 

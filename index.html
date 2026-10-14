@@ -49,11 +49,12 @@ const DEMO = {
     { slug:"sommerfest-2026", title:"Sommerfest", event_date:"Samstag, 26. September 2026",
       event_time:"14–19 Uhr", place:"Kita-Außengelände", archived:false,
       categories:[{id:"kuchen",label:"Kuchen & Süßes",target:12},{id:"salat",label:"Salate",target:6}],
-      tasks:[{id:"aufbau",label:"Aufbau",needed:6}] },
+      tasks:[{id:"aufbau",label:"Aufbau",needed:6}], payment:{ adults:3, kids:5 } },
     { slug:"laternenfest-2026", title:"Laternenfest", event_date:"Mittwoch, 11. November 2026",
       event_time:"17–19 Uhr", place:"Treffpunkt Kita-Tor", archived:false,
       categories:[{id:"punsch",label:"Punsch & Heißes",target:6}],
-      tasks:[{id:"fackeln",label:"Fackeln tragen",needed:4}] }
+      tasks:[{id:"fackeln",label:"Fackeln tragen",needed:4}],
+      fields:[{label:"Zusätzlicher Weckmann",type:"order",price:2.5}], payment:{ kids:3 } }
   ],
   signups:[
     { event:"sommerfest-2026", adults:2, kids:2, items:[{cat:"kuchen"},{cat:"salat"}], tasks:["aufbau"] },
@@ -95,6 +96,16 @@ function stats(ev, rows){
   return { count:mine.length, people, gaps, helperGap };
 }
 
+// Preise je Person, damit niemand erst beim Anmelden merkt, dass es etwas kostet
+function preisPill(ev){
+  const p = ev.payment || {}, g = groups(ev);
+  const teile = [];
+  if(g.adults.on && preisZahl(p.adults)) teile.push(g.adults.label + " " + euro(preisZahl(p.adults)));
+  if(g.kids.on && preisZahl(p.kids)) teile.push(g.kids.label + " " + euro(preisZahl(p.kids)));
+  if(!teile.length && kostetEtwas(ev)) teile.push("mit Bestellung");
+  return teile.length ? '<span class="pill">Kosten: ' + esc(teile.join(", ")) + "</span>" : "";
+}
+
 (async function(){
   let events, rows;
   try{
@@ -124,7 +135,8 @@ function stats(ev, rows){
       '<span class="pill">' + s.count + (s.count===1?" Anmeldung":" Anmeldungen") + "</span>",
       s.people ? '<span class="pill">' + s.people + " Personen</span>" : "",
       ...s.gaps.map(g=>'<span class="pill need">' + g.fehlt + " × " + esc(g.label) + " gesucht</span>"),
-      s.helperGap ? '<span class="pill need">' + s.helperGap + " Helferplätze offen</span>" : ""
+      s.helperGap ? '<span class="pill need">' + s.helperGap + " Helferplätze offen</span>" : "",
+      preisPill(ev)
     ].filter(Boolean).join("");
     return '<a class="card" href="' + CONFIG.publicPage + "?event=" + encodeURIComponent(ev.slug) + '">' +
       "<h2>" + esc(ev.title) + "</h2>" +

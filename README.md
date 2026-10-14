@@ -15,6 +15,8 @@ gemeinsamen Skript- und Stildateien, kein Build, kein Framework. Wer HTML lesen 
 - Anmelden oder begründet absagen, auch nachträglich über einen persönlichen Link ändern
 - Eintragen, was man mitbringt, mit Anzeige, was noch fehlt
 - Aufgaben übernehmen, vorab oder am Tag selbst
+- Sehen, was die Anmeldung kostet, auch mit Bestellungen wie einem zusätzlichen Weckmann,
+  dazu Zahlungshinweis und ein PayPal-Link mit dem richtigen Betrag
 - Nach der Veranstaltung eine Rückmeldung geben
 
 **Für das Orgateam**
@@ -25,6 +27,9 @@ gemeinsamen Skript- und Stildateien, kein Build, kein Framework. Wer HTML lesen 
 - Anmeldungen einsehen, von Hand eintragen oder bearbeiten
 - Gemeldete Aufgaben übernehmen oder ablehnen
 - Rückblick mit Zahlen und Bewertung, die als Vorschlag ins nächste Mal einfließen
+- Preise je Person und Bestellartikel festlegen, erwartete Einnahmen und Bestellmengen sehen,
+  Zahlungseingang je Anmeldung abhaken, offene Beträge und Differenzen nach Änderungen sehen,
+  Ausgaben in der Einkaufsliste erfassen, Saldo im Rückblick
 
 ## Die Seiten
 
