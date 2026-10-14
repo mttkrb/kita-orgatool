@@ -407,7 +407,7 @@ const api = {
   async update(token, entry, id){
     if(!live){ const i = demo.findIndex(e=>e.token===token);
       if(i>-1) demo[i] = {...demo[i], ...entry}; return; }
-    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?id=eq." + id,{
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?select=id&id=eq." + id,{
       method:"PATCH",
       headers:anonHead({ "Content-Type":"application/json", "X-Entry-Token":token }),
       body: JSON.stringify(entry)
@@ -416,7 +416,7 @@ const api = {
   },
   async remove(token, id){
     if(!live){ demo = demo.filter(e=>e.token!==token); return; }
-    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?id=eq." + id,{
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?select=id&id=eq." + id,{
       method:"DELETE", headers:anonHead({ "X-Entry-Token":token, Prefer:"return=representation" })
     });
     if(!r.ok) throw new Error("Abmeldung hat nicht geklappt." + await fehlertext(r));
