@@ -53,6 +53,7 @@ nas/                    Backup- und Keep-alive-Skripte für das Vereins-NAS
 docs/                   Projekthandbuch, Migrationsanleitung, Aufgabenliste
 umzug/                  Umzug in ein anderes Supabase-Projekt: Skripte (sh, ps1) und Anleitung
 einrichtung/            Neuinstallation: Anleitung, SQL-Vorlage und Skript, das sie erzeugt
+aktualisierung/         Update einer laufenden Installation: Anleitung
 ```
 
 Supabase-URL und anonKey stehen einmal in `config.js` (`SUPABASE`). Seitenspezifische
@@ -206,6 +207,10 @@ Daraus folgt:
 Dateien per SFTP in den Ordner `/orga/` des Webspace. Kein Build, keine Pipeline.
 `config.js`, `common.js`, `common.css`, `eltern.css`, der Ordner `fonts/` und
 `deploy/.htaccess` gehören dazu. Erst SQL, dann Dateien.
+Ablauf für bestehende Installationen in `aktualisierung/ANLEITUNG.md`. Wer dort
+aktualisiert, überschreibt seine `config.js` nicht: Neue Einträge in `config.js`
+brauchen einen Standardwert im Code. Migration, erneuerte Vorlage und geänderte Seiten
+in einen Commit.
 
 ## Nicht ins Repo
 

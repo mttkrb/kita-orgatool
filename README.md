@@ -111,8 +111,26 @@ Die beiden SQL-Dateien werden mit `einrichtung/vorlage-erzeugen.sh` aus dem lauf
 Projekt erzeugt, nur Struktur, keine Daten, und nach jeder Migration neu mitgeliefert
 (Anleitung, Abschnitt 10).
 
-Bei Updates gilt: **erst SQL, dann HTML.** Sonst sucht die Seite nach Spalten, die es
-in der Datenbank noch nicht gibt.
+## Aktualisieren
+
+Ein Update besteht aus neuen Migrationen in `sql/` und geänderten Dateien. Die
+[Anleitung](aktualisierung/ANLEITUNG.md) im Ordner [`aktualisierung/`](aktualisierung/)
+beschreibt die Schritte. Auch hier braucht es keine Programme, nur das
+Supabase-Dashboard, SFTP und einen Browser.
+
+1. **Stand feststellen:** Welcher Commit und welche Migration laufen gerade? Am besten
+   bei jedem Update im Passwortsafe notieren.
+2. **Sichern:** Datenbank mit `pg_dump`, Dateien vom Webspace herunterladen.
+3. **Erst SQL:** jede neue `sql/migration-N.sql` in aufsteigender Nummer im SQL-Editor
+   ausführen, danach `einrichtung/sql/pruefen.sql` des neuen Stands; jede Zeile muss mit
+   OK beginnen.
+4. **Dann Dateien:** geänderte Seiten und gemeinsame Dateien hochladen, **`config.js`
+   auf dem Webspace nicht überschreiben**. Neue Einträge von Hand übernehmen.
+5. **Hart neu laden** (Strg+F5) und im Orga-Bereich prüfen, dass kein roter Hinweis zur
+   Datenbank erscheint.
+
+Umgekehrt, erst Seiten und dann SQL, sucht die Seite nach Spalten, die es in der
+Datenbank noch nicht gibt.
 
 > **Hinweis:** Die echten Zugangsdaten werden nie committet. Im Repo bleiben die Felder
 > in `config.js` leer. Lokal kann man die Werte in einer `supabase.env` ablegen,
