@@ -116,7 +116,7 @@ gerechnet. Zahlwege sind nur Links, kein Skript und keine Fremdquelle.
 Check-in (ab `migration-23.sql`): `events.checkin` schaltet ihn ein. Der Aushang führt auf
 `fest-anmeldung.html?event=…&checkin=CODE`. Eltern checken über die Datenbankfunktionen
 `checkin()` und `checkin_status()` ein und aus; sie prüfen Token, Code und Tag
-(Europe/Berlin). Direkt in `attendance` schreibt nur das Orgateam. Bei Veranstaltungen mit
+(Europe/Berlin). Abgesagte Anmeldungen checken nicht ein (ab `migration-25.sql`). Direkt in `attendance` schreibt nur das Orgateam. Bei Veranstaltungen mit
 Check-in merkt sich das Handy Kennung und Token unter `localStorage` `kita-anmeldung:<slug>`,
 wiedererkannt wird nur beim Scan am Eingang. Der QR-Code entsteht ohne Bibliothek in
 `orga.html` (`qrMatrix`, `qrSvg`).

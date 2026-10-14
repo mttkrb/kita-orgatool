@@ -1,4 +1,4 @@
--- Rechteprüfung für Migration 22 (Zahlungseingang), 23 (Check-in) und 24 (Abmelden mit
+-- Rechteprüfung für Migration 22 (Zahlungseingang), 23 und 25 (Check-in), 24 (Abmelden mit
 -- Zahlung, Aufräumen), dazu die gesperrte Token-Spalte aus schema.sql.
 -- Weist auch nach, was verboten ist. Jede Zeile beginnt mit OK oder FEHLER.
 \set QUIET on
@@ -17,6 +17,8 @@ insert into signups (id, event, name, token) values
   ('aaaaaaaa-0000-0000-0000-000000000002','morgen','Familie B','token-b-12345'),
   ('aaaaaaaa-0000-0000-0000-000000000003','ohne','Familie C','token-c-12345'),
   ('aaaaaaaa-0000-0000-0000-000000000004','heute','Familie D','token-d-12345');
+insert into signups (id, event, name, token, status) values
+  ('aaaaaaaa-0000-0000-0000-000000000005','heute','Familie E','token-e-12345','absage');
 insert into payments values ('aaaaaaaa-0000-0000-0000-000000000004', 6, now());
 
 create function pruef(name text, ok boolean) returns void language plpgsql as $$
@@ -55,6 +57,8 @@ select pruef('Code einer anderen Veranstaltung', checkin('aaaaaaaa-0000-0000-000
 select pruef('falscher Tag', checkin('aaaaaaaa-0000-0000-0000-000000000002','token-b-12345','code-morgen')->>'fehler' = 'tag');
 select pruef('Check-in aus', checkin('aaaaaaaa-0000-0000-0000-000000000003','token-c-12345','code-ohne')->>'fehler' = 'aus');
 select pruef('Auschecken ohne Einchecken', checkin('aaaaaaaa-0000-0000-0000-000000000001','token-a-12345','richtiger-code',true)->>'fehler' = 'nicht_da');
+select pruef('Absage checkt nicht ein', checkin('aaaaaaaa-0000-0000-0000-000000000005','token-e-12345','richtiger-code')->>'fehler' = 'absage');
+select pruef('Absage hinterlässt keine Anwesenheit', (checkin_status('aaaaaaaa-0000-0000-0000-000000000005','token-e-12345')->>'checked_in_at') is null);
 select pruef('Einchecken', (checkin('aaaaaaaa-0000-0000-0000-000000000001','token-a-12345','richtiger-code')->>'ok')::boolean);
 select pruef('zweimal Einchecken behält erste Zeit',
   (checkin('aaaaaaaa-0000-0000-0000-000000000001','token-a-12345','richtiger-code')->>'checked_in_at') =

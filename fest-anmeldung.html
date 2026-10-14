@@ -477,6 +477,7 @@ const api = {
     if(!live){
       if(checkinCode !== "demo") return { ok:false, fehler:"code" };
       const a = DEMO_ANWESEND[mySid] || {};
+      if(!raus && MEIN && MEIN.status === "absage") return { ok:false, fehler:"absage" };
       if(raus && !a.checked_in_at) return { ok:false, fehler:"nicht_da" };
       if(raus) a.checked_out_at = new Date().toISOString();
       else a.checked_in_at = a.checked_in_at || new Date().toISOString();
@@ -896,7 +897,9 @@ const CHECKIN_FEHLER = {
   tag: "Einchecken geht nur am Tag der Veranstaltung.",
   aus: "Für diese Veranstaltung gibt es keinen Check-in.",
   anmeldung: "Die gespeicherte Anmeldung gibt es nicht mehr. Meldet euch bitte unten neu an.",
-  nicht_da: "Ihr seid noch nicht eingecheckt."
+  nicht_da: "Ihr seid noch nicht eingecheckt.",
+  absage: "Ihr habt für diese Veranstaltung abgesagt. Wenn ihr doch da seid, ändert unten " +
+    "eure Antwort auf Zusage und schickt sie ab, dann seid ihr eingecheckt."
 };
 
 async function renderCheckin(meldung){
