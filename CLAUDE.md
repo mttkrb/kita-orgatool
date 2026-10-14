@@ -46,7 +46,7 @@ manifest-eltern.json    Installation Startbildschirm, helles Symbol
 manifest-orga.json      Installation Startbildschirm, dunkles Symbol
 icons/                  App-Symbole, Standard-Logo (logo.svg) und -Favicon (favicon.svg/.png)
 fonts/                  Fraunces und Work Sans als woff2, Lizenztexte OFL-*.txt
-sql/                    schema.sql, migration-2.sql … migration-N.sql, Importe
+sql/                    schema.sql, migration-2.sql … migration-N.sql (keine Daten)
 tests/                  Node mit jsdom, Nachbau der Datenbank inkl. Rechteprüfung
 deploy/.htaccess        Für den Zielordner /orga/ auf dem Webspace
 nas/                    Backup- und Keep-alive-Skripte für das Vereins-NAS
