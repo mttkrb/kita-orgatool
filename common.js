@@ -64,7 +64,11 @@ const preisZahl = v => {
 
 // Bestellartikel mit Stückpreis sind Zusatzfragen vom Typ "order".
 const bestellArtikel = ev => ((ev && ev.fields) || []).filter(f=>f.type === "order");
-const bestellMenge = (e, f) => Math.max(0, Math.floor(+(((e && e.fields) || {})[f.label]) || 0));
+// Die Höchstmenge gilt nur hier im Browser; die Datenbank begrenzt Antworten nicht.
+// Wer über die API mehr einträgt, wird beim Rechnen auf max gekappt, damit der
+// Soll-Betrag im Orga-Bereich nicht ausufert.
+const bestellMenge = (e, f) => Math.min(+f.max || 99,
+  Math.max(0, Math.floor(+(((e && e.fields) || {})[f.label]) || 0)));
 
 // Kostet die Veranstaltung überhaupt etwas?
 const kostetEtwas = ev => {

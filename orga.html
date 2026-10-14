@@ -1621,14 +1621,14 @@ function download(name, text, typ){
 
 // Eine CSV-Zelle. Was mit = + - @ Tab oder Zeilenumbruch beginnt, liest Excel als
 // Formel; ein Apostroph davor macht daraus Text. Negative Zahlen bleiben Zahlen.
-// Betrag für die CSV: Komma als Dezimalzeichen, ohne Eurozeichen, damit Excel rechnen kann.
-const betragCsv = n => (+n || 0).toFixed(2).replace(".", ",");
-
 function csvCell(v){
   let s = String(v ?? "");
   if(/^[=+\-@\t\r]/.test(s) && !/^-\d+([.,]\d+)?$/.test(s)) s = "'" + s;
   return '"' + s.replace(/"/g,'""') + '"';
 }
+
+// Betrag für die CSV: Komma als Dezimalzeichen, ohne Eurozeichen, damit Excel rechnen kann.
+const betragCsv = n => (+n || 0).toFixed(2).replace(".", ",");
 
 async function alleAnmeldungen(){
   if(!live) return demoSignups.map(x=>({...x}));
@@ -1933,7 +1933,9 @@ function fieldRow(f){
       esc(preisZahl(f.price) ? String(preisZahl(f.price).toFixed(2)).replace(".", ",") : "")+'" placeholder="2,50"></div>'+
     '<div><label>höchstens pro Anmeldung</label><input type="number" class="f-max" min="1" max="99" value="'+
       (+f.max || 10)+'"></div></div>'+
-    '<p class="hint">Die Eltern tragen eine Anzahl ein, der Betrag kommt zum Gesamtpreis dazu.</p></div>';
+    '<p class="hint">Die Eltern tragen eine Anzahl ein, der Betrag kommt zum Gesamtpreis dazu. '+
+    'Die Mengen hängen am Text der Frage: nach den ersten Anmeldungen nicht mehr umbenennen, '+
+    'sonst fallen die bisherigen Bestellungen aus der Rechnung.</p></div>';
   d.dataset.id = f.id || "";
   const type = d.querySelector(".f-type"), opts = d.querySelector(".f-opts");
   const order = d.querySelector(".f-order"), req = d.querySelector(".f-req");
