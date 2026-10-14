@@ -2,7 +2,8 @@
 
 Diese Anleitung richtet das Kita-Orgatool von Grund auf neu ein: neues Supabase-Projekt,
 leere Datenbank, eigenes Orga-Passwort, Seiten auf dem Webspace. Für den Wechsel eines
-bestehenden Tools samt Daten in ein anderes Projekt gibt es den [Umzug](../umzug/ANLEITUNG.md).
+bestehenden Tools samt Daten in ein anderes Projekt gibt es den [Umzug](../umzug/ANLEITUNG.md),
+für spätere Updates die [Aktualisierung](../aktualisierung/ANLEITUNG.md).
 
 Für die Einrichtung selbst braucht es **keine Programme**: Die Datenbank wird im
 Browser über den SQL-Editor von Supabase angelegt, die Dateien kommen per SFTP auf den
@@ -144,7 +145,7 @@ fonts/               ← ganzer Ordner
 icons/               ← ganzer Ordner, samt eigenem Logo
 ```
 
-Nicht hochladen: `einrichtung/`, `umzug/`, `README.md`, `CLAUDE.md`, `.git*`.
+Nicht hochladen: `aktualisierung/`, `einrichtung/`, `umzug/`, `README.md`, `CLAUDE.md`, `.git*`.
 
 Liegt im Zielordner oder darüber eine `.htaccess` mit Content-Security-Policy, muss dort
 unter `connect-src` die Project URL stehen, sonst blockiert der Browser jede Abfrage.
@@ -188,6 +189,8 @@ Im Browser, mit neu geladener Seite (Strg+F5 bzw. Cmd+Shift+R):
   sieht).
 - **Passwortsafe**, vollständig: Zugang zum Supabase-Konto, Datenbank-Passwort,
   Orga-Passwort, Project URL, SFTP-Zugang zum Webspace.
+- **Stand notieren:** Datum und Commit, mit dem eingerichtet wurde. Das nächste Update
+  setzt dort an ([Aktualisierung](../aktualisierung/ANLEITUNG.md), Abschnitt 1).
 
 ## 9. Wenn etwas nicht passt
 
