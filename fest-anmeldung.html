@@ -127,6 +127,14 @@
   .zahlung p{margin:0 0 6px}
   .zahlung .hinweis{white-space:pre-line}
   .zahlung .zweck{color:var(--ink-soft);font-size:.86rem}
+  .checkin{background:var(--moss-soft);border:1px solid var(--moss);border-radius:6px;
+    padding:16px;margin-bottom:22px}
+  .checkin h2{margin-bottom:6px}
+  .checkin p{margin:0 0 10px}
+  .checkin .zeit{font-family:'Fraunces',serif;font-size:1.15rem;color:var(--moss)}
+  .checkin .klein{font-size:.85rem;color:var(--ink-soft)}
+  .checkin .vergessen{border:none;background:none;color:var(--ink-soft);font:inherit;font-size:.83rem;
+    text-decoration:underline;padding:0;cursor:pointer;margin-top:6px}
   a.paypal{display:inline-block;margin-top:6px;padding:10px 14px;border-radius:5px;
     background:var(--moss);color:#fff;font-weight:600;text-decoration:none}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -155,6 +163,8 @@
       zwei Sätze für das nächste Mal.</p>
     <a id="rueckblick-link" href="#" style="font-weight:600;color:var(--moss)">Rückmeldung geben</a>
   </div>
+
+  <div id="checkin-box" class="checkin hidden" aria-live="polite"></div>
 
   <div id="main" class="hidden">
     <section id="board-section">
@@ -259,11 +269,33 @@ const slug = params.get("event") || CONFIG.defaultEvent;
 if(!params.get("event") && CONFIG.startPage && CONFIG.showStart) location.replace(CONFIG.startPage);
 let myToken = params.get("entry") || null;
 let mySid = params.get("sid") || null;
+// Code vom Aushang am Eingang, siehe Check-in im Orga-Bereich
+const checkinCode = params.get("checkin") || null;
+const checkinModus = () => !!(EV && EV.checkin && checkinCode);
+
+// Bei Veranstaltungen mit Check-in merkt sich das Handy die eigene Anmeldung, damit der
+// Check-in am Eingang mit einem Tipp geht. Gemerkt werden nur Kennung und Token, also
+// das, was ohnehin im persönlichen Link steht. Ohne Speicher (privater Modus) geht es
+// über die Neuanmeldung.
+const MERK = "kita-anmeldung:" + slug;
+const merken = () => {
+  try{ if(myToken && mySid) localStorage.setItem(MERK, JSON.stringify({ sid:mySid, token:myToken })); }catch(e){}
+};
+const gemerkt = () => {
+  try{ const g = JSON.parse(localStorage.getItem(MERK) || "null"); return g && g.sid && g.token ? g : null; }
+  catch(e){ return null; }
+};
+const vergessen = () => { try{ localStorage.removeItem(MERK); }catch(e){} };
+let MEIN = null;
 
 let absage = false;
 
+const absendenText = () => absage ? "Abmeldung abschicken"
+  : checkinModus() && !(myToken && mySid) ? "Anmelden und einchecken" : "Anmeldung abschicken";
+
 function wahlAnzeigen(){
-  const pflicht = EV && EV.mandatory === true;
+  // Wer am Eingang eincheckt, ist da: dann keine Wahl zwischen Zu- und Absage
+  const pflicht = EV && EV.mandatory === true && !checkinModus();
   $("wahl-block").classList.toggle("hidden", !pflicht);
   $("pflicht-hinweis").classList.toggle("hidden", !pflicht);
   if(pflicht){
@@ -278,7 +310,7 @@ function wahlAnzeigen(){
     if(el) el.classList.toggle("hidden", absage);
   });
   $("absage-block").classList.toggle("hidden", !absage);
-  $("submit").textContent = absage ? "Abmeldung abschicken" : "Anmeldung abschicken";
+  $("submit").textContent = absendenText();
   renderKosten();
 }
 
@@ -311,6 +343,7 @@ const DEMO_EVENT = {
   fields:[{id:"anfahrt",label:"Wie kommt ihr hin?",type:"select",required:false,
     options:["zu Fuß","Rad","Auto"]},
     {id:"bratwurst",label:"Bratwurst vorbestellen",type:"order",price:2.5,max:10}],
+  checkin:true,
   payment:{ adults:3, kids:5, paypal:"sammlerin@example.de",
     note:"Bitte bis zum 20. September überweisen:\nElterninitiative Beispiel e. V., IBAN DE00 0000 0000 0000 0000 00\nOder bar am Eingang." }
 };
@@ -427,6 +460,30 @@ const api = {
     if(!r.ok) return [];
     return r.json();
   },
+  // Check-in über Datenbankfunktionen; sie prüfen Token, Code vom Aushang und Datum
+  async rpc(name, body){
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/rpc/" + name, {
+      method:"POST", headers:anonHead({ "Content-Type":"application/json" }), body:JSON.stringify(body)
+    });
+    if(!r.ok) throw new Error("Der Check-in hat nicht geklappt." + await fehlertext(r));
+    return r.json();
+  },
+  async checkin(raus){
+    if(!live){
+      if(checkinCode !== "demo") return { ok:false, fehler:"code" };
+      const a = DEMO_ANWESEND[mySid] || {};
+      if(raus && !a.checked_in_at) return { ok:false, fehler:"nicht_da" };
+      if(raus) a.checked_out_at = new Date().toISOString();
+      else a.checked_in_at = a.checked_in_at || new Date().toISOString();
+      DEMO_ANWESEND[mySid] = a;
+      return { ok:true, ...a };
+    }
+    return api.rpc("checkin", { p_signup:mySid, p_token:myToken, p_code:checkinCode, p_out:!!raus });
+  },
+  async checkinStatus(){
+    if(!live) return { ok:true, ...(DEMO_ANWESEND[mySid] || {}) };
+    return api.rpc("checkin_status", { p_signup:mySid, p_token:myToken });
+  },
   async mine(token, id){
     if(!live) return demo.find(e=>e.token===token) || null;
     if(!id) return null;
@@ -439,6 +496,7 @@ const api = {
 };
 
 let EV = null, EVENT_ID = null, BELEGT = [];
+let DEMO_ANWESEND = {};
 let DEMO_CLAIMS = [{id:"c1", task_id:"aufbau", name:"Sarah Klein", done:true}];
 let entries = [];
 const cat = id => (EV.categories||[]).find(c=>c.id===id);
@@ -462,7 +520,10 @@ function renderHead(){
       " für alle sichtbar sind, die diesen Link haben. "
     : "Meine Angaben sieht nur das Orgateam, nicht die anderen Gäste. ") +
     "Das Orgateam sieht immer alle Angaben" +
-    (kostetEtwas(EV) ? " und hält fest, ob bezahlt ist. " : ". ") + (EV.retention_note ||
+    (kostetEtwas(EV) ? " und hält fest, ob bezahlt ist. " : ". ") +
+    (EV.checkin ? "Beim Check-in am Eingang hält das Orgateam fest, wann ihr gekommen und gegangen seid. " +
+      "Dieses Handy merkt sich die Anmeldung, damit der Check-in mit einem Tipp geht. " : "") +
+    (EV.retention_note ||
       ("Alle Angaben werden " + (EV.retention_days === 1 ? "einen Tag" :
         (EV.retention_days || 14) + " Tage") + " nach der Veranstaltung gelöscht."));
   entries = entries.filter(e=>e.status !== "absage");
@@ -513,7 +574,7 @@ function renderHead(){
   const alsDatum = iso => new Date(iso + "T12:00:00").toLocaleDateString("de-DE",
     { weekday:"long", day:"numeric", month:"long" });
 
-  if(!offenFuerAnmeldung){
+  if(!offenFuerAnmeldung && !checkinModus()){
     $("anmelde-hinweis-text").innerHTML = nichtFrei
       ? "<strong>Die Anmeldung wird noch vorbereitet.</strong> Das Orgateam schaltet sie frei, " +
         "sobald alles steht. Termin schon mal vormerken" +
@@ -561,8 +622,8 @@ function renderHead(){
   const fragtNichts = !hatKategorien && !(EV.fields||[]).length &&
     (!verteilen || !(EV.tasks||[]).length) && groups(EV).adults.on === false && groups(EV).kids.on === false;
   const anmeldeTeil = $("form").closest("section");
-  if(anmeldeTeil) anmeldeTeil.classList.toggle("hidden",
-    (fragtNichts && !myToken) || (!offenFuerAnmeldung && !myToken));
+  if(anmeldeTeil) anmeldeTeil.classList.toggle("hidden", !checkinModus() &&
+    ((fragtNichts && !myToken) || (!offenFuerAnmeldung && !myToken)));
 
   if((EV.visibility||{}).tasksFirst === true){
     $("tasks-head").textContent = "Aufgaben";
@@ -823,6 +884,60 @@ function renderFields(pre){
   renderKosten();
 }
 
+/* ---------- Check-in am Eingang ---------- */
+const uhrzeit = iso => new Date(iso).toLocaleTimeString("de-DE", { hour:"2-digit", minute:"2-digit" });
+const CHECKIN_FEHLER = {
+  code: "Dieser QR-Code gilt nicht mehr. Bitte scannt den Aushang am Eingang noch einmal.",
+  tag: "Einchecken geht nur am Tag der Veranstaltung.",
+  aus: "Für diese Veranstaltung gibt es keinen Check-in.",
+  anmeldung: "Die gespeicherte Anmeldung gibt es nicht mehr. Meldet euch bitte unten neu an.",
+  nicht_da: "Ihr seid noch nicht eingecheckt."
+};
+
+async function renderCheckin(meldung){
+  const box = $("checkin-box");
+  if(!checkinModus()){ box.classList.add("hidden"); return; }
+  box.classList.remove("hidden");
+  if(!(myToken && mySid)){
+    box.innerHTML = "<h2>Check-in</h2><p>Schön, dass ihr da seid! Auf diesem Handy ist noch keine " +
+      "Anmeldung gespeichert. Meldet euch unten kurz an, damit seid ihr gleich eingecheckt.</p>";
+    if(meldung) box.insertAdjacentHTML("beforeend", '<p class="error">' + esc(meldung) + "</p>");
+    return;
+  }
+  let st = {};
+  try{ st = await api.checkinStatus(); }catch(e){}
+  const name = MEIN ? shortName(MEIN.name) : "";
+  let html = "<h2>Check-in" + (name ? " · " + esc(name) : "") + "</h2>";
+  if(!st.checked_in_at){
+    html += "<p>Schön, dass ihr da seid! Ein Tipp genügt.</p>" +
+      '<button type="button" class="primary" id="ci-da" style="margin-top:0">Wir sind da</button>';
+  } else if(!st.checked_out_at){
+    html += '<p>Eingecheckt um <span class="zeit">' + uhrzeit(st.checked_in_at) + "</span>. Danke, dass ihr da seid!</p>" +
+      '<button type="button" class="ghost" id="ci-weg">Wir gehen jetzt</button>' +
+      '<p class="klein" style="margin-top:8px">Wenn ihr geht, tippt kurz darauf. Dann wissen wir fürs ' +
+      "nächste Mal, wie lange so ein Einsatz dauert.</p>";
+  } else {
+    html += '<p>Danke! Ihr wart von <span class="zeit">' + uhrzeit(st.checked_in_at) + "</span> bis " +
+      '<span class="zeit">' + uhrzeit(st.checked_out_at) + "</span> da.</p>";
+  }
+  if(meldung) html += '<p class="error">' + esc(meldung) + "</p>";
+  html += '<button type="button" class="vergessen" id="ci-vergessen">Nicht ihr? Auf diesem Handy vergessen</button>';
+  box.innerHTML = html;
+  const tun = async raus => {
+    let r;
+    try{ r = await api.checkin(raus); }catch(err){ return renderCheckin(err.message); }
+    if(r && r.ok === false && r.fehler === "anmeldung"){ vergessen(); myToken = mySid = MEIN = null; }
+    renderCheckin(r && r.ok === false ? (CHECKIN_FEHLER[r.fehler] || "Der Check-in hat nicht geklappt.") : "");
+  };
+  if($("ci-da")) $("ci-da").onclick = () => tun(false);
+  if($("ci-weg")) $("ci-weg").onclick = () => tun(true);
+  $("ci-vergessen").onclick = () => {
+    vergessen();
+    location.href = location.pathname + "?event=" + encodeURIComponent(slug) +
+      "&checkin=" + encodeURIComponent(checkinCode);
+  };
+}
+
 /* ---------- Kosten und Bezahlung ---------- */
 // Zahlungshinweis. Den PayPal-Knopf gibt es erst nach dem Abschicken, damit niemand
 // bezahlt, ohne angemeldet zu sein.
@@ -991,7 +1106,14 @@ $("form").addEventListener("submit", async ev=>{
     if(myToken && mySid) await api.update(myToken, data, mySid);
     else { const rec = await api.create(data); token = rec.token; mySid = rec.id; }
     myToken = token;
+    if(EV.checkin) merken();
     await load();
+    if(checkinModus() && !absage){
+      let r = null;
+      try{ r = await api.checkin(false); }catch(e){}
+      try{ MEIN = await api.mine(myToken, mySid); }catch(e){}
+      await renderCheckin(r && r.ok === false ? (CHECKIN_FEHLER[r.fehler] || "") : "");
+    }
     const link = location.origin + location.pathname + "?event=" + slug +
       "&entry=" + token + "&sid=" + mySid;
     $("form").classList.add("hidden");
@@ -1014,11 +1136,12 @@ $("form").addEventListener("submit", async ev=>{
     $("remove").onclick = async () => {
       if(!confirm("Anmeldung wirklich löschen?")) return;
       await api.remove(myToken, mySid);
+      vergessen();
       location.href = location.pathname + "?event=" + slug;
     };
-    $("done").scrollIntoView({behavior:"smooth", block:"center"});
+    (checkinModus() ? $("checkin-box") : $("done")).scrollIntoView({behavior:"smooth", block:"center"});
   }catch(err){ showError(err.message + " Versuch es bitte nochmal."); }
-  finally{ $("submit").disabled = false; $("submit").textContent = "Anmeldung abschicken"; }
+  finally{ $("submit").disabled = false; $("submit").textContent = absendenText(); }
 });
 
 document.addEventListener("click", async ev => {
@@ -1062,6 +1185,12 @@ async function load(){
       ' <a href="' + CONFIG.startPage + '">Hier stehen alle offenen Veranstaltungen.</a>';
     return;
   }
+  if(EV.checkin){
+    if(myToken && mySid) merken();
+    // Wiedererkennen nur beim Scan am Eingang, sonst stünde auf einem geteilten Handy
+    // beim normalen Anmeldelink die Anmeldung von jemand anderem zum Ändern bereit
+    else if(checkinCode){ const g = gemerkt(); if(g){ myToken = g.token; mySid = g.sid; } }
+  }
   $("main").classList.remove("hidden");
   wahlAnzeigen();
   if((EV.categories||[]).length) $("brings").appendChild(bringRow());
@@ -1073,10 +1202,15 @@ async function load(){
   renderTasks();
   renderTaskChecks([...document.querySelectorAll("#task-checks input:checked")].map(c=>c.value));
   if(myToken){
-    try{ const mine = await api.mine(myToken, mySid); if(mine) fillForm(mine); }catch(e){}
+    try{
+      MEIN = await api.mine(myToken, mySid);
+      if(MEIN) fillForm(MEIN);
+      else if(EV.checkin && mySid){ vergessen(); myToken = mySid = null; wahlAnzeigen(); }
+    }catch(e){}
     if(myToken && !mySid) showError("Dieser Änderungslink stammt aus einer früheren Fassung und " +
       "funktioniert nicht mehr. Melde dich einfach neu an — das Orgateam räumt den alten Eintrag weg.");
   }
+  await renderCheckin();
   setInterval(load, 30000);
 })();
 </script>

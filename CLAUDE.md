@@ -82,7 +82,7 @@ erst beim Deployment eingetragen und nie committet.
 
 ## Datenmodell
 
-Zehn Tabellen. Veränderliche Strukturen liegen als JSON in Spalten, weil sich die
+Zwölf Tabellen. Veränderliche Strukturen liegen als JSON in Spalten, weil sich die
 Felder je Veranstaltung unterscheiden.
 
 | Tabelle | Inhalt | Wer liest |
@@ -96,6 +96,8 @@ Felder je Veranstaltung unterscheiden.
 | `proposals` | Gemeldete Aufgaben | Melder offene, Orga alles |
 | `feedback` | Rückmeldungen der Eltern | nur Orga |
 | `payments` | Zahlungseingang je Anmeldung (Haken, Betrag, Datum), Kaskade mit `signups` | nur Orga |
+| `attendance` | Check-in: gekommen, gegangen, Stunden je Anmeldung, Kaskade mit `signups` | nur Orga |
+| `checkin_codes` | Code vom Aushang je Veranstaltung | nur Orga |
 | `orga_keys` | Orga-Passwort | niemand über die API |
 
 JSON-Strukturen: `categories`, `tasks`, `fields`, `checklist`, `shopping`, `review`,
@@ -108,6 +110,14 @@ die Menge steht wie jede Antwort in `signups.fields`. Ausgaben stehen als `preis
 `planning.shopping`, festgehaltene Summen in `planning.review.geld`. Der Betrag einer
 Anmeldung wird nie gespeichert, sondern immer mit `kosten(ev, signup)` aus `common.js`
 gerechnet. PayPal ist nur ein Link (`paypalLink`), kein Skript und keine Fremdquelle.
+
+Check-in (ab `migration-22.sql`): `events.checkin` schaltet ihn ein. Der Aushang führt auf
+`fest-anmeldung.html?event=…&checkin=CODE`. Eltern checken über die Datenbankfunktionen
+`checkin()` und `checkin_status()` ein und aus; sie prüfen Token, Code und Tag
+(Europe/Berlin). Direkt in `attendance` schreibt nur das Orgateam. Bei Veranstaltungen mit
+Check-in merkt sich das Handy Kennung und Token unter `localStorage` `kita-anmeldung:<slug>`,
+wiedererkannt wird nur beim Scan am Eingang. Der QR-Code entsteht ohne Bibliothek in
+`orga.html` (`qrMatrix`, `qrSvg`).
 
 ## Sicherheitsmodell
 
