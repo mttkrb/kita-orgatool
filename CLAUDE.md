@@ -119,6 +119,13 @@ Check-in merkt sich das Handy Kennung und Token unter `localStorage` `kita-anmel
 wiedererkannt wird nur beim Scan am Eingang. Der QR-Code entsteht ohne Bibliothek in
 `orga.html` (`qrMatrix`, `qrSvg`).
 
+Abmelden mit Zahlung (ab `migration-24.sql`): Ist für eine Anmeldung ein Zahlungseingang
+eingetragen, löschen Eltern sie nicht mehr über den persönlichen Link; das Orgateam löscht
+selbst und zahlt vorher zurück. Absagen über das Formular bleiben möglich. Hilfsfunktionen
+für Policies liegen im Schema `intern`, das die Schnittstelle nicht erreicht.
+`intern.anmeldung_betrag()` rechnet wie `kosten()` in `common.js` — wer eines ändert,
+ändert beide.
+
 ## Sicherheitsmodell
 
 Drei Stufen, alle ohne Benutzerkonten, alle über dieselbe Postgres-Rolle `anon`:
@@ -146,7 +153,8 @@ Daraus folgt:
 - Namen unter Rückmeldungen und Meldungen: nach 60 Tagen anonymisiert, Texte bleiben.
 - Planung, Rückblick, Fotos und Zahlen: bleiben dauerhaft.
 - `daten_aufraeumen()` schreibt vor dem Löschen eine Zusammenfassung ohne
-  Personenbezug nach `planning.review.zahlen`. Die Historie überlebt die Namen.
+  Personenbezug nach `planning.review.zahlen` (dazu Anwesenheit und Stunden) und die
+  Einnahmen nach `planning.review.geld`. Die Historie überlebt die Namen.
 - Der Einwilligungstext auf der Anmeldeseite wird aus `visibility` und
   `retention_days` erzeugt. **Wer diese Felder ändert, ändert ein Versprechen an die
   Eltern** — Text und Verhalten müssen zusammenpassen.

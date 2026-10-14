@@ -3252,8 +3252,11 @@ async function loadSignups(){
   $("su-table").querySelectorAll("button[data-del]").forEach(b=>{
     b.onclick = async () => {
       const wer = (signups.find(x=>x.id === b.dataset.del) || {}).name || "diese Anmeldung";
-      if(!confirm("Anmeldung von " + wer + " löschen?\n\nDas wirkt sofort und lässt sich " +
-        "nicht zurückholen.")) return;
+      const z = zahlungen[b.dataset.del];
+      if(!confirm("Anmeldung von " + wer + " löschen?\n\n" +
+        (z ? "Achtung: " + wer + " hat " + euro(z.amount) + " bezahlt. Mit der Anmeldung verschwindet " +
+             "auch der Zahlungseingang. Erst zurückzahlen, dann löschen.\n\n" : "") +
+        "Das wirkt sofort und lässt sich nicht zurückholen.")) return;
       await db.deleteSignup(b.dataset.del); await loadSignups();
     };
   });

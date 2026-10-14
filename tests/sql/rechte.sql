@@ -1,5 +1,5 @@
--- Rechteprüfung für Migration 22 (Zahlungseingang) und 23 (Check-in), dazu die gesperrte
--- Token-Spalte aus schema.sql.
+-- Rechteprüfung für Migration 22 (Zahlungseingang), 23 (Check-in) und 24 (Abmelden mit
+-- Zahlung, Aufräumen), dazu die gesperrte Token-Spalte aus schema.sql.
 -- Weist auch nach, was verboten ist. Jede Zeile beginnt mit OK oder FEHLER.
 \set QUIET on
 \pset tuples_only on
@@ -73,9 +73,58 @@ select pruef('Orga hakt von Hand ab', (select count(*) from attendance) = 2);
 update checkin_codes set code = 'neuer-code-123' where event_id = '11111111-1111-1111-1111-111111111111';
 select pruef('Orga erneuert Code', (select code from checkin_codes where event_id='11111111-1111-1111-1111-111111111111') = 'neuer-code-123');
 
--- Eltern löschen eigene Anmeldung: Kaskade
+-- Eltern löschen eigene Anmeldung: mit Zahlung gesperrt, ohne Zahlung erlaubt
 set request.headers = '{"x-entry-token":"token-d-12345"}';
 delete from signups where id = 'aaaaaaaa-0000-0000-0000-000000000004';
+set request.headers = '{"x-entry-token":"token-c-12345"}';
+delete from signups where id = 'aaaaaaaa-0000-0000-0000-000000000003';
 reset role;
+select pruef('Eltern löschen bezahlte Anmeldung nicht', (select count(*) from signups where id='aaaaaaaa-0000-0000-0000-000000000004') = 1);
+select pruef('Zahlung bleibt dabei erhalten', (select count(*) from payments where signup_id='aaaaaaaa-0000-0000-0000-000000000004') = 1);
+select pruef('Eltern löschen Anmeldung ohne Zahlung', (select count(*) from signups where id='aaaaaaaa-0000-0000-0000-000000000003') = 0);
+set role anon;
+set request.headers = '{"x-entry-token":"token-d-12345"}';
+update signups set status = 'absage', note = 'krank' where id = 'aaaaaaaa-0000-0000-0000-000000000004';
+reset role;
+select pruef('Absage über das Formular bleibt möglich', (select status from signups where id='aaaaaaaa-0000-0000-0000-000000000004') = 'absage');
+set role anon;
+set request.headers = '{"x-orga-key":"geheim-orga"}';
+delete from signups where id = 'aaaaaaaa-0000-0000-0000-000000000004';
+reset role;
+select pruef('Orga löscht bezahlte Anmeldung', (select count(*) from signups where id='aaaaaaaa-0000-0000-0000-000000000004') = 0);
 select pruef('Löschen nimmt payments mit', (select count(*) from payments) = 0);
 select pruef('Löschen nimmt attendance mit', (select count(*) from attendance where signup_id='aaaaaaaa-0000-0000-0000-000000000004') = 0);
+
+-- Betrag in der Datenbank wie kosten() in common.js
+insert into events (id, slug, title, event_on, retention_days, people, fields, payment) values
+  ('44444444-4444-4444-4444-444444444444','vorbei','Sankt Martin',current_date - 20, 14,
+   '{"adults":{"on":true,"label":"Erwachsene"},"kids":{"on":true,"label":"Kinder"}}',
+   '[{"type":"order","label":"Weckmann","price":2.5,"max":10},{"type":"text","label":"Notiz"}]',
+   '{"adults":3,"kids":1.5}');
+insert into signups (id, event, name, adults, kids, fields, status) values
+  ('bbbbbbbb-0000-0000-0000-000000000001','vorbei','Familie E',2,1,'{"Weckmann":"3"}','zusage'),
+  ('bbbbbbbb-0000-0000-0000-000000000002','vorbei','Familie F',1,0,'{"Weckmann":"500"}','zusage'),
+  ('bbbbbbbb-0000-0000-0000-000000000003','vorbei','Familie G',2,2,'{"Weckmann":"abc"}','absage');
+insert into payments values ('bbbbbbbb-0000-0000-0000-000000000001', 15, now());
+insert into attendance (signup_id, checked_in_at, checked_out_at) values
+  ('bbbbbbbb-0000-0000-0000-000000000001', now() - interval '3 hours', now() - interval '30 minutes');
+select pruef('Betrag mit Bestellung', (select intern.anmeldung_betrag(s, e) from signups s, events e
+  where s.id='bbbbbbbb-0000-0000-0000-000000000001' and e.slug='vorbei') = 15.00);
+select pruef('Bestellmenge auf max gekappt', (select intern.anmeldung_betrag(s, e) from signups s, events e
+  where s.id='bbbbbbbb-0000-0000-0000-000000000002' and e.slug='vorbei') = 28.00);
+select pruef('Absage kostet nichts', (select intern.anmeldung_betrag(s, e) from signups s, events e
+  where s.id='bbbbbbbb-0000-0000-0000-000000000003' and e.slug='vorbei') = 0);
+
+-- Aufräumen hält Geld und Anwesenheit fest, bevor die Namen gehen
+select count(*) from daten_aufraeumen();
+select pruef('Anmeldungen nach Frist gelöscht', (select count(*) from signups where event='vorbei') = 0);
+select pruef('Einnahmen gesichert', (select review->'geld'->>'einnahmen' from planning
+  where event_id='44444444-4444-4444-4444-444444444444')::numeric = 43);
+select pruef('Bezahlt gesichert', (select review->'geld'->>'bezahlt' from planning
+  where event_id='44444444-4444-4444-4444-444444444444')::numeric = 15);
+select pruef('Anwesenheit gesichert', (select review->'zahlen'->>'anwesend' from planning
+  where event_id='44444444-4444-4444-4444-444444444444')::int = 1);
+select pruef('Stunden gesichert', (select review->'zahlen'->>'stunden' from planning
+  where event_id='44444444-4444-4444-4444-444444444444')::numeric = 2.5);
+select pruef('Zahlen wie bisher gesichert', (select review->'zahlen'->>'anmeldungen' from planning
+  where event_id='44444444-4444-4444-4444-444444444444')::int = 3);

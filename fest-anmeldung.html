@@ -417,9 +417,14 @@ const api = {
   async remove(token, id){
     if(!live){ demo = demo.filter(e=>e.token!==token); return; }
     const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?id=eq." + id,{
-      method:"DELETE", headers:anonHead({ "X-Entry-Token":token })
+      method:"DELETE", headers:anonHead({ "X-Entry-Token":token, Prefer:"return=representation" })
     });
     if(!r.ok) throw new Error("Abmeldung hat nicht geklappt." + await fehlertext(r));
+    // Die Datenbank löscht still nichts, wenn schon bezahlt ist (migration-24.sql):
+    // dann muss das Orgateam abmelden, damit das Geld zurückgehen kann.
+    const weg = await r.json().catch(()=>[]);
+    if(!weg.length) throw new Error("Ihr habt schon bezahlt. Damit ihr das Geld zurückbekommt, " +
+      "meldet euch bitte beim Orgateam ab. Bis dahin bleibt eure Anmeldung bestehen.");
   },
   async claims(){
     if(!live || !EVENT_ID) return DEMO_CLAIMS;
@@ -1135,7 +1140,8 @@ $("form").addEventListener("submit", async ev=>{
     };
     $("remove").onclick = async () => {
       if(!confirm("Anmeldung wirklich löschen?")) return;
-      await api.remove(myToken, mySid);
+      try{ await api.remove(myToken, mySid); }
+      catch(err){ showError(err.message); $("error").scrollIntoView({behavior:"smooth", block:"center"}); return; }
       vergessen();
       location.href = location.pathname + "?event=" + slug;
     };
