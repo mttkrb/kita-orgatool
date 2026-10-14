@@ -103,7 +103,7 @@ Felder je Veranstaltung unterscheiden.
 JSON-Strukturen: `categories`, `tasks`, `fields`, `checklist`, `shopping`, `review`,
 `people`, `visibility`, `payment` — Felder siehe Projekthandbuch, Abschnitt 4.
 
-Kosten (ab `migration-21.sql`): `events.payment` und `templates.payment` halten
+Kosten (ab `migration-22.sql`): `events.payment` und `templates.payment` halten
 `{ adults, kids, note, paypal }` — Preis je Person der beiden Gruppen, Zahlungshinweis,
 PayPal.me-Name oder PayPal-Adresse (Freunde & Familie). Bestellartikel sind Zusatzfragen vom Typ `order` mit `price` und `max`;
 die Menge steht wie jede Antwort in `signups.fields`. Ausgaben stehen als `preis` in
@@ -111,7 +111,7 @@ die Menge steht wie jede Antwort in `signups.fields`. Ausgaben stehen als `preis
 Anmeldung wird nie gespeichert, sondern immer mit `kosten(ev, signup)` aus `common.js`
 gerechnet. PayPal ist nur ein Link (`paypalLink`), kein Skript und keine Fremdquelle.
 
-Check-in (ab `migration-22.sql`): `events.checkin` schaltet ihn ein. Der Aushang führt auf
+Check-in (ab `migration-23.sql`): `events.checkin` schaltet ihn ein. Der Aushang führt auf
 `fest-anmeldung.html?event=…&checkin=CODE`. Eltern checken über die Datenbankfunktionen
 `checkin()` und `checkin_status()` ein und aus; sie prüfen Token, Code und Tag
 (Europe/Berlin). Direkt in `attendance` schreibt nur das Orgateam. Bei Veranstaltungen mit

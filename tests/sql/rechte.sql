@@ -1,9 +1,11 @@
--- Rechteprüfung für Migration 21 (Zahlungseingang) und 22 (Check-in).
+-- Rechteprüfung für Migration 22 (Zahlungseingang) und 23 (Check-in), dazu die gesperrte
+-- Token-Spalte aus schema.sql.
 -- Weist auch nach, was verboten ist. Jede Zeile beginnt mit OK oder FEHLER.
 \set QUIET on
 \pset tuples_only on
 \pset format unaligned
 -- Testdaten als Superuser
+insert into orga_keys (secret, label) values ('geheim-orga', 'Test') on conflict do nothing;
 insert into events (id, slug, title, event_on, checkin, payment) values
   ('11111111-1111-1111-1111-111111111111','heute','Arbeitseinsatz',(now() at time zone 'Europe/Berlin')::date,true,'{"adults":3}'),
   ('22222222-2222-2222-2222-222222222222','morgen','Laternenfest',(now() at time zone 'Europe/Berlin')::date+1,true,'{}'),
