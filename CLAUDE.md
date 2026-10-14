@@ -74,7 +74,7 @@ Laden feststehen, über `titel(text)` setzen, nicht über `document.title`.
 Namen aus `common.js` (`live`, `$`, `esc`, `bildUrl`, `SIGNUP_COLS`, `anonHead`,
 `isoDatum`, `heute`, `fmtDate`, `vis`, `groups`, `verkleinern`, `EINSTELLUNG`,
 `kitaName`, `eigeneAdresse`, `farbe`, `titel`, `euro`, `preisZahl`, `bestellArtikel`, `bestellMenge`,
-`kostetEtwas`, `kosten`, `paypalName`, `paypalMail`, `paypalLink`) in den Seiten nicht auf oberster Ebene
+`kostetEtwas`, `kosten`, `paypalName`, `paypalMail`, `paypalLink`, `zahlLink`, `zahlweg`) in den Seiten nicht auf oberster Ebene
 neu deklarieren — das ergibt einen SyntaxError und die ganze Seite bleibt stehen.
 
 Im Repo steht in `SUPABASE.url` in `config.js` ein Platzhalter. Die echte Projektadresse wird
@@ -104,12 +104,13 @@ JSON-Strukturen: `categories`, `tasks`, `fields`, `checklist`, `shopping`, `revi
 `people`, `visibility`, `payment` — Felder siehe Projekthandbuch, Abschnitt 4.
 
 Kosten (ab `migration-22.sql`): `events.payment` und `templates.payment` halten
-`{ adults, kids, note, paypal }` — Preis je Person der beiden Gruppen, Zahlungshinweis,
-PayPal.me-Name oder PayPal-Adresse (Freunde & Familie). Bestellartikel sind Zusatzfragen vom Typ `order` mit `price` und `max`;
+`{ adults, kids, note, link }` — Preis je Person der beiden Gruppen, Zahlungshinweis und
+Zahlweg: PayPal.me-Name, PayPal-Adresse (Freunde & Familie) oder ein beliebiger https-Link
+(Wero, Bank). Ältere Einträge heißen `paypal`; `zahlweg()` liest beide, gespeichert wird `link`. Bestellartikel sind Zusatzfragen vom Typ `order` mit `price` und `max`;
 die Menge steht wie jede Antwort in `signups.fields`. Ausgaben stehen als `preis` in
 `planning.shopping`, festgehaltene Summen in `planning.review.geld`. Der Betrag einer
 Anmeldung wird nie gespeichert, sondern immer mit `kosten(ev, signup)` aus `common.js`
-gerechnet. PayPal ist nur ein Link (`paypalLink`), kein Skript und keine Fremdquelle.
+gerechnet. Zahlwege sind nur Links, kein Skript und keine Fremdquelle.
 
 Check-in (ab `migration-23.sql`): `events.checkin` schaltet ihn ein. Der Aushang führt auf
 `fest-anmeldung.html?event=…&checkin=CODE`. Eltern checken über die Datenbankfunktionen

@@ -471,9 +471,9 @@ create policy "eigene loeschen" on signups for delete to anon
       <textarea id="e-p-note" maxlength="1000" placeholder="Bitte bis zum … überweisen an Elterninitiative …, IBAN …&#10;Oder bar am Eingang."></textarea>
       <p class="hint">Steht nach dem Anmelden unter dem Betrag, zusammen mit einem Verwendungszweck aus
         Veranstaltung und Name.</p>
-      <label for="e-p-paypal">PayPal <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
-      <input type="text" id="e-p-paypal" maxlength="200" placeholder="PayPal-Adresse oder PayPal.me-Name">
-      <p class="hint" id="e-p-paypal-hint">Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die
+      <label for="e-p-link">Zahllink oder PayPal <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <input type="text" id="e-p-link" maxlength="300" placeholder="https://… , PayPal-Adresse oder PayPal.me-Name">
+      <p class="hint" id="e-p-link-hint">Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die
         Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.</p>
     </fieldset>
 
@@ -620,9 +620,9 @@ create policy "eigene loeschen" on signups for delete to anon
       <textarea id="t-p-note" maxlength="1000" placeholder="Bitte bis zum … überweisen an Elterninitiative …, IBAN …&#10;Oder bar am Eingang."></textarea>
       <p class="hint">Steht nach dem Anmelden unter dem Betrag, zusammen mit einem Verwendungszweck aus
         Veranstaltung und Name.</p>
-      <label for="t-p-paypal">PayPal <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
-      <input type="text" id="t-p-paypal" maxlength="200" placeholder="PayPal-Adresse oder PayPal.me-Name">
-      <p class="hint" id="t-p-paypal-hint">Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die
+      <label for="t-p-link">Zahllink oder PayPal <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <input type="text" id="t-p-link" maxlength="300" placeholder="https://… , PayPal-Adresse oder PayPal.me-Name">
+      <p class="hint" id="t-p-link-hint">Nur der Name hinter paypal.me/. Nach dem Anmelden bekommen die
         Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.</p>
     </fieldset>
 
@@ -752,7 +752,7 @@ function fillPayment(prefix, o){
   $(prefix+"-p-adults").value = zeig(p.adults);
   $(prefix+"-p-kids").value = zeig(p.kids);
   $(prefix+"-p-note").value = p.note || "";
-  $(prefix+"-p-paypal").value = p.paypal || "";
+  $(prefix+"-p-link").value = p.link || p.paypal || "";
   paymentLabels(prefix);
 }
 function readPayment(prefix){
@@ -762,9 +762,9 @@ function readPayment(prefix){
   if(k) p.kids = k;
   const note = $(prefix+"-p-note").value.trim().slice(0, 1000);
   if(note) p.note = note;
-  const roh = $(prefix+"-p-paypal").value;
-  const pp = paypalMail(roh) || paypalName(roh);
-  if(pp) p.paypal = pp;
+  // Früher payment.paypal; beim Speichern wird daraus payment.link
+  const weg = zahlweg({ link:$(prefix+"-p-link").value });
+  if(weg) p.link = weg.wert;
   return p;
 }
 // Beschriftung der Preisfelder folgt den Gruppennamen; abgeschaltete Gruppen kosten nichts.
@@ -774,21 +774,28 @@ function paymentLabels(prefix){
     $(prefix+"-p-"+k+"-lbl").textContent = ($(prefix+"-"+g+"-label").value.trim() || std) + ": Preis pro Person";
     $(prefix+"-p-"+k).disabled = !an;
   });
-  const roh = $(prefix+"-p-paypal").value.trim();
-  const hinweis = $(prefix+"-p-paypal-hint");
-  const falsch = roh && !paypalName(roh) && !paypalMail(roh);
+  const roh = $(prefix+"-p-link").value.trim();
+  const hinweis = $(prefix+"-p-link-hint");
+  const weg = zahlweg({ link:roh });
+  const falsch = roh && !weg;
   hinweis.textContent = falsch
-    ? "Das ist weder eine E-Mail-Adresse noch ein PayPal.me-Name (Buchstaben, Ziffern, Punkt, Strich, Unterstrich)."
-    : paypalMail(roh)
+    ? "Das ist weder ein Link mit https:// noch eine E-Mail-Adresse noch ein PayPal.me-Name."
+    : !weg
+    ? "Ein Zahllink (etwa von Wero oder der Bank), die PayPal-Adresse der Person, die sammelt, oder ein " +
+      "PayPal.me-Name. Die Seite selbst lädt nichts von dort; die Eltern öffnen den Link selbst."
+    : weg.art === "mail"
     ? "Nach dem Anmelden sehen die Eltern diese Adresse mit Betrag und Verwendungszweck zum Kopieren. " +
       "Die Adresse steht damit für alle mit dem Link sichtbar auf der Anmeldeseite. Nur eintragen, " +
       "wenn die Person, die sammelt, einverstanden ist."
-    : "PayPal-Adresse der Person, die sammelt, oder ein PayPal.me-Name. Beim PayPal.me-Namen bekommen die " +
-      "Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.";
+    : weg.art === "paypalme"
+    ? "PayPal.me-Name: Nach dem Anmelden bekommen die Eltern einen Knopf, der PayPal mit dem richtigen " +
+      "Betrag öffnet."
+    : "Zahllink: Nach dem Anmelden bekommen die Eltern einen Knopf zu diesem Link und sehen den Betrag " +
+      "daneben. Ob der Betrag beim Anbieter schon eingetragen ist, hängt vom Anbieter ab.";
   hinweis.style.color = falsch ? "var(--berry)" : "";
 }
 ["e","t"].forEach(prefix=>{
-  ["-g1-on","-g1-label","-g2-on","-g2-label","-p-paypal"].forEach(id=>
+  ["-g1-on","-g1-label","-g2-on","-g2-label","-p-link"].forEach(id=>
     $(prefix+id).addEventListener("input", () => paymentLabels(prefix)));
 });
 
@@ -832,7 +839,7 @@ let demoEvents = [{
   tasks:[{id:"aufbau",label:"Aufbau",when:"ab 12 Uhr",needed:6}],
   fields:[{id:"bratwurst",label:"Bratwurst vorbestellen",type:"order",price:2.5,max:10,required:false,options:[]}],
   checkin:true,
-  payment:{ adults:3, kids:5, paypal:"sammlerin@example.de",
+  payment:{ adults:3, kids:5, link:"sammlerin@example.de",
     note:"Bitte bis zum 20. September überweisen:\nElterninitiative Beispiel e. V., IBAN DE00 0000 0000 0000 0000 00" }
 }];
 let demoPlanning = { "e-alt": {

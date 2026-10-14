@@ -344,7 +344,7 @@ const DEMO_EVENT = {
     options:["zu Fuß","Rad","Auto"]},
     {id:"bratwurst",label:"Bratwurst vorbestellen",type:"order",price:2.5,max:10}],
   checkin:true,
-  payment:{ adults:3, kids:5, paypal:"sammlerin@example.de",
+  payment:{ adults:3, kids:5, link:"sammlerin@example.de",
     note:"Bitte bis zum 20. September überweisen:\nElterninitiative Beispiel e. V., IBAN DE00 0000 0000 0000 0000 00\nOder bar am Eingang." }
 };
 let demo = [
@@ -944,28 +944,32 @@ async function renderCheckin(meldung){
 }
 
 /* ---------- Kosten und Bezahlung ---------- */
-// Zahlungshinweis. Den PayPal-Knopf gibt es erst nach dem Abschicken, damit niemand
-// bezahlt, ohne angemeldet zu sein.
+// Zahlungshinweis. Knopf oder Adresse zum Bezahlen gibt es erst nach dem Abschicken,
+// damit niemand bezahlt, ohne angemeldet zu sein.
 function zahlHtml(summe, name, mitLink){
   const P = EV.payment || {};
   const hinweis = String(P.note || "").trim();
-  const pp = mitLink && summe > 0 ? paypalLink(P.paypal, summe) : "";
-  const mail = paypalMail(P.paypal);
-  const hatPaypal = !!(paypalName(P.paypal) || mail);
-  if(!hinweis && !hatPaypal) return "";
+  const weg = zahlweg(P);
+  const zeigen = weg && mitLink && summe > 0;
+  if(!hinweis && !weg) return "";
   const zweck = EV.title + (name ? " - " + name : "");
+  const mail = zeigen && weg.art === "mail" ? weg.wert : "";
+  const pp = zeigen && weg.art === "paypalme" ? paypalLink(weg.wert, summe) : "";
+  const fremd = zeigen && weg.art === "link" ? weg.wert : "";
   return '<div class="zahlung"><p><strong>So bezahlst du</strong></p>' +
     (hinweis ? '<p class="hinweis">' + esc(hinweis) + '</p>' : "") +
     (summe > 0 ? '<p class="zweck">Verwendungszweck: ' + esc(zweck) + '</p>' : "") +
-    (mail && mitLink && summe > 0
+    (mail
       ? '<p style="margin-top:8px">Per PayPal <strong>' + euro(summe) + '</strong> an <strong>' + esc(mail) +
         '</strong> senden, als Zahlung an Freunde und Familie. Den Verwendungszweck als Nachricht dazuschreiben.</p>' +
         '<button type="button" class="ghost" data-kopie="' + esc(mail) + '">Adresse kopieren</button> ' +
         '<button type="button" class="ghost" data-kopie="' + esc(zweck) + '">Verwendungszweck kopieren</button>'
     : pp ? '<a class="paypal" href="' + esc(pp) + '" target="_blank" rel="noopener noreferrer">' +
           'Mit PayPal ' + euro(summe) + ' bezahlen</a>'
-        : (hatPaypal && summe > 0 ? '<p class="zweck">Wie du mit PayPal bezahlst, steht hier ' +
-          'nach dem Abschicken.</p>' : "")) +
+    : fremd ? '<a class="paypal" href="' + esc(fremd) + '" target="_blank" rel="noopener noreferrer">' +
+          'Jetzt bezahlen</a><p class="zweck" style="margin-top:6px">Bitte dort <strong>' + euro(summe) +
+          '</strong> eintragen und den Verwendungszweck angeben.</p>'
+        : (weg && summe > 0 ? '<p class="zweck">Wie du bezahlst, steht hier nach dem Abschicken.</p>' : "")) +
     '</div>';
 }
 

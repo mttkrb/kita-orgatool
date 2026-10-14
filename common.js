@@ -94,10 +94,12 @@ const kosten = (ev, e) => {
   return { zeilen, summe:Math.round(zeilen.reduce((a,z)=>a+z.summe, 0)*100)/100 };
 };
 
-// Name bei PayPal.me, auch wenn jemand den ganzen Link einträgt.
+// Name bei PayPal.me, auch wenn jemand den ganzen PayPal.me-Link einträgt.
+// Andere Adressen mit Schrägstrich oder Doppelpunkt sind kein Name.
 const paypalName = s => {
-  const n = String(s || "").trim().replace(/^https?:\/\//i, "")
-    .replace(/^(www\.)?paypal\.(me|com\/paypalme)\//i, "").replace(/[\/?#].*$/, "");
+  let n = String(s || "").trim();
+  const m = n.match(/^(?:https?:\/\/)?(?:www\.)?paypal\.(?:me|com\/paypalme)\/([^\/?#]+)/i);
+  if(m) n = m[1]; else if(/[\/:]/.test(n)) return "";
   return /^[A-Za-z0-9._-]{1,40}$/.test(n) ? n : "";
 };
 // PayPal-Adresse (E-Mail), an die Eltern über Freunde & Familie senden.
@@ -111,6 +113,25 @@ const paypalLink = (name, betrag) => {
   const n = paypalName(name);
   if(!n) return "";
   return "https://www.paypal.me/" + encodeURIComponent(n) + (betrag > 0 ? "/" + betrag.toFixed(2) + "EUR" : "");
+};
+
+// Beliebiger Zahllink, etwa von Wero oder der Bank. Nur https, nur ein Link: die Seite
+// lädt nichts von dort, die Eltern öffnen ihn selbst.
+const zahlLink = s => {
+  const t = String(s || "").trim();
+  if(t.length > 300) return "";
+  try{ const u = new URL(t); return u.protocol === "https:" ? u.href : ""; }catch(e){ return ""; }
+};
+// Zahlweg einer Veranstaltung aus payment.link (früher payment.paypal):
+// PayPal-Adresse, PayPal.me-Name oder anderer Zahllink. Sonst null.
+const zahlweg = p => {
+  const roh = (p && (p.link || p.paypal)) || "";
+  const mail = paypalMail(roh);
+  if(mail) return { art:"mail", wert:mail };
+  const name = paypalName(roh);
+  if(name) return { art:"paypalme", wert:name };
+  const url = zahlLink(roh);
+  return url ? { art:"link", wert:url } : null;
 };
 
 // Bild im Browser verkleinern, damit die Datenbank klein bleibt (JPEG-Data-URL).
