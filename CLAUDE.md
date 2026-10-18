@@ -54,6 +54,7 @@ docs/                   Projekthandbuch, Migrationsanleitung, Aufgabenliste
 umzug/                  Umzug in ein anderes Supabase-Projekt: Skripte (sh, ps1) und Anleitung
 einrichtung/            Neuinstallation: Anleitung, SQL-Vorlage und Skript, das sie erzeugt
 aktualisierung/         Update einer laufenden Installation: Anleitung
+anleitungen/            Bedienungsanleitungen je Rolle: Eltern, Orgateam, Melden, Technik
 ```
 
 Supabase-URL und anonKey stehen einmal in `config.js` (`SUPABASE`). Seitenspezifische
@@ -192,6 +193,9 @@ Daraus folgt:
 - Keine typografischen Anführungszeichen in JavaScript-Zeichenketten.
 - Tagesdatum immer über `heute()` bzw. `isoDatum(d)` aus `common.js`, nie über
   `toISOString().slice(0,10)` — das ist UTC und liefert nach Mitternacht den Vortag.
+
+- Wer Bedienung, Knopftexte oder Verhalten ändert, passt die Anleitung der betroffenen
+  Rolle in `anleitungen/` mit an.
 
 **Tests**
 

@@ -45,6 +45,17 @@ gemeinsamen Skript- und Stildateien, kein Build, kein Framework. Wer HTML lesen 
 | `vorschlag.html` | Leitung, Vorstand, Teams | Aufgaben melden |
 | `orga.html` | Orgateam | To-dos, Veranstaltungen, Vorlagen, Planung, Auswertung |
 
+## Anleitungen
+
+Für jede Rolle eine Anleitung im Ordner `anleitungen/`:
+
+| Anleitung | Für wen |
+| --- | --- |
+| [Eltern](anleitungen/eltern.md) | Anmelden, ändern, absagen, bezahlen, Check-in, Rückmeldung |
+| [Orgateam](anleitungen/orgateam.md) | Veranstaltungen, Vorlagen, Planung, Anmeldungen, Zahlungen, Check-in, Rückblick |
+| [Aufgaben melden](anleitungen/melden.md) | Leitung, Vorstand und Teams |
+| [Technik](anleitungen/technik.md) | Wer das Tool betreut: Aussehen, Passwort, Aufräumen, Backup, Übergabe |
+
 ## Ausprobieren
 
 Eine der HTML-Dateien im Browser öffnen. Solange in `config.js` keine Adresse
