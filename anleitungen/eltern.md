@@ -12,7 +12,7 @@ jeweilige Veranstaltung eingestellt hat.
 1. [Die Übersicht der Veranstaltungen](#1-die-übersicht-der-veranstaltungen)
 2. [Die Anmeldeseite im Überblick](#2-die-anmeldeseite-im-überblick)
 3. [Anmelden](#3-anmelden)
-4. [Absagen bei verbindlichen Veranstaltungen](#4-absagen-bei-verbindlichen-veranstaltungen)
+4. [Absagen](#4-absagen)
 5. [Der persönliche Link](#5-der-persönliche-link)
 6. [Kosten und Bezahlen](#6-kosten-und-bezahlen)
 7. [Aufgaben am Tag](#7-aufgaben-am-tag)
@@ -41,8 +41,8 @@ Die Karten sind nach Datum sortiert, die nächste zuerst. Jede Karte zeigt:
 
 | Hinweis auf der Karte | Bedeutung |
 | --- | --- |
-| „3 Anmeldungen“ | So viele Einträge gibt es schon. Bei verbindlichen Veranstaltungen zählen hier auch Absagen mit. |
-| „12 Personen“ | Erwachsene und Kinder zusammengezählt. |
+| „3 Anmeldungen“ | So viele haben schon zugesagt. Absagen zählen nicht mit. Nur wenn das Orgateam die Zahlen für alle sichtbar gemacht hat. |
+| „12 Personen“ | Erwachsene und Kinder zusammengezählt, ohne Absagen. Nur wenn das Orgateam die Zahlen für alle sichtbar gemacht hat. |
 | „4 × Kuchen & Süßes gesucht“ | In dieser Kategorie fehlt noch etwas. Es werden höchstens zwei solche Hinweise gezeigt, die größten Lücken zuerst. |
 | „5 Helferplätze offen“ | So viele Plätze bei den Aufgaben sind noch frei. |
 | „Kosten: Erwachsene 3,00 €, Kinder 5,00 €“ | Die Veranstaltung kostet etwas, hier der Preis je Person. |
@@ -91,13 +91,13 @@ Welche Felder du siehst, hängt von der Veranstaltung ab.
 
 | Feld | Wann es erscheint | Pflicht? |
 | --- | --- | --- |
-| „Könnt ihr dabei sein?“ | nur bei verbindlichen Veranstaltungen | ja |
+| „Könnt ihr dabei sein?“ | bei verbindlichen Veranstaltungen, und bei jeder Veranstaltung, wenn du deine Anmeldung über den persönlichen Link öffnest | ja |
 | „Dein Name“ | immer | ja |
 | „Erwachsene“, „Kinder“ | wenn das Orgateam nach Personen fragt; die Bezeichnungen können anders heißen | — |
 | „Was bringst du mit?“ | wenn es Mitbringsel-Kategorien gibt | nein |
 | „Wobei kannst du helfen?“ | wenn es Aufgaben gibt und sie vorab verteilt werden | nein |
 | Zusatzfragen | wenn das Orgateam welche angelegt hat | nur die mit rotem Sternchen * |
-| „Warum könnt ihr nicht?“ | nur wenn du bei einer verbindlichen Veranstaltung absagst | ja |
+| „Warum könnt ihr nicht?“ | nur wenn du absagst | nur bei verbindlichen Veranstaltungen |
 | „Anmerkung (optional)“ | immer, außer bei einer Absage | nein |
 | Häkchen beim Datenschutzhinweis | immer | ja |
 
@@ -191,7 +191,7 @@ Höchstmenge wird nicht übernommen.
 ### Anmerkung
 
 Freies Textfeld, zum Beispiel für „Allergien, Kuchen ist vegan, komme später …“. Die
-Seite zeigt die Anmerkung den anderen Familien nicht an.
+Anmerkung liest nur das Orgateam.
 
 ### Kosten
 
@@ -228,15 +228,31 @@ Fehlt etwas, erscheint eine rote Meldung unter dem Knopf:
 | „Bitte trag deinen Namen ein.“ | der Name |
 | „Bitte noch beantworten: …“ | eine Pflichtfrage mit Sternchen |
 | „Ohne Häkchen beim Datenschutzhinweis geht es leider nicht.“ | das Häkchen |
-| „Bitte schreib kurz dazu, warum ihr nicht könnt.“ | bei einer Absage die Begründung |
+| „Bitte schreib kurz dazu, warum ihr nicht könnt.“ | bei einer Absage zu einer verbindlichen Veranstaltung die Begründung |
 | „Anmeldung konnte nicht gespeichert werden. … Versuch es bitte nochmal.“ | keine Verbindung oder ein Fehler beim Speichern |
 
-Hat alles geklappt, steht dort „Du bist angemeldet“ und dein persönlicher Link (siehe
-[Abschnitt 5](#5-der-persönliche-link)).
+Hat alles geklappt, steht dort „Du bist angemeldet“ (nach einer Absage „Du hast abgesagt“)
+und dein persönlicher Link (siehe [Abschnitt 5](#5-der-persönliche-link)).
 
 ---
 
-## 4. Absagen bei verbindlichen Veranstaltungen
+## 4. Absagen
+
+Abgesagt wird über die Auswahl „Könnt ihr dabei sein?“ oben im Formular:
+
+- „Wir kommen“: das normale Formular wie in Abschnitt 3.
+- „Wir können nicht“: Personenzahl, Mitbringsel, Aufgaben, Zusatzfragen und Anmerkung
+  verschwinden. Stattdessen erscheint „Warum könnt ihr nicht?“. Eine kurze Begründung
+  genügt, zum Beispiel „Urlaub“ oder „Schichtdienst“. Darunter steht: „Das Orgateam sieht
+  die Begründung in seiner Übersicht.“ Der Knopf heißt dann „Abmeldung abschicken“.
+
+Wann die Auswahl erscheint:
+
+| Situation | Auswahl „Könnt ihr dabei sein?“ | Begründung |
+| --- | --- | --- |
+| verbindliche Veranstaltung, erste Anmeldung | ja | Pflicht (rotes Sternchen *) |
+| normale Veranstaltung, erste Anmeldung | nein; wer nicht kommt, meldet sich nicht an | — |
+| eigene Anmeldung über den persönlichen Link geöffnet | ja, bei jeder Veranstaltung | Pflicht nur bei verbindlichen Veranstaltungen |
 
 Hat das Orgateam eine Veranstaltung als verbindlich markiert (zum Beispiel einen
 Arbeitseinsatz), steht über dem Formular:
@@ -244,20 +260,15 @@ Arbeitseinsatz), steht über dem Formular:
 > **Diese Veranstaltung ist verbindlich.** Wenn ihr nicht könnt, meldet euch bitte hier ab
 > und schreibt kurz dazu, warum.
 
-Im Formular wählst du dann bei „Könnt ihr dabei sein?“:
+Dort lässt sich eine Absage ohne Begründung nicht abschicken.
 
-- „Wir kommen“: das normale Formular wie in Abschnitt 3.
-- „Wir können nicht“: Personenzahl, Mitbringsel, Aufgaben, Zusatzfragen und Anmerkung
-  verschwinden. Stattdessen erscheint „Warum könnt ihr nicht? *“. Eine kurze Begründung
-  genügt, zum Beispiel „Urlaub“ oder „Schichtdienst“. Ohne Begründung lässt sich die
-  Absage nicht abschicken. Der Knopf heißt dann „Abmeldung abschicken“.
+Eine Absage kostet nichts und wird bei den Anmeldezahlen nicht mitgezählt. Nach einer Absage
+steht dort „Du hast abgesagt“, und du bekommst einen persönlichen Link. Damit kannst du
+später doch noch zusagen.
 
-Eine Absage kostet nichts und wird bei den Anmeldezahlen nicht mitgezählt. Auch nach einer
-Absage bekommst du einen persönlichen Link. Damit kannst du später doch noch zusagen.
-
-Bei Veranstaltungen, die nicht verbindlich sind, gibt es diese Auswahl nicht. Wer dort nicht
-kommt, meldet sich einfach nicht an. Wer angemeldet ist und doch nicht kann, löscht seine
-Anmeldung über den persönlichen Link.
+Statt abzusagen kannst du deine Anmeldung auch ganz löschen („Abmelden“, siehe
+[Abschnitt 5](#abmelden)). Eine Absage bleibt beim Orgateam stehen, mit Begründung, bis zur
+Löschfrist.
 
 ---
 
@@ -272,14 +283,14 @@ Mit diesem Link kannst du:
 
 - deine Angaben ändern
 - dich abmelden (Anmeldung löschen)
-- bei verbindlichen Veranstaltungen von Absage auf Zusage wechseln oder umgekehrt
+- absagen oder nach einer Absage doch noch zusagen
 - die Kosten und den Bezahlknopf wieder aufrufen
 
 Tipp auf „Link kopieren“ und speicher ihn, zum Beispiel in einer Notiz oder schick ihn dir
 selbst. Klappt das Kopieren nicht, steht dort „Bitte manuell markieren“: Dann markier den
 Link von Hand und kopier ihn.
 
-Gib den Link nicht weiter. Wer ihn hat, kann deine Anmeldung ändern oder löschen.
+Gib den Link nicht weiter. Wer ihn hat, kann deine Anmeldung lesen, ändern oder löschen.
 
 ### Ändern
 
@@ -289,7 +300,8 @@ Gib den Link nicht weiter. Wer ihn hat, kann deine Anmeldung ändern oder lösch
 3. Ändere, was du ändern willst.
 4. Tipp auf „Änderungen speichern“.
 
-Über dem Formular steht „Änderungen sind sofort für alle sichtbar.“
+Über dem Formular steht „Hier kannst du alles ändern oder absagen.“ Zum Absagen tippst du
+oben auf „Wir können nicht“ (siehe [Abschnitt 4](#4-absagen)).
 
 Den Link kannst du auch nutzen, wenn die Anmeldefrist schon vorbei ist. Das Formular bleibt
 für dich offen.
@@ -317,9 +329,9 @@ mehr selbst löschen. Beim Tippen auf „Abmelden“ erscheint:
 
 Melde dich dann beim Orgateam. Es zahlt zurück und löscht die Anmeldung.
 
-Ändern kannst du deine Angaben weiterhin. Bei einer verbindlichen Veranstaltung kannst du
-auch auf „Wir können nicht“ umstellen und mit Begründung absagen. Beachte: Ändert sich
-dadurch der Betrag, sieht das Orgateam die Differenz zu dem, was schon bezahlt ist.
+Ändern kannst du deine Angaben weiterhin. Du kannst auch auf „Wir können nicht“ umstellen
+und absagen. Beachte: Ändert sich dadurch der Betrag, sieht das Orgateam die Differenz zu
+dem, was schon bezahlt ist.
 
 ### Link verloren
 
@@ -485,6 +497,13 @@ dich. Sonst würdest du dich ein zweites Mal anmelden.
 
 Ist die Anmeldefrist vorbei, kannst du dich beim Scannen am Eingang trotzdem noch anmelden.
 
+### Abgesagt und doch da
+
+Hast du abgesagt und kommst trotzdem, steht nach „Wir sind da“: „Ihr habt für diese
+Veranstaltung abgesagt. Wenn ihr doch da seid, tippt unten auf 'Wir kommen' und speichert,
+dann seid ihr eingecheckt.“ Die Auswahl „Könnt ihr dabei sein?“ steht dann im Formular.
+Tipp auf „Wir kommen“, prüf die Personenzahl und tipp auf „Änderungen speichern“.
+
 ### Was sich das Handy merkt
 
 Bei Veranstaltungen mit Check-in merkt sich das Handy deine Anmeldung, damit der Check-in mit
@@ -518,7 +537,7 @@ In einem privaten Fenster merkt sich das Handy nichts. Dann meldest du dich am E
 | „Für diese Veranstaltung gibt es keinen Check-in.“ | Das Orgateam hat den Check-in ausgeschaltet. | Nichts. |
 | „Die gespeicherte Anmeldung gibt es nicht mehr. Meldet euch bitte unten neu an.“ | Die Anmeldung wurde gelöscht. | Unten neu anmelden. |
 | „Ihr seid noch nicht eingecheckt.“ | Auschecken ohne vorheriges Einchecken. | Erst „Wir sind da“. |
-| „Ihr habt für diese Veranstaltung abgesagt. …“ | Deine Anmeldung ist eine Absage. | Das Orgateam am Eingang ansprechen (siehe Häufige Fragen). |
+| „Ihr habt für diese Veranstaltung abgesagt. …“ | Deine Anmeldung ist eine Absage. | Unten auf „Wir kommen“ tippen und speichern. |
 
 ---
 
@@ -572,25 +591,32 @@ nicht mehr. Über „Hier stehen alle offenen Veranstaltungen.“ kommst du zur 
 „Andere“ heißt hier: alle, die den Link zur Anmeldeseite haben. Das Orgateam sieht immer
 alle Angaben.
 
+Deine ganze Anmeldung mit vollem Namen, Anmerkung, Antworten und Absagegrund lesen nur das
+Orgateam und du selbst über deinen persönlichen Link. Die Seiten für die Eltern bekommen aus
+der Datenbank nur Personenzahlen, Mitbringsel, Aufgaben, ob zu- oder abgesagt ist, und den
+gekürzten Namen. Den gekürzten Namen auch nur, wenn die Veranstaltung Namen bei Mitbringseln
+oder Aufgaben zeigt.
+
 Das Orgateam stellt je Veranstaltung ein, was sichtbar ist. Der Text beim Datenschutzhäkchen
 sagt dir, was bei dieser Veranstaltung gilt.
 
 | Angabe | Für andere sichtbar? |
 | --- | --- |
-| dein Name | nur als Vorname und erster Buchstabe des Nachnamens, und nur dort, wo Namen eingeblendet sind |
+| dein voller Name | nur das Orgateam |
+| dein Name gekürzt (Vorname und erster Buchstabe des Nachnamens) | nur dort, wo Namen eingeblendet sind |
 | Anzahl Anmeldungen, Erwachsene und Kinder (Summe) | wenn das Orgateam die Zahlen freigegeben hat |
 | deine Mitbringsel | wenn das Orgateam sie freigegeben hat, mit oder ohne deinen Namen |
 | deine Aufgaben (vorab) | die Zahl der belegten Plätze immer; dein Name, wenn das Orgateam Namen bei Aufgaben freigegeben hat |
-| Name bei einer Aufgabe am Tag | immer, so wie du ihn in das Feld eingetippt hast |
-| Anmerkung | wird auf der Seite nicht angezeigt |
-| Antworten auf Zusatzfragen, Bestellungen | werden auf der Seite nicht angezeigt |
-| Betrag und ob bezahlt ist | werden anderen nicht angezeigt |
-| Check-in-Zeiten | werden anderen nicht angezeigt |
-| Absage und Begründung | werden auf der Seite nicht angezeigt |
+| Name bei einer Aufgabe am Tag | immer, ungekürzt, so wie du ihn in das Feld eingetippt hast |
+| Anmerkung | nur das Orgateam |
+| Antworten auf Zusatzfragen, Bestellungen | nur das Orgateam |
+| Betrag und ob bezahlt ist | nur das Orgateam |
+| Check-in-Zeiten | nur das Orgateam |
+| wer abgesagt hat und warum | nur das Orgateam |
 | Rückmeldung | nur das Orgateam |
 
-Auf der Übersichtsseite stehen immer die Zahl der Anmeldungen und die Zahl der Personen, auch
-wenn auf der Anmeldeseite die Summen ausgeblendet sind.
+Die Übersichtsseite richtet sich nach derselben Einstellung: Sind die Summen ausgeblendet,
+fehlen dort auch die Zahl der Anmeldungen und die Zahl der Personen.
 
 ---
 
@@ -618,6 +644,10 @@ Hat eine Veranstaltung kein Datum, wird nichts automatisch gelöscht.
 - Gespeichert wird, was du ins Formular schreibst. Schreib nur hinein, was das Orgateam für
   die Veranstaltung wissen muss.
 - Was andere sehen, steht im Text beim Häkchen. Ohne Häkchen wird nichts gespeichert.
+- Deine ganze Anmeldung lesen nur das Orgateam und du über deinen persönlichen Link. Andere
+  bekommen höchstens Zahlen, Mitbringsel, Aufgaben und deinen gekürzten Namen (siehe
+  [Abschnitt 11](#11-was-andere-von-dir-sehen)). Einen Namen, den du bei einer Aufgabe am Tag
+  einträgst, sehen alle so, wie du ihn eintippst.
 - Bei Veranstaltungen mit Check-in merkt sich dein Handy deine Anmeldung, und das Orgateam
   sieht, wann ihr gekommen und gegangen seid. Beides steht vorher im Datenschutztext.
 - Kostet die Veranstaltung etwas, hält das Orgateam fest, ob du bezahlt hast. Bezahlt wird
@@ -638,7 +668,7 @@ Hat eine Veranstaltung kein Datum, wird nichts automatisch gelöscht.
 | Ich will mich abmelden, sehe aber keinen Knopf dafür. | Persönlichen Link öffnen, „Änderungen speichern“ tippen, dann erscheint „Abmelden“. |
 | Beim Abmelden kommt „Ihr habt schon bezahlt …“. | Beim Orgateam abmelden. Es zahlt zurück und löscht die Anmeldung. |
 | Ich habe mich aus Versehen zweimal angemeldet. | Den zweiten Eintrag über seinen persönlichen Link löschen. Hast du den Link nicht, das Orgateam fragen. |
-| Ich will bei einer normalen Veranstaltung absagen. | Eine Absage mit Begründung gibt es nur bei verbindlichen Veranstaltungen. Sonst die Anmeldung über den persönlichen Link löschen. |
+| Ich will bei einer normalen Veranstaltung absagen. | Persönlichen Link öffnen, oben „Wir können nicht“ wählen, „Abmeldung abschicken“. Die Begründung ist dort freiwillig. Oder die Anmeldung mit „Abmelden“ ganz löschen. |
 | Ich habe die Personenzahl nicht geändert und es stehen 2 Erwachsene und 1 Kind drin. | Das ist die Vorauswahl. Über den persönlichen Link korrigieren. |
 | Der Bezahlknopf fehlt. | Er erscheint erst nach dem Abschicken. Später über den persönlichen Link aufrufen. Hat das Orgateam keinen Zahlweg eingetragen, gilt nur der Hinweistext. |
 | Der Betrag stimmt nicht. | Personenzahl und Bestellungen über den persönlichen Link prüfen. Der Betrag rechnet sich immer aus diesen Angaben. |
@@ -647,7 +677,7 @@ Hat eine Veranstaltung kein Datum, wird nichts automatisch gelöscht.
 | Die Aufgabenliste fehlt. | Das Orgateam verteilt die Aufgaben am Tag selbst. Der Hinweis über dem Formular sagt, ab wann die Liste erscheint. |
 | Beim Scannen erkennt das Handy mich nicht. | Du hast dich auf einem anderen Handy angemeldet oder in einem privaten Fenster. Persönlichen Link auf diesem Handy öffnen und neu scannen, oder unten neu anmelden. |
 | Beim Scannen steht der Name von jemand anderem da. | „Nicht ihr? Auf diesem Handy vergessen“ tippen und dann selbst anmelden. |
-| Beim Scannen kommt „Ihr habt für diese Veranstaltung abgesagt“. | Am Eingang das Orgateam ansprechen; es kann euch von Hand einchecken. |
+| Beim Scannen kommt „Ihr habt für diese Veranstaltung abgesagt“. | Unten im Formular auf „Wir kommen“ tippen und „Änderungen speichern“. Dann seid ihr eingecheckt. |
 | „Dieser QR-Code gilt nicht mehr.“ | Den Aushang am Eingang neu scannen, nicht ein altes Foto davon. |
 | Die Seite zeigt „Veranstaltung nicht gefunden“. | Link prüfen oder über die Übersicht gehen. |
 | Die Anmeldung ist geschlossen, ich will noch kommen. | Jemanden aus dem Orgateam ansprechen. |

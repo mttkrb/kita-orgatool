@@ -114,8 +114,8 @@ eine Zeile wie „Aufgeräumt: 12 abgelaufene Anmeldungen, …“.
 
 ## 3. Hinweis auf eine veraltete Datenbank
 
-Nach dem Anmelden prüft der Orga-Bereich, ob die Datenbank alle Tabellen und Spalten hat, die
-diese Version der Seiten braucht. Fehlt etwas, erscheint oberhalb der Reiter ein roter Kasten:
+Nach dem Anmelden prüft der Orga-Bereich, ob die Datenbank alle Tabellen, Spalten und
+Funktionen hat, die diese Version der Seiten braucht. Fehlt etwas, erscheint oberhalb der Reiter ein roter Kasten:
 
 > **Die Datenbank ist nicht auf dem Stand dieser Version.**
 > Es fehlt: events.checkin, Tabelle attendance, …
@@ -155,11 +155,6 @@ steht „heute“, „morgen“, „in 5 Tagen“ oder in Rot „seit 3 Tagen ü
 - **Auf den Titel tippen** öffnet den Editor der Veranstaltung und springt zu diesem Punkt.
   Enthält der Titel „Einkauf“, „besorg“ oder „bestell“, springt die Seite direkt zur
   Einkaufsliste.
-
-> **Achtung:** Ein Haken hier im Reiter „To-dos“ speichert die Checkliste ohne die
-> Einkaufsliste. Die Einkaufsliste der Veranstaltung ist danach leer. Hat die Veranstaltung
-> eine Einkaufsliste, hak den Punkt lieber im Editor ab (Haken vor dem Punkt, dann
-> „Speichern“).
 
 **Gemeldete Aufgaben, die auf Entscheidung warten** („3 gemeldete Aufgaben warten auf
 Entscheidung“), mit Titel, Veranstaltung und Name der meldenden Person. Ein Tipp auf den Titel
@@ -299,11 +294,11 @@ Zeilen ohne Namen werden beim Speichern weggelassen.
 | Feld | Was es bewirkt |
 | --- | --- |
 | „Name der Veranstaltung“ | Überschrift auf der Anmeldeseite. Pflicht. |
-| „Kurzname für den Link“ | Steht im Link: `fest-anmeldung.html?event=<kurzname>`. Nur Kleinbuchstaben, Zahlen und Bindestriche. Bleibt das Feld leer, wird es beim Verlassen des Namensfelds aus dem Namen gebildet (ä wird ae, Leerzeichen werden Bindestriche). Beim Speichern wird es in diese Form gebracht. |
+| „Kurzname für den Link“ | Steht im Link: `fest-anmeldung.html?event=<kurzname>`. Nur Kleinbuchstaben, Zahlen und Bindestriche. Bleibt das Feld leer, wird es beim Verlassen des Namensfelds aus dem Namen gebildet (ä wird ae, Leerzeichen werden Bindestriche). Beim Speichern wird es in diese Form gebracht. Sobald es Anmeldungen gibt, lässt er sich nicht mehr ändern. |
 | „Datum“ | Grundlage für alles Zeitliche: Startseite, Fristen der Checkliste, Check-in, Löschfrist. Nach diesem Datum verschwindet die Veranstaltung von der Startseite der Eltern. |
 | „Uhrzeit“ | Freier Text, zum Beispiel „15–18 Uhr“. |
 | „Abweichender Anzeigetext“ (optional) | Ersetzt das ausgeschriebene Datum in der Anzeige, etwa „Freitag, 18. Oktober, ab mittags“. Das Feld „Datum“ gilt trotzdem für alle Fristen. |
-| „Pflichtveranstaltung“ | Eltern müssen zu- oder absagen; wer nicht kann, meldet sich mit Begründung ab. In den Anmeldungen zählt der Orga-Bereich dann Zusagen und Absagen getrennt. |
+| „Pflichtveranstaltung“ | Eltern müssen zu- oder absagen; wer nicht kann, meldet sich mit Begründung ab. In den Anmeldungen zählt der Orga-Bereich dann Zusagen und Absagen getrennt. Ohne den Haken können Eltern über ihren persönlichen Link ebenfalls absagen; die Begründung ist dann freiwillig. |
 | „Check-in per QR-Code“ | Schaltet den Check-in ein. Darunter erscheint „Aushang mit QR-Code“ ([Abschnitt 11](#11-check-in-am-eingang)). |
 | „Wie viele Familien insgesamt?“ (optional) | Bei Pflichtveranstaltungen zeigen die Anmeldungen damit „ohne Antwort“: Familienzahl minus Zahl der Antworten. Bei anderen Veranstaltungen wird die Zahl nicht angezeigt. |
 | „Anmeldung freigegeben“ | Erst mit diesem Haken können sich Eltern eintragen. Ohne ihn sehen sie die Veranstaltung mit dem Hinweis, dass die Anmeldung noch kommt. Bei neuen, duplizierten und aus Vorlagen angelegten Veranstaltungen ist er aus. |
@@ -316,11 +311,13 @@ Zeilen ohne Namen werden beim Speichern weggelassen.
 | „Wen soll die Anmeldung zählen?“ | Zwei Personengruppen, siehe unten. |
 | „Archivieren“ | Die Veranstaltung verschwindet von der Startseite der Eltern. Der direkte Link bleibt gültig. |
 
-> **Kurzname nicht mehr ändern, sobald Anmeldungen da sind.** Die Anmeldungen hängen am
-> Kurznamen. Änderst du ihn, gehört keine Anmeldung mehr zur Veranstaltung, und beim nächsten
-> Aufräumen (spätestens wenn du zur Übersicht zurückgehst) werden sie als „verwaiste
-> Anmeldungen“ gelöscht. Außerdem funktionieren verschickte Links und gedruckte Aushänge nicht
-> mehr.
+> **Der Kurzname bleibt, sobald Anmeldungen da sind.** Die Anmeldungen und die persönlichen
+> Links der Eltern hängen am Kurznamen. Änderst du ihn bei einer gespeicherten Veranstaltung mit
+> Anmeldungen, setzt die Seite beim Speichern den alten Kurznamen zurück und meldet „Der
+> Kurzname bleibt …: Es gibt schon 3 Anmeldungen, und die persönlichen Links enthalten ihn.
+> Nochmal auf Speichern drücken, um den Rest zu sichern.“ Dann noch einmal „Speichern“.
+> Ohne Anmeldungen lässt er sich ändern, aber schon verschickte Anmeldelinks und gedruckte
+> Aushänge führen danach ins Leere.
 
 Ist der Kurzname schon vergeben, trägt die Seite beim Speichern einen freien Vorschlag ein
 (etwa `sommerfest-2026-2`) und bittet, noch einmal auf „Speichern“ zu drücken.
@@ -347,19 +344,26 @@ Text.
 
 #### Löschfrist und Hinweistext
 
-Unter „Anmeldungen löschen nach“ steht, wann gelöscht wird, zum Beispiel „Löschung am
-02.10.2026.“ Gezählt wird ab dem Veranstaltungstag. Gelöscht werden Namen, Anmerkungen und
-Antworten; die Zahlen für den Rückblick werden vorher gesichert. Tatsächlich gelöscht wird beim
-ersten Aufräumen, nachdem dieser Tag vorbei ist.
+Unter „Anmeldungen löschen nach“ steht, ab wann gelöscht wird, zum Beispiel „Löschung ab
+02.10.2026.“ Das ist der Tag nach Ablauf der Frist: Veranstaltungstag plus Frist plus ein Tag.
+Gelöscht werden Namen, Anmerkungen und Antworten; die Zahlen für den Rückblick werden vorher
+gesichert. Tatsächlich gelöscht wird beim ersten Aufräumen ab diesem Tag.
 
 Der Einwilligungstext, den die Eltern beim Anmelden sehen, endet mit einem Satz zur Löschung.
-Ist „Abweichender Hinweistext“ leer, bildet die Seite ihn aus der Frist („Alle Angaben werden
-30 Tage nach der Veranstaltung gelöscht.“). Steht dort ein Text, gilt dieser Text.
+Derselbe Satz steht ganz unten auf der Anmeldeseite. Ist „Abweichender Hinweistext“ leer,
+bildet die Seite ihn aus der Frist („Alle Angaben werden 30 Tage nach der Veranstaltung
+gelöscht.“). Steht dort ein eigener Text, gilt dieser Text.
 
-> **Wichtig:** Bei neuen Veranstaltungen und solchen aus Vorlagen ist „Abweichender
-> Hinweistext“ schon mit „Alle Angaben werden zwei Wochen nach der Veranstaltung gelöscht.“
-> vorbelegt. Wählst du eine andere Frist, lösch diesen Satz oder pass ihn an. Sonst
-> versprichst du den Eltern zwei Wochen und das Tool löscht nach einer anderen Frist.
+Bei neuen Veranstaltungen und solchen aus Vorlagen ist das Feld leer. Steht darin genau der
+Satz „Alle Angaben werden zwei Wochen nach der Veranstaltung gelöscht.“, gilt:
+
+- Wählst du eine andere Frist, leert die Seite das Feld.
+- Ist die Frist nicht 14 Tage, nimmt die Anmeldeseite statt dieses Satzes den Satz aus der
+  Frist.
+
+> **Wichtig:** Einen eigenen Hinweistext prüfst du selbst gegen die Frist, auch nach jeder
+> Änderung der Frist. Sonst versprichst du den Eltern eine Frist, und das Tool löscht nach
+> einer anderen.
 
 #### Personengruppen
 
@@ -441,7 +445,7 @@ Jede Aufgabe ist eine Zeile:
 | „Wann“ (optional) | Etwa „ab 13 Uhr“, leer lassen, wenn ganztags |
 | „Wie viele“ | Gesuchte Helfer, Standard 4 |
 | „Erklärung für die Eltern“ (optional) | Was genau zu tun ist |
-| „Fotos“ (optional) | Mehrere Bilder möglich. Werden im Browser verkleinert und erst beim Speichern hochgeladen. Mit „×“ am Bild entfernen. **Keine Bilder mit Kindern** — die Liste ist für alle sichtbar, die den Link haben. |
+| „Fotos“ (optional) | Mehrere Bilder möglich. Werden im Browser verkleinert und erst beim Speichern hochgeladen. Mit „×“ am Bild entfernen. **Keine Bilder mit Kindern** — die Liste ist für alle sichtbar, die den Link haben. Nur in der Veranstaltung, nicht in Vorlagen. |
 
 Wie die Eltern Aufgaben übernehmen, hängt vom Haken „Aufgaben werden vor Ort verteilt“ ab:
 
@@ -627,7 +631,7 @@ Vorlage). Prüf die Werte gegen die erwartete Personenzahl und speichere dann.
 
 | Wert | Wann |
 | --- | --- |
-| „Anmeldungen“ | bei normalen Veranstaltungen: Zahl aller Einträge |
+| „Anmeldungen“ | bei normalen Veranstaltungen: Zahl aller Einträge, Absagen eingeschlossen |
 | „Zusagen“, „Absagen“, „ohne Antwort“ | bei Pflichtveranstaltungen; „ohne Antwort“ nur mit „Wie viele Familien insgesamt?“ |
 | Personen je Gruppe | je eingeschalteter Gruppe |
 | „Mitbringsel“ | Zahl aller Mitbringsel |
@@ -766,7 +770,8 @@ aufhängen.
 - Eltern mit Anmeldung tippen auf „Wir sind da“. Das Handy merkt sich die Anmeldung, wenn sie
   dort angemeldet wurden oder den persönlichen Link geöffnet haben.
 - Wer nicht angemeldet ist, meldet sich beim Scannen kurz an und ist dann eingecheckt.
-- Wer abgesagt hat, kann nicht einchecken.
+- Wer abgesagt hat und trotzdem scannt, bekommt den Hinweis, unten auf „Wir kommen“ zu tippen
+  und zu speichern. Danach ist die Familie zugesagt und eingecheckt.
 - Beim Gehen können Eltern auschecken. Dann rechnet das Tool die Dauer.
 
 ### Anwesenheit in den Anmeldungen
@@ -820,12 +825,11 @@ Checklistenpunkte und ein Etikett: „neu“ oder „2× gelaufen“.
 | „Aufgaben am Veranstaltungstag“ | wie dort, aber ohne Fotos (siehe unten) |
 | „Zusätzliche Fragen“ | wie dort |
 | „Standard-Einkaufsliste“ | wird jeder Veranstaltung daraus mitgegeben |
-| „Planungs-Checkliste“ | mit „Wer“ und „Vorlauf“ |
+| „Planungs-Checkliste“ | mit „Wer“ und „Vorlauf“; ein Fälligkeitsdatum gibt es erst in der Veranstaltung |
 
 „Vorlage speichern“ speichert, „Fertig, zur Übersicht“ führt zurück.
 
-Das Feld „Fotos“ erscheint zwar auch in Aufgaben der Vorlage, Fotos werden dort aber **nicht
-gespeichert**. Fotos fügst du in der Veranstaltung hinzu.
+Aufgaben in der Vorlage haben kein Feld „Fotos“. Fotos fügst du in der Veranstaltung hinzu.
 
 ### Was „Veranstaltung daraus anlegen“ übernimmt
 
@@ -870,14 +874,15 @@ Weitere Exporte: „Als CSV exportieren“ in den Anmeldungen ([Abschnitt 10](#e
 | Name, Datum, Uhrzeit, Ort, Begrüßungstext | ja | ja |
 | Veranstaltung auf der Startseite | solange nicht archiviert und Datum nicht vorbei | immer |
 | Veranstaltung über den direkten Link | immer, auch archiviert | immer |
-| Gesamtzahl der Anmeldungen und Personen | wenn Haken „Gesamtzahlen im Kopf“ | immer |
+| Gesamtzahl der Anmeldungen und Personen, ohne Absagen | wenn Haken „Gesamtzahlen im Kopf“, auf der Anmeldeseite und der Startseite | immer |
 | Liste der Mitbringsel | wenn Haken „Liste der Mitbringsel“, sonst nur Fortschrittsbalken | immer |
-| Namen an Mitbringseln und Aufgaben | wenn die jeweiligen Haken gesetzt sind, gekürzt | immer, voller Name |
+| Namen an Mitbringseln und vorab angekreuzten Aufgaben | wenn die jeweiligen Haken gesetzt sind, gekürzt | immer, voller Name |
+| Namen bei Aufgaben am Tag („Ich mach das“) | immer, ungekürzt, so wie eingetippt | ja |
 | Aufgaben mit Erklärung und Fotos | ja, für alle mit dem Link | ja |
 | Eigener Betrag, Zahlungshinweis, Zahlweg | ja, nach dem Anmelden | ja |
 | PayPal-Adresse als Zahlweg | für alle mit dem Link | ja |
 | Anmerkungen und Antworten auf Zusatzfragen anderer | nein | ja |
-| Absagen und Begründungen | nein | ja |
+| wer abgesagt hat, und Begründungen | nein | ja |
 | Zahlungseingänge | nein | ja |
 | Anwesenheit und Stunden | nein | ja |
 | Checkliste, Einkaufsliste, Rückblick, Geld | nein | ja |
@@ -885,9 +890,16 @@ Weitere Exporte: „Als CSV exportieren“ in den Anmeldungen ([Abschnitt 10](#e
 | Gemeldete Aufgaben | die meldende Person sieht offene Meldungen | ja |
 | Vorlagen | nein | ja |
 
-Die Haken unter „Was sehen die Gäste auf der Seite?“ bestimmen, was die Anmeldeseite anzeigt.
-Gespeichert sind die Anmeldungen unabhängig davon in der Datenbank; ohne das geheime Zeichen des
-persönlichen Links kann sie dort niemand ändern.
+Ganze Anmeldungen mit vollem Namen, Anmerkung, Antworten auf Zusatzfragen und Absagegrund
+liefert die Datenbank nur an das Orgateam und an die Familie selbst über ihren persönlichen
+Link. Die Elternseiten bekommen nur Personenzahlen, Mitbringsel, Aufgaben, ob zu- oder abgesagt
+ist, und den gekürzten Namen. Den Namen nur, wenn bei der Veranstaltung „Namen an den
+Mitbringseln“ oder „Namen in der Helferliste“ gesetzt ist. Welche dieser Angaben die Seite
+anzeigt, bestimmen die Haken unter „Was sehen die Gäste auf der Seite?“. Ändern oder löschen
+kann eine Anmeldung nur das Orgateam oder wer den persönlichen Link hat.
+
+Ausnahme sind die Aufgaben am Tag: Was Helfer bei „Ich mach das“ eintippen, ist für alle mit
+dem Link lesbar, ungekürzt.
 
 ---
 
@@ -902,7 +914,7 @@ zurückkehrt, und, falls in der Datenbank eingerichtet, jede Nacht um 3 Uhr.
 | --- | --- | --- |
 | Anmeldungen (mit Zahlungseingang und Anwesenheit) | nach Ablauf der Löschfrist, gezählt ab dem Veranstaltungstag | gelöscht |
 | Aufgabenübernahmen am Tag | nach Ablauf der Löschfrist | gelöscht |
-| Anmeldungen ohne zugehörige Veranstaltung (gelöscht oder Kurzname geändert) | beim nächsten Aufräumen | gelöscht |
+| Anmeldungen ohne zugehörige Veranstaltung (Veranstaltung gelöscht) | beim nächsten Aufräumen | gelöscht |
 | Veranstaltung | nach Ablauf der Löschfrist, wenn keine Anmeldungen mehr da sind | archiviert |
 | Namen unter Rückmeldungen | 60 Tage nach dem Veranstaltungstag | Name entfernt, Text bleibt |
 | Namen unter gemeldeten Aufgaben | 60 Tage nach dem Veranstaltungstag | Name entfernt, Text bleibt |
@@ -935,8 +947,8 @@ angemeldet hat, hat dem alten Text zugestimmt. Deshalb:
 - Sichtbarkeit und Löschfrist vor dem Freigeben der Anmeldung festlegen.
 - Nach dem Freigeben nur in Richtung „weniger zeigen“ und „früher löschen“ ändern, oder die
   Angemeldeten informieren.
-- Bei einer anderen Frist als zwei Wochen den vorbelegten „Abweichenden Hinweistext“ leeren
-  oder anpassen ([Abschnitt 6](#löschfrist-und-hinweistext)).
+- Steht ein eigener „Abweichender Hinweistext“ drin, ihn nach jeder Änderung der Frist
+  prüfen ([Abschnitt 6](#löschfrist-und-hinweistext)).
 - Check-in und Kosten erst einschalten, wenn klar ist, dass ihr sie braucht; beides erweitert
   den Einwilligungstext.
 
@@ -958,7 +970,7 @@ mehr brauchst. Für Fotos zu Aufgaben gilt: keine Kinder darauf.
 | Nach dem Schließen des Tabs muss ich mich neu anmelden. | So gewollt: Das Passwort bleibt nur im offenen Tab. |
 | Eltern sehen die Veranstaltung nicht auf der Startseite. | Archiviert oder Datum vorbei. Der direkte Link funktioniert trotzdem. |
 | Eltern können sich nicht eintragen. | Haken „Anmeldung freigegeben“ fehlt, „Frühestens ab“ liegt in der Zukunft oder „Anmeldeschluss“ ist vorbei. Etikett auf der Karte zeigt den Grund. |
-| Nach dem Ändern des Kurznamens sind alle Anmeldungen weg. | Die Anmeldungen hingen am alten Kurznamen und wurden beim Aufräumen gelöscht. Wiederherstellen geht nur aus einer Sicherung. Kurznamen nach den ersten Anmeldungen nie ändern. |
+| Beim Speichern „Der Kurzname bleibt …: Es gibt schon … Anmeldungen …“ | Sobald es Anmeldungen gibt, bleibt der Kurzname. Die Seite hat den alten wieder eingetragen. Noch einmal „Speichern“ sichert die übrigen Änderungen. |
 | „Der Kurzname … gehört schon zu …“ | Die Seite hat einen freien Kurznamen eingetragen. Noch einmal „Speichern“ oder selbst einen anderen wählen. |
 | Eine Familie hat ihren persönlichen Link verloren. | Den Link kann der Orga-Bereich nicht anzeigen. Eintrag mit „bearbeiten“ selbst ändern, oder löschen und neu anmelden lassen. |
 | Eltern können sich über ihren Link nicht löschen. | Für die Anmeldung ist ein Zahlungseingang eingetragen. Zurückzahlen, dann löscht das Orgateam. Absagen über das Formular geht. |
@@ -971,11 +983,10 @@ mehr brauchst. Für Fotos zu Aufgaben gilt: keine Kinder darauf.
 | Der QR-Code am Eingang funktioniert nicht. | Check-in geht nur am Veranstaltungstag. Wurde „Neuen Code erzeugen“ benutzt, gilt nur der neue Aushang. |
 | Jemand kam ohne Handy. | In den Anmeldungen den Haken „war da“ setzen, Stunden von Hand eintragen. Ohne Anmeldung vorher „+ Anmeldung eintragen“. |
 | Ein Checklistenpunkt steht nicht in den To-dos. | Vorlauf ist „kein fester Termin“, die Veranstaltung hat kein Datum, ist archiviert oder vorbei, oder der Punkt ist mehr als zwei Wochen entfernt. |
-| Nach einem Haken in den To-dos ist die Einkaufsliste leer. | Bekanntes Verhalten: Der Haken dort speichert die Einkaufsliste nicht mit. Liste neu eintragen und speichern; Punkte solcher Veranstaltungen im Editor abhaken. |
 | Der Knopf „Zielwerte aus dem Rückblick übernehmen“ fehlt. | Die Veranstaltung ist nicht aus einer Vorlage, oder beim letzten Mal wurde keine Kategorie bewertet, oder die Ziele stimmen schon. |
 | „Angemeldet waren“ zeigt 0. | Die Löschfrist ist abgelaufen, die Anmeldungen sind weg. Die Zusammenfassung steht beim nächsten Mal unter „Aus den letzten Malen“. Künftig den Rückblick vor Ablauf der Frist ausfüllen. |
 | Eine Zeile aus Versehen entfernt. | 30 Sekunden lang „Rückgängig“. Danach: Editor ohne Speichern verlassen, dann ist der alte Stand noch da. |
-| Fotos in der Vorlage sind weg. | Vorlagen speichern keine Fotos. Fotos in der Veranstaltung hinzufügen. |
+| Bei Aufgaben in der Vorlage fehlt das Feld „Fotos“. | Vorlagen speichern keine Fotos. Fotos in der Veranstaltung hinzufügen. |
 | Gemeldete Aufgabe übernommen, aber sie steht wieder bei den Meldungen. | Nach „Übernehmen“ nicht gespeichert. Noch einmal übernehmen und „Speichern“. |
 | Rückmeldungen sind nicht mehr zu sehen. | Haken „Rückmeldungen der Eltern einsammeln“ wieder setzen. |
 | Alles, was ich eingebe, ist nach dem Neuladen weg. | Demo-Modus: in `config.js` ist keine Datenbank eingetragen. |

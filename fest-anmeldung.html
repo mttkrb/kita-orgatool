@@ -294,6 +294,7 @@ let absage = false;
 let warAbsage = false;   // gespeicherte Anmeldung ist eine Absage
 
 const absendenText = () => absage ? "Abmeldung abschicken"
+  : myToken && mySid && MEIN ? "Änderungen speichern"
   : checkinModus() && !(myToken && mySid) ? "Anmelden und einchecken" : "Anmeldung abschicken";
 
 function wahlAnzeigen(){

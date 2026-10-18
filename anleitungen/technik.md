@@ -62,8 +62,8 @@ Schnittstelle an. Es gibt zwölf Tabellen:
 | Tabelle | Inhalt | Wer liest |
 | --- | --- | --- |
 | `events` | Veranstaltungen mit Kategorien, Aufgaben, Zusatzfragen, Fristen | alle |
-| `signups` | Anmeldungen und Absagen | alle, außer der Spalte `token` |
-| `task_claims` | übernommene Aufgaben am Tag | alle |
+| `signups` | Anmeldungen und Absagen | nur Orgateam und die Familie selbst (Token aus dem persönlichen Link); die Elternseiten bekommen Zahlen und gekürzte Namen über `anmeldungen_oeffentlich()`. Die Spalte `token` liest niemand. |
+| `task_claims` | übernommene Aufgaben am Tag, Namen ungekürzt | alle |
 | `task_images` | Fotos zu Aufgaben | alle |
 | `templates` | Vorlagen für wiederkehrende Veranstaltungen | nur Orgateam |
 | `planning` | Checkliste, Einkaufsliste, Rückblick | nur Orgateam |
@@ -77,7 +77,7 @@ Schnittstelle an. Es gibt zwölf Tabellen:
 Die SQL-Dateien im Ordner `sql/`:
 
 - `schema.sql`: der erste Stand der Datenbank
-- `migration-2.sql` bis `migration-25.sql`: alle späteren Änderungen, in dieser
+- `migration-2.sql` bis `migration-26.sql`: alle späteren Änderungen, in dieser
   Reihenfolge. Oben in jeder Datei steht, was sie ändert.
 
 Für eine Neuinstallation werden sie nicht einzeln ausgeführt, sondern
@@ -92,8 +92,8 @@ gemeint ist. Was jemand damit darf, entscheidet die Datenbank.
 
 | Stufe | Wer | Woran die Datenbank es erkennt | Was erlaubt ist |
 | --- | --- | --- | --- |
-| Anonym | jeder mit einem Link | nichts weiter | Veranstaltungen lesen, sich anmelden, Aufgaben melden, Rückmeldung geben |
-| Eigener Eintrag | wer eine Anmeldung abgeschickt hat | Zufallscode im persönlichen Link | die eigene Anmeldung ändern oder löschen |
+| Anonym | jeder mit einem Link | nichts weiter | Veranstaltungen lesen, Zahlen und gekürzte Namen der Anmeldungen über `anmeldungen_oeffentlich()` (nicht die Tabelle `signups`), Aufgaben am Tag lesen und übernehmen, sich anmelden, Aufgaben melden, Rückmeldung geben |
+| Eigener Eintrag | wer eine Anmeldung abgeschickt hat | Zufallscode im persönlichen Link, als Header `X-Entry-Token` | die eigene Anmeldung lesen, ändern oder löschen |
 | Orgateam | wer das Orga-Passwort kennt | Passwort aus `orga_keys`, geprüft von `is_orga()` | alles im Orga-Bereich |
 
 Daraus folgt für dich:
@@ -261,6 +261,9 @@ Die Grundsätze:
 3. **Erst SQL, dann Dateien.** Neue `sql/migration-N.sql` in aufsteigender Nummer im
    SQL-Editor ausführen. Keine auslassen. Danach `einrichtung/sql/pruefen.sql` des neuen
    Stands; jede Zeile muss mit OK beginnen. Erst dann die Seiten hochladen.
+   Bei `migration-26.sql` direkt danach `index.html`, `fest-anmeldung.html` und `orga.html`
+   hochladen. Dazwischen zeigen die alten Seiten keine Anmeldungen der anderen, und
+   persönliche Links öffnen die eigene Anmeldung nicht.
 4. **`config.js` auf dem Webspace nicht überschreiben.** Die Datei im Repo hat leere
    Felder; hochgeladen schaltet sie alle Seiten in den Demo-Modus. Neue Einträge von Hand
    übernehmen. Fehlen sie, nehmen die Seiten den Standard.
@@ -269,8 +272,9 @@ Die Grundsätze:
    „Die Datenbank ist nicht auf dem Stand dieser Version“ erscheint.
 
 Migrationen lassen sich nicht zurücknehmen, dürfen aber mehrfach laufen. Alte Seiten
-laufen mit einer neueren Datenbank weiter. Geht etwas schief, die heruntergeladenen
-Seiten wieder hochladen.
+laufen mit einer neueren Datenbank weiter. Ausnahme: Elternseiten aus der Zeit vor
+`migration-26.sql` zeigen danach keine Anmeldungen der anderen (siehe Schritt 3). Geht etwas
+schief, die heruntergeladenen Seiten wieder hochladen.
 
 ## 7. Umzug
 
@@ -331,8 +335,9 @@ Checkliste beim Wechsel:
 | „Server nicht erreichbar.“ beim Orga-Login | Project URL falsch, Projekt pausiert oder Data API aus | URL in `config.js` prüfen, im Dashboard „Restore“, unter Project Settings → API Data API an und `public` unter „Exposed schemas“ |
 | Keine Seite bekommt Daten, obwohl das Projekt läuft | `.htaccess` lässt die Datenbank nicht zu | in `connect-src` steht noch `PROJEKT-REF` oder die alte Adresse |
 | „Passwort stimmt nicht.“ | Tippfehler, Leerzeichen mitkopiert, Passwort geändert | neu kopieren; sonst neues Passwort erzeugen ([Abschnitt 3](#3-orga-passwort-ändern)) |
-| Roter Hinweis „Die Datenbank ist nicht auf dem Stand dieser Version“ | Migration fehlt oder ist abgebrochen; der Hinweis nennt die fehlenden Spalten | fehlende Migrationen in Reihenfolge ausführen, neu laden; bis dahin nichts anlegen |
+| Roter Hinweis „Die Datenbank ist nicht auf dem Stand dieser Version“ | Migration fehlt oder ist abgebrochen; der Hinweis nennt die fehlenden Spalten, Tabellen und Funktionen | fehlende Migrationen in Reihenfolge ausführen, neu laden; bis dahin nichts anlegen |
 | „Der Datenbank fehlt eine Spalte“ beim Speichern | dasselbe | Fenster offen lassen, Migration einspielen, erneut speichern |
+| Elternseiten zeigen keine Anmeldungen der anderen, persönliche Links öffnen die eigene Anmeldung nicht; im Orga-Bereich ist alles da | `migration-26.sql` ist eingespielt, auf dem Webspace liegen noch alte Seiten | `index.html`, `fest-anmeldung.html` und `orga.html` hochladen, Strg+F5 |
 | „Die Datenbank verweigert das Anlegen. Melde dich ab und wieder an …“ | Orga-Passwort in diesem Tab nicht mehr gültig | abmelden, neu anmelden |
 | Seite bleibt weiß oder reagiert nicht | Seite und `common.js` passen nicht zusammen | alle Dateien hochladen, hart neu laden; sonst alte Kopie zurück |
 | Anmeldungen bleiben länger als die Frist | Cron-Auftrag fehlt, und niemand hat sich im Orga-Bereich angemeldet | Cron-Auftrag prüfen oder anlegen ([Abschnitt 4](#wann-es-läuft)) |
