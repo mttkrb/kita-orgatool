@@ -283,8 +283,8 @@ Richtlinie nur für diesen Aufruf.
 
 ## Anhang: Was die Skripte technisch tun
 
-1. `pg_dump --format=custom --schema=public` sichert Schema und Daten des alten
-   Projekts nach `arbeit/alt_<zeitpunkt>.dump`. Dazu kommen die Zeilenzahlen, ein
+1. `pg_dump --format=custom --schema=public --schema=intern` sichert Schema und Daten
+   des alten Projekts, dazu die Hilfsfunktionen im Schema `intern`, nach `arbeit/alt_<zeitpunkt>.dump`. Dazu kommen die Zeilenzahlen, ein
    Fingerabdruck von Struktur und Rechten (`sql/struktur.sql`) und die Cron-Aufträge
    (`sql/cron-export.sql`).
 2. Das Inhaltsverzeichnis der Sicherung wird geteilt. Weggelassen werden das Schema
