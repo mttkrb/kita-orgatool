@@ -385,7 +385,8 @@ create policy "eigene loeschen" on signups for delete to anon
       <input type="text" id="e-title" placeholder="Oma-Opa-Tag">
       <label for="e-slug">Kurzname für den Link</label>
       <input type="text" id="e-slug" placeholder="oma-opa-tag-2026">
-      <p class="hint">Nur Kleinbuchstaben, Zahlen und Bindestriche.</p>
+      <p class="hint">Nur Kleinbuchstaben, Zahlen und Bindestriche. Steht in allen Links;
+        sobald es Anmeldungen gibt, lässt er sich nicht mehr ändern.</p>
       <div class="row">
         <div><label for="e-on">Datum</label>
           <input type="date" id="e-on"></div>
@@ -1011,12 +1012,19 @@ const db = {
   },
   async savePlanning(eventId, data){
     if(!eventId) return;
-    if(!live){ demoPlanning[eventId] = JSON.parse(JSON.stringify(data)); return; }
+    if(!live){
+      demoPlanning[eventId] = Object.assign({}, demoPlanning[eventId], JSON.parse(JSON.stringify(data)));
+      return;
+    }
+    // Nur mitgeschickte Spalten werden überschrieben. Ohne shopping bleibt die
+    // Einkaufsliste stehen, etwa beim Abhaken in den To-dos.
+    const zeile = { event_id:eventId, checklist:data.checklist, review:data.review,
+                    updated_at:new Date().toISOString() };
+    if(data.shopping) zeile.shopping = data.shopping;
     await req("planning", {
       method:"POST",
       headers:head({ Prefer:"resolution=merge-duplicates" }),
-      body: JSON.stringify({ event_id:eventId, checklist:data.checklist, review:data.review,
-                             shopping:data.shopping || [], updated_at:new Date().toISOString() })
+      body: JSON.stringify(zeile)
     });
   },
   async allPlanning(){
@@ -1216,6 +1224,11 @@ async function checkSchema(){
       else fehlt.push("Tabelle " + tabelle);
     }
   }
+  // Funktionen, die die Elternseiten brauchen
+  try{
+    await req("rpc/anmeldungen_oeffentlich", { method:"POST",
+      headers: head({ "Content-Type":"application/json" }), body: JSON.stringify({ p_events:[] }) });
+  }catch(err){ fehlt.push("Funktion anmeldungen_oeffentlich (migration-26.sql)"); }
   if(fehlt.length){
     $("schema-warn").classList.remove("hidden");
     $("schema-warn").innerHTML = "<strong>Die Datenbank ist nicht auf dem Stand dieser Version.</strong><br>" +
@@ -1689,7 +1702,7 @@ async function handleTemplate(act, id){
     return openEditor({
       title: t.name + " " + year, slug: slugify(t.name + "-" + year),
       event_date:"", event_time:"", place:"", intro:"",
-      retention_note:"Alle Angaben werden zwei Wochen nach der Veranstaltung gelöscht.",
+      retention_note:"",
       ask_people:true, people:JSON.parse(JSON.stringify(t.people || {})),
       payment:JSON.parse(JSON.stringify(t.payment || {})),
       archived:false, template_id:t.id,
@@ -1939,7 +1952,7 @@ function catRow(c){
   return d;
 }
 
-function taskRow(t, bilder){
+function taskRow(t, bilder, imTpl){
   t = t || {};
   const d = document.createElement("div"); d.className = "item";
   d.innerHTML = TOOLS+
@@ -1949,10 +1962,12 @@ function taskRow(t, bilder){
     '<div><label>Wie viele</label><input type="number" class="t-needed" min="1" value="'+(t.needed??4)+'"></div></div>'+
     '<label>Erklärung für die Eltern <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>'+
     '<textarea class="t-info" placeholder="Was genau ist zu tun, worauf achten?">'+esc(t.info||"")+'</textarea>'+
+    // Fotos hängen an der Veranstaltung; Vorlagen speichern keine
+    '<div class="t-fotos'+(imTpl ? ' hidden' : '')+'">'+
     '<label>Fotos <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>'+
     '<input type="file" class="t-img" accept="image/*" multiple>'+
     '<p class="hint">Werden automatisch verkleinert. Keine Bilder mit Kindern — die Liste ist für alle sichtbar, die den Link haben.</p>'+
-    '<div class="shots"></div>';
+    '<div class="shots"></div></div>';
   d.dataset.id = t.id || "";
   d._neu = [];          // frisch ausgewaehlte Bilder
   d._weg = [];          // zu loeschende, bereits gespeicherte Bilder
@@ -2190,7 +2205,7 @@ $("view-edit").addEventListener("input", ev => {
   if(ev.target.closest("#fields") || /^e-(p-|g\d)/.test(ev.target.id || "")) renderGeld();
 });
 
-function checkRow(c){
+function checkRow(c, imTpl){
   c = c || {};
   const d = document.createElement("div"); d.className = "item";
   d.innerHTML = TOOLS+
@@ -2223,8 +2238,9 @@ function checkRow(c){
   sel.value = off === null ? "" : String(off);
   const zeig = () => {
     const o = sel.value === "" ? null : +sel.value;
-    const datum = faelligAm(($("e-on") && $("e-on").value) || null, o);
-    d.querySelector(".k-faellig").textContent = datum
+    // In der Vorlage gibt es kein Datum, dort reicht der Vorlauf
+    const datum = imTpl ? null : faelligAm(($("e-on") && $("e-on").value) || null, o);
+    d.querySelector(".k-faellig").textContent = imTpl ? "" : datum
       ? "fällig am " + new Date(datum+"T12:00:00").toLocaleDateString("de-DE") + " (" + wannText(tageBis(datum)) + ")"
       : (o === null ? "" : "Datum der Veranstaltung fehlt — kein Termin berechenbar");
   };
@@ -2245,7 +2261,7 @@ function checkRow(c){
     const v = VORLAUF.find(z=>String(z.d) === o);
     if(v && v.d !== null) teile.push(v.label);
     const erledigt = (x.querySelector(".k-done") || {}).checked;
-    const knapp = !wer && !erledigt && o !== "" && $("e-on") && $("e-on").value &&
+    const knapp = !imTpl && !wer && !erledigt && o !== "" && $("e-on") && $("e-on").value &&
       tageBis(faelligAm($("e-on").value, +o)) <= 7;
     return "<b>"+esc(label)+"</b>" + (teile.length ? ' <span>' + teile.join(" · ") + "</span>" : "") +
       (knapp ? '<span class="ohne">niemand zuständig</span>' : "");
@@ -2302,18 +2318,18 @@ function openTemplate(t){
   fillGroups("t", currentTpl);
   fillPayment("t", currentTpl);
   $("t-cats").innerHTML = ""; (currentTpl.categories||[]).forEach(c=>$("t-cats").appendChild(catRow(c))); refreshTools($("t-cats"));
-  $("t-tasks").innerHTML = ""; (currentTpl.tasks||[]).forEach(x=>$("t-tasks").appendChild(taskRow(x))); refreshTools($("t-tasks"));
+  $("t-tasks").innerHTML = ""; (currentTpl.tasks||[]).forEach(x=>$("t-tasks").appendChild(taskRow(x, [], true))); refreshTools($("t-tasks"));
   $("t-fields").innerHTML = ""; (currentTpl.fields||[]).forEach(f=>$("t-fields").appendChild(fieldRow(f))); refreshTools($("t-fields"));
-  $("t-checks").innerHTML = ""; (currentTpl.checklist||[]).forEach(c=>$("t-checks").appendChild(checkRow(c))); refreshTools($("t-checks"));
+  $("t-checks").innerHTML = ""; (currentTpl.checklist||[]).forEach(c=>$("t-checks").appendChild(checkRow(c, true))); refreshTools($("t-checks"));
   $("t-einkauf").innerHTML = ""; (currentTpl.shopping||[]).forEach(p=>$("t-einkauf").appendChild(kaufRow(p))); refreshTools($("t-einkauf"));
   msg($("tpl-msg"),"");
   clearDirty();
   show("template");
 }
 $("t-add-cat").onclick   = () => { $("t-cats").appendChild(catRow()); refreshTools($("t-cats")); };
-$("t-add-task").onclick  = () => { $("t-tasks").appendChild(taskRow()); refreshTools($("t-tasks")); };
+$("t-add-task").onclick  = () => { $("t-tasks").appendChild(taskRow(undefined, [], true)); refreshTools($("t-tasks")); };
 $("t-add-field").onclick = () => { $("t-fields").appendChild(fieldRow()); refreshTools($("t-fields")); };
-$("t-add-check").onclick = () => { $("t-checks").appendChild(checkRow()); refreshTools($("t-checks")); };
+$("t-add-check").onclick = () => { $("t-checks").appendChild(checkRow(undefined, true)); refreshTools($("t-checks")); };
 
 $("t-save").onclick = async () => {
   const name = $("t-name").value.trim();
@@ -2453,7 +2469,7 @@ async function openEditor(ev, opts){
   opts = opts || {};
   current = ev ? {...ev} : {
     title:"", slug:"", event_date:"", event_time:"", place:"", intro:"",
-    retention_note:"Alle Angaben werden zwei Wochen nach der Veranstaltung gelöscht.",
+    retention_note:"",
     ask_people:true, archived:false, template_id:null,
     categories:JSON.parse(JSON.stringify(DEFAULTS.categories)),
     tasks:JSON.parse(JSON.stringify(DEFAULTS.tasks)), fields:[]
@@ -2484,14 +2500,20 @@ async function openEditor(ev, opts){
   const zeigeLoeschtag = () => {
     const tage = +$("e-days").value || 14;
     const wann = $("e-on").value
-      ? new Date(new Date($("e-on").value + "T12:00:00").getTime() + tage*864e5)
+      // Das Aufräumen löscht, wenn die Frist vorbei ist, also am Tag danach
+      ? new Date(new Date($("e-on").value + "T12:00:00").getTime() + (tage+1)*864e5)
           .toLocaleDateString("de-DE")
       : null;
-    $("e-days-hint").textContent = (wann ? "Löschung am " + wann + ". " : "Gezählt ab dem Veranstaltungstag. ") +
+    $("e-days-hint").textContent = (wann ? "Löschung ab " + wann + ". " : "Gezählt ab dem Veranstaltungstag. ") +
       "Gelöscht werden Namen, Anmerkungen und Antworten — die Zahlen für den Rückblick werden " +
       "vorher gesichert und bleiben.";
   };
-  $("e-days").onchange = zeigeLoeschtag;
+  $("e-days").onchange = () => {
+    // Der früher vorbelegte Satz versprach zwei Wochen und passt dann nicht mehr
+    if($("e-retention").value.trim() === "Alle Angaben werden zwei Wochen nach der Veranstaltung gelöscht.")
+      $("e-retention").value = "";
+    zeigeLoeschtag();
+  };
   $("e-on").addEventListener("change", zeigeLoeschtag);
   zeigeLoeschtag();
   fillGroups("e", current);
@@ -2898,6 +2920,21 @@ $("save").onclick = async () => {
     msg($("edit-msg"), "Der Kurzname " + ev.slug + " gehört schon zu " + kollision.title +
       ". Ich habe " + frei + " eingetragen — nochmal auf Speichern drücken.", true);
     return;
+  }
+
+  // Anmeldungen hängen am Kurznamen. Ein neuer Kurzname ließe sie verwaisen, und das
+  // Aufräumen löscht verwaiste Anmeldungen. Persönliche Links gingen ebenfalls ins Leere.
+  if(current.id && current.slug && ev.slug !== current.slug){
+    let anzahl = 0;
+    try{ anzahl = (await db.listSignups(current.slug)).length; }
+    catch(e){ msg($("edit-msg"), "Konnte nicht prüfen, ob es Anmeldungen gibt: " + e.message, true); return; }
+    if(anzahl){
+      $("e-slug").value = current.slug;
+      msg($("edit-msg"), "Der Kurzname bleibt " + current.slug + ": Es gibt schon " + anzahl +
+        (anzahl === 1 ? " Anmeldung" : " Anmeldungen") + ", und die persönlichen Links enthalten ihn. " +
+        "Nochmal auf Speichern drücken, um den Rest zu sichern.", true);
+      return;
+    }
   }
   $("save").disabled = true;
   try{

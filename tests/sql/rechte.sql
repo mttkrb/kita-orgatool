@@ -20,6 +20,8 @@ insert into signups (id, event, name, token) values
 insert into signups (id, event, name, token, status) values
   ('aaaaaaaa-0000-0000-0000-000000000005','heute','Familie E','token-e-12345','absage');
 insert into payments values ('aaaaaaaa-0000-0000-0000-000000000004', 6, now());
+update events set visibility = '{"itemNames":false,"taskNames":false}' where slug = 'morgen';
+update signups set note = 'privat' where id = 'aaaaaaaa-0000-0000-0000-000000000001';
 
 create function pruef(name text, ok boolean) returns void language plpgsql as $$
 begin raise notice '%: %', case when ok then 'OK  ' else 'FEHLER' end, name; end $$;
@@ -50,6 +52,29 @@ select pruef('events.checkin lesbar', (select checkin from events where slug='he
 do $$ begin update events set checkin = false where slug = 'heute';
   perform pruef('anon ändert events.checkin nicht', (select checkin from events where slug='heute')); end $$;
 
+-- Anmeldungen lesen (migration-26): ohne Token keine Zeile, mit Token nur die eigene
+select pruef('anon liest fremde Anmeldungen nicht', (select count(*) from signups) = 0);
+do $$ begin perform 1 from signups where name = 'Familie A';
+  perform pruef('anon findet Namen nicht per Filter', not found); end $$;
+select pruef('öffentlich: alle Anmeldungen gezählt', (select count(*) from anmeldungen_oeffentlich(array['heute'])) = 3);
+select pruef('öffentlich: Name gekürzt', (select count(*) from anmeldungen_oeffentlich(array['heute']) where name = 'Familie A.') = 1);
+select pruef('öffentlich: Absage ohne Name und Personen', (select count(*) from anmeldungen_oeffentlich(array['heute'])
+  where status = 'absage' and name is null and adults = 0) = 1);
+select pruef('öffentlich: kein Name, wenn Namen aus', (select count(*) from anmeldungen_oeffentlich(array['morgen'])
+  where name is not null) = 0);
+do $$ begin perform note from anmeldungen_oeffentlich(array['heute']);
+  perform pruef('öffentlich: keine Anmerkung', false);
+  exception when undefined_column then perform pruef('öffentlich: keine Anmerkung', true); end $$;
+do $$ begin perform * from intern.kurzname('Anna Beispiel');
+  perform pruef('intern.kurzname nicht aufrufbar', false);
+  exception when insufficient_privilege then perform pruef('intern.kurzname nicht aufrufbar', true); end $$;
+set request.headers = '{"x-entry-token":"token-a-12345"}';
+select pruef('Token liest eigene Anmeldung', (select count(*) from signups) = 1
+  and (select note from signups where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 'privat');
+set request.headers = '{"x-entry-token":"falsch-12345"}';
+select pruef('falsches Token liest nichts', (select count(*) from signups) = 0);
+set request.headers = '{}';
+
 -- Check-in
 select pruef('falsches Token', checkin('aaaaaaaa-0000-0000-0000-000000000001','falsch-12345','richtiger-code')->>'fehler' = 'anmeldung');
 select pruef('falscher Code', checkin('aaaaaaaa-0000-0000-0000-000000000001','token-a-12345','falsch')->>'fehler' = 'code');
@@ -69,6 +94,7 @@ select pruef('Status ohne Token', checkin_status('aaaaaaaa-0000-0000-0000-000000
 
 -- mit Orga-Passwort
 set request.headers = '{"x-orga-key":"geheim-orga"}';
+select pruef('Orga liest alle Anmeldungen', (select count(*) from signups) = 5);
 select pruef('Orga liest payments', (select count(*) from payments) = 1);
 select pruef('Orga liest attendance', (select count(*) from attendance) = 1);
 select pruef('Orga liest checkin_codes', (select count(*) from checkin_codes) = 3);
