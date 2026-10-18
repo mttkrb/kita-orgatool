@@ -178,7 +178,8 @@ Im Browser, mit neu geladener Seite (Strg+F5 bzw. Cmd+Shift+R):
 
 - **Pausieren:** Im kostenlosen Tarif pausiert Supabase ein Projekt nach einer Woche
   ohne Zugriff. Zwischen den Festen ist das normal. Ein regelmäßiger Abruf (etwa von
-  einem Vereins-NAS oder einem Cron-Dienst) verhindert es; sonst vor jeder Veranstaltung
+  einem Vereins-NAS mit [nas/keepalive.sh](../nas/keepalive.sh) oder einem Cron-Dienst)
+  verhindert es; sonst vor jeder Veranstaltung
   im Dashboard nachsehen und gegebenenfalls „Restore“ klicken.
 - **Sicherungen:** Der kostenlose Tarif hat keine herunterladbaren Sicherungen. Eine
   eigene Sicherung geht mit `pg_dump` über den Session Pooler (wie in
