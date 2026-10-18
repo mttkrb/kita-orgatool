@@ -142,6 +142,8 @@ function textMitFormat(ziel, text){
   const ARTEN = { "*":"strong", "_":"em", "~":"s" };
   const wortzeichen = c => !!c && /[0-9A-Za-zÀ-ÖØ-öø-ÿ]/.test(c);
   const zeile = (p, t) => {
+    // **fett** wie in Markdown gilt auch
+    t = t.replace(/\*\*(?=\S)([^\n]*?\S)\*\*/g, "*$1*");
     // Marker zählen nur an Wortgrenzen, damit kita_sonne oder 3*4 Text bleiben
     const re = /([*_~])([^\s*_~](?:[^\n]*?[^\s])?)\1/g;
     let pos = 0, m;

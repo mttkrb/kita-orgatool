@@ -426,7 +426,8 @@ create policy "eigene loeschen" on signups for delete to anon
       <input type="text" id="e-place" placeholder="Kita-Außengelände">
       <label for="e-intro">Begrüßungstext <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
       <textarea id="e-intro" rows="5"></textarea>
-      <p class="hint">Leerzeile = neuer Absatz. Wie in WhatsApp: *fett*, _kursiv_, ~durchgestrichen~.</p>
+      <p class="hint">Leerzeile = neuer Absatz. Wie in WhatsApp: *fett*, _kursiv_, ~durchgestrichen~.
+        Aus Google Forms, Word oder Mail eingefügt, wird Fett und Kursiv automatisch umgesetzt.</p>
       <label for="e-days">Anmeldungen löschen nach</label>
       <select id="e-days">
         <option value="14">14 Tagen (empfohlen)</option>
@@ -2774,6 +2775,55 @@ $("kauf-csv").onclick = () => {
 $("e-title").addEventListener("blur", () => {
   if(!$("e-slug").value.trim() && $("e-title").value.trim())
     $("e-slug").value = slugify($("e-title").value);
+});
+
+// Eingefügter Text aus Google Forms, Word oder Mail: Fett und Kursiv werden zu *…* und _…_,
+// Absätze zu Leerzeilen. DOMParser führt keine Skripte aus und lädt nichts nach.
+function htmlAlsText(html){
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const BLOCK = /^(P|DIV|LI|H[1-6]|TR|BLOCKQUOTE|UL|OL|TABLE)$/;
+  const teile = [];   // [text, marker]
+  const lauf = (n, fett, kursiv) => {
+    if(n.nodeType === 3){
+      teile.push([n.data.replace(/\s+/g, " "), fett ? "*" : kursiv ? "_" : ""]);
+      return;
+    }
+    if(n.nodeType !== 1 || /^(SCRIPT|STYLE|HEAD|TITLE)$/.test(n.tagName)) return;
+    if(n.tagName === "BR"){ teile.push(["\n", ""]); return; }
+    // Google Docs packt alles in <b style="font-weight:normal">, deshalb zählt der Stil
+    const st = n.style || {};
+    if(/^(B|STRONG)$/.test(n.tagName)) fett = true;
+    if(st.fontWeight) fett = /bold/.test(st.fontWeight) || parseInt(st.fontWeight, 10) >= 600;
+    if(/^(I|EM)$/.test(n.tagName)) kursiv = true;
+    if(st.fontStyle) kursiv = st.fontStyle !== "normal";
+    const block = BLOCK.test(n.tagName);
+    if(block) teile.push(["\n\n", ""]);
+    n.childNodes.forEach(k => lauf(k, fett, kursiv));
+    if(block) teile.push(["\n\n", ""]);
+  };
+  lauf(doc.body, false, false);
+  // Gleich formatierte Stücke zusammenlegen, Leerzeichen vor und hinter die Marker
+  const runs = [];
+  teile.forEach(([t, m]) => {
+    const letzt = runs[runs.length - 1];
+    if(letzt && letzt[1] === m) letzt[0] += t; else runs.push([t, m]);
+  });
+  const text = runs.map(([t, m]) => {
+    if(!m) return t;
+    const [, vor, kern, nach] = /^(\s*)([\s\S]*?)(\s*)$/.exec(t);
+    return kern ? vor + m + kern + m + nach : t;
+  }).join("");
+  return text.replace(/[ \t]*\n[ \t]*/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+$("e-intro").addEventListener("paste", e => {
+  const html = e.clipboardData && e.clipboardData.getData("text/html");
+  const text = html ? htmlAlsText(html) : "";
+  if(!text) return;
+  e.preventDefault();
+  const f = e.target;
+  f.setRangeText(text, f.selectionStart, f.selectionEnd, "end");
+  f.dispatchEvent(new Event("input", { bubbles:true }));
 });
 
 function collectEvent(){
