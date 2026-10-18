@@ -24,6 +24,8 @@
   header.hero{padding-bottom:22px;margin-bottom:0}
   .meta{color:var(--ink-soft);font-size:.95rem;margin-top:8px}
   .meta strong{color:var(--ink);font-weight:600}
+  .intro p{margin:0 0 .7em}
+  .intro p:last-child{margin-bottom:0}
   section{margin-top:34px}
   .lead{color:var(--ink-soft);font-size:.95rem;margin:0 0 14px}
   .cat{border-top:1px solid var(--line);padding:14px 0}
@@ -65,7 +67,7 @@
   .check .dabei{display:block;color:var(--ink-soft);font-size:.83rem}
   .details{border:none;background:none;color:var(--moss);font-size:.83rem;padding:2px 0;
     text-decoration:underline;cursor:pointer}
-  .aufgabe-info{font-size:.86rem;color:var(--ink-soft);margin:4px 0 0 27px}
+  .aufgabe-info{font-size:.86rem;color:var(--ink-soft);margin:4px 0 0 27px;white-space:pre-line}
   .aufgabe-info img{width:84px;height:84px;object-fit:cover;border-radius:5px;
     border:1px solid var(--line);margin-top:6px;cursor:zoom-in}
   .wahl{display:flex;gap:8px;margin:6px 0 4px;flex-wrap:wrap}
@@ -75,7 +77,7 @@
   .wahl button.nein.an{background:var(--berry);border-color:var(--berry)}
   .pflicht{background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--berry);
     border-radius:6px;padding:14px 16px;margin-bottom:20px;font-size:.92rem}
-  .task-info{display:block;color:var(--ink);font-size:.88rem;margin-top:4px}
+  .task-info{display:block;color:var(--ink);font-size:.88rem;margin-top:4px;white-space:pre-line}
   .task-shots{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
   .task-shots img{width:88px;height:88px;object-fit:cover;border-radius:5px;
     border:1px solid var(--line);cursor:zoom-in}
@@ -146,7 +148,7 @@
   <header class="hero">
     <h1 id="ev-title">Lädt …</h1>
     <p class="meta" id="ev-meta"></p>
-    <p class="meta" id="ev-intro"></p>
+    <div class="meta intro" id="ev-intro"></div>
     <p class="meta" id="ev-count"></p>
     <p class="meta hidden" id="ev-preis"></p>
   </header>
@@ -515,7 +517,7 @@ function renderHead(){
   const bits = [datum && "<strong>"+esc(datum)+"</strong>", esc(EV.event_time||""),
     esc(EV.place||"")].filter(Boolean);
   $("ev-meta").innerHTML = bits.join(" · ");
-  $("ev-intro").textContent = EV.intro || "";
+  textMitFormat($("ev-intro"), EV.intro);
   $("ev-intro").classList.toggle("hidden", !EV.intro);
   const V2 = vis(EV);
   const sichtbar = [];

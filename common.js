@@ -134,6 +134,41 @@ const zahlweg = p => {
   return url ? { art:"link", wert:url } : null;
 };
 
+// Text des Orgateams mit Absätzen und einfachen Auszeichnungen wie in WhatsApp:
+// *fett*, _kursiv_, ~durchgestrichen~. Leerzeile = neuer Absatz, Zeilenumbruch bleibt.
+// Baut die Elemente selbst und setzt nur textContent, nie innerHTML (fremde Eingabe).
+function textMitFormat(ziel, text){
+  ziel.replaceChildren();
+  const ARTEN = { "*":"strong", "_":"em", "~":"s" };
+  const wortzeichen = c => !!c && /[0-9A-Za-zÀ-ÖØ-öø-ÿ]/.test(c);
+  const zeile = (p, t) => {
+    // Marker zählen nur an Wortgrenzen, damit kita_sonne oder 3*4 Text bleiben
+    const re = /([*_~])([^\s*_~](?:[^\n]*?[^\s])?)\1/g;
+    let pos = 0, m;
+    while((m = re.exec(t))){
+      if(wortzeichen(t[m.index - 1]) || wortzeichen(t[m.index + m[0].length])){
+        re.lastIndex = m.index + 1; continue;
+      }
+      if(m.index > pos) p.append(t.slice(pos, m.index));
+      const el = document.createElement(ARTEN[m[1]]);
+      el.textContent = m[2];
+      p.append(el);
+      pos = m.index + m[0].length;
+    }
+    if(pos < t.length) p.append(t.slice(pos));
+  };
+  const rein = String(text || "").replace(/\r\n?/g, "\n").trim();
+  if(!rein) return;
+  rein.split(/\n\s*\n/).forEach(absatz=>{
+    const p = document.createElement("p");
+    absatz.split("\n").forEach((t, i)=>{
+      if(i) p.append(document.createElement("br"));
+      zeile(p, t);
+    });
+    ziel.append(p);
+  });
+}
+
 // Bild im Browser verkleinern, damit die Datenbank klein bleibt (JPEG-Data-URL).
 function verkleinern(datei, kante=1000, guete=0.72){
   return new Promise((ok, fehler)=>{

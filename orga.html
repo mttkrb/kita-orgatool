@@ -425,7 +425,8 @@ create policy "eigene loeschen" on signups for delete to anon
       <label for="e-place">Ort</label>
       <input type="text" id="e-place" placeholder="Kita-Außengelände">
       <label for="e-intro">Begrüßungstext <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
-      <textarea id="e-intro"></textarea>
+      <textarea id="e-intro" rows="5"></textarea>
+      <p class="hint">Leerzeile = neuer Absatz. Wie in WhatsApp: *fett*, _kursiv_, ~durchgestrichen~.</p>
       <label for="e-days">Anmeldungen löschen nach</label>
       <select id="e-days">
         <option value="14">14 Tagen (empfohlen)</option>
