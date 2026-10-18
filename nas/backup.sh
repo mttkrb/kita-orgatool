@@ -16,8 +16,8 @@
 #   4. Einmal von Hand ausführen; im Ordner sicherungen/ liegt dann eine .dump-Datei.
 #
 # pg_dump muss mindestens die Postgres-Version des Projekts haben (Dashboard →
-# Project Settings → Infrastructure). Wiederherstellen: pg_restore, siehe
-# umzug/ANLEITUNG.md.
+# Project Settings → Infrastructure). Wiederherstellen mit wiederherstellen.sh im
+# selben Ordner.
 #
 # Ohne Datei auf dem NAS: In Schritt 2 statt des Befehls diese Zeilen in das Feld
 # "Benutzerdefiniertes Skript" eintragen. Das Passwort steht dann im Klartext in der

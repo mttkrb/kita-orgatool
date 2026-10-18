@@ -184,7 +184,8 @@ Im Browser, mit neu geladener Seite (Strg+F5 bzw. Cmd+Shift+R):
 - **Sicherungen:** Der kostenlose Tarif hat keine herunterladbaren Sicherungen. Eine
   eigene Sicherung geht mit `pg_dump` über den Session Pooler (wie in
   [umzug/ANLEITUNG.md](../umzug/ANLEITUNG.md), Abschnitt 4 beschrieben), täglich etwa
-  mit [nas/backup.sh](../nas/backup.sh) auf dem Vereins-NAS. Sicherungen
+  mit [nas/backup.sh](../nas/backup.sh) auf dem Vereins-NAS, zurückspielen mit
+  [nas/wiederherstellen.sh](../nas/wiederherstellen.sh). Sicherungen
   enthalten Elterndaten: verschlüsselt ablegen und nach der Löschfrist verwerfen.
 - **Einwilligungstext:** Auf der Anmeldeseite prüfen, ob der automatisch erzeugte Text
   zu dem passt, was der Verein den Eltern zusagt (Löschfrist, wer die Anmeldungen
