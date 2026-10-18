@@ -1,4 +1,5 @@
--- Nimmt anon, authenticated und service_role alle Rechte an den Objekten in public.
+-- Nimmt anon, authenticated und service_role alle Rechte an den Objekten in public
+-- und intern.
 --
 -- Supabase gibt neuen Tabellen von sich aus alle Rechte für anon. Beim Einspielen
 -- entstehen die Tabellen neu und bekämen damit mehr Rechte als im alten Projekt,
@@ -13,7 +14,7 @@ begin
     select c.oid::regclass as name, c.relkind
     from pg_class c
     join pg_namespace n on n.oid = c.relnamespace
-    where n.nspname = 'public'
+    where n.nspname in ('public', 'intern')
       and c.relkind in ('r', 'p', 'v', 'm', 'S', 'f')
       and not exists (select 1 from pg_depend d
                       where d.classid = 'pg_class'::regclass and d.objid = c.oid and d.deptype = 'e')
@@ -29,7 +30,7 @@ begin
     select p.oid::regprocedure as name
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public'
+    where n.nspname in ('public', 'intern')
       and p.prokind in ('f', 'p')
       and not exists (select 1 from pg_depend d
                       where d.classid = 'pg_proc'::regclass and d.objid = p.oid and d.deptype = 'e')

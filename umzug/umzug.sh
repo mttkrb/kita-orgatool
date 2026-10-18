@@ -238,7 +238,7 @@ cmd_sichern() {
   basis="alt_$stamp"
 
   vorher="$(sql_datei alt ../sql/zeilen.sql)" || fehler "Zeilen im alten Projekt nicht lesbar."
-  pg alt pg_dump --format=custom --schema=public \
+  pg alt pg_dump --format=custom --schema=public --schema=intern \
       --no-publications --no-subscriptions --no-security-labels \
       --file="$basis.dump" \
     || fehler "pg_dump ist gescheitert, siehe Meldung oben."

@@ -261,7 +261,7 @@ function Cmd-Sichern {
 
   $vorher = @(Sql-Datei 'alt' '../sql/zeilen.sql')
   if ($script:PgExit -ne 0) { Fehler 'Zeilen im alten Projekt nicht lesbar.' }
-  Pg 'alt' 'pg_dump' @('--format=custom', '--schema=public', '--no-publications', '--no-subscriptions',
+  Pg 'alt' 'pg_dump' @('--format=custom', '--schema=public', '--schema=intern', '--no-publications', '--no-subscriptions',
                        '--no-security-labels', "--file=$basis.dump")
   if ($script:PgExit -ne 0) { Fehler 'pg_dump ist gescheitert, siehe Meldung oben.' }
   $struktur = @(Sql-Datei 'alt' '../sql/struktur.sql')
