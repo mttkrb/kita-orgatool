@@ -3,7 +3,7 @@
 Anmeldungen, Planung und Auswertung für die Veranstaltungen einer Elterninitiative.
 Betrieben von ehrenamtlichen Eltern, weitergegeben an nachfolgende Vorstände.
 
-Ausführliche Begründungen stehen im Projekthandbuch (`docs/projekthandbuch.md`).
+Aufbau, Rechte und Betrieb für Menschen erklärt `anleitungen/technik.md`.
 Diese Datei ist die Kurzfassung für die Arbeit am Code.
 
 ## Grundregeln
@@ -50,7 +50,7 @@ sql/                    schema.sql, migration-2.sql … migration-N.sql (keine D
 tests/                  Node mit jsdom, Nachbau der Datenbank inkl. Rechteprüfung
 deploy/.htaccess        Für den Zielordner /orga/ auf dem Webspace
 nas/                    Backup- und Keep-alive-Skripte für das Vereins-NAS
-docs/                   Projekthandbuch, Migrationsanleitung, Aufgabenliste
+aufgaben.md             Offene Aufgaben
 umzug/                  Umzug in ein anderes Supabase-Projekt: Skripte (sh, ps1) und Anleitung
 einrichtung/            Neuinstallation: Anleitung, SQL-Vorlage und Skript, das sie erzeugt
 aktualisierung/         Update einer laufenden Installation: Anleitung
@@ -103,7 +103,7 @@ Felder je Veranstaltung unterscheiden.
 | `orga_keys` | Orga-Passwort | niemand über die API |
 
 JSON-Strukturen: `categories`, `tasks`, `fields`, `checklist`, `shopping`, `review`,
-`people`, `visibility`, `payment` — Felder siehe Projekthandbuch, Abschnitt 4.
+`people`, `visibility`, `payment` — Felder siehe Kommentare in `sql/` und der Code in `orga.html`.
 
 Kosten (ab `migration-22.sql`): `events.payment` und `templates.payment` halten
 `{ adults, kids, note, link }` — Preis je Person der beiden Gruppen, Zahlungshinweis und
@@ -229,4 +229,4 @@ mit echten Namen, Exporte mit Elterndaten. Nur `.example`-Dateien committen.
 
 E-Mail-Versand, Mitgliederliste, Papierkorb mit Wiederherstellen, KI-Assistent im Tool,
 Offline-Modus, serverseitige Begrenzung von Helferplätzen, Einladungsgestaltung.
-Begründungen im Projekthandbuch, Abschnitt 9. Diese Themen nicht unaufgefordert ergänzen.
+Diese Themen nicht unaufgefordert ergänzen.
