@@ -109,6 +109,8 @@ feedback.html
 common.js
 common.css
 eltern.css
+manifest-eltern.json
+manifest-orga.json
 fonts/               ← ganzer Ordner
 icons/               ← nur neue Standarddateien, siehe unten
 ```

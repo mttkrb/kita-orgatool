@@ -115,7 +115,8 @@ dafür nicht, nur ein Supabase-Konto, den SFTP-Zugang zum Webspace und einen Bro
    `anonKey` eintragen. Das gilt für alle Seiten. Darunter unter `SETTINGS` optional
    Kitaname, Logo, Favicon und zwei Farben; leer lassen heißt Standardaussehen.
 4. **Hochladen:** Die HTML-Dateien zusammen mit `config.js`, `common.js`, `common.css`,
-   `eltern.css` und den Ordnern `fonts/` und `icons/` per SFTP in einen Unterordner des
+   `eltern.css`, `manifest-eltern.json`, `manifest-orga.json` und den Ordnern `fonts/` und
+   `icons/` per SFTP in einen Unterordner des
    Webspace laden, zum Beispiel `/orga/`.
 
 Die beiden SQL-Dateien werden mit `einrichtung/vorlage-erzeugen.sh` aus dem laufenden

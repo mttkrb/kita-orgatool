@@ -1,0 +1,14 @@
+{
+  "name": "Kita – Orga-Bereich",
+  "short_name": "Orga",
+  "lang": "de",
+  "start_url": "orga.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#EFEAE0",
+  "theme_color": "#3F5540",
+  "icons": [
+    { "src": "icons/orga-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/orga-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

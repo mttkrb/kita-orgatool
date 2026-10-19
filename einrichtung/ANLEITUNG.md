@@ -141,6 +141,8 @@ config.js            ← die Kopie mit den echten Werten
 common.js
 common.css
 eltern.css
+manifest-eltern.json
+manifest-orga.json
 fonts/               ← ganzer Ordner
 icons/               ← ganzer Ordner, samt eigenem Logo
 ```
