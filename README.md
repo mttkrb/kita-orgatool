@@ -117,7 +117,8 @@ dafür nicht, nur ein Supabase-Konto, den SFTP-Zugang zum Webspace und einen Bro
 4. **Hochladen:** Die HTML-Dateien zusammen mit `config.js`, `common.js`, `common.css`,
    `eltern.css`, `manifest-eltern.json`, `manifest-orga.json` und den Ordnern `fonts/` und
    `icons/` per SFTP in einen Unterordner des
-   Webspace laden, zum Beispiel `/orga/`.
+   Webspace laden, zum Beispiel `/orga/`. Dazu `deploy/.htaccess` als `.htaccess` in
+   denselben Ordner, vorher `PROJEKT-REF` durch die eigene Project URL ersetzen.
 
 Die beiden SQL-Dateien werden mit `einrichtung/vorlage-erzeugen.sh` aus dem laufenden
 Projekt erzeugt, nur Struktur, keine Daten, und nach jeder Migration neu mitgeliefert

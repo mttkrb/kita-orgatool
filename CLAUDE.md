@@ -79,7 +79,7 @@ Namen aus `common.js` (`live`, `$`, `esc`, `bildUrl`, `SIGNUP_COLS`, `anonHead`,
 `kostetEtwas`, `kosten`, `paypalName`, `paypalMail`, `paypalLink`, `zahlLink`, `zahlweg`, `textMitFormat`) in den Seiten nicht auf oberster Ebene
 neu deklarieren — das ergibt einen SyntaxError und die ganze Seite bleibt stehen.
 
-Im Repo steht in `SUPABASE.url` in `config.js` ein Platzhalter. Die echte Projektadresse wird
+Im Repo bleibt `SUPABASE.url` in `config.js` leer (Demo-Modus). Die echte Projektadresse wird
 erst beim Deployment eingetragen und nie committet.
 
 ## Datenmodell
