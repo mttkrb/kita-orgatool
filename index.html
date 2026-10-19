@@ -75,16 +75,17 @@ async function loadEvents(){
 async function loadSignups(slugs){
   if(!slugs.length) return [];
   if(!live) return DEMO.signups;
-  const list = slugs.map(s=>'"'+s+'"').join(",");
-  const r = await fetch(CONFIG.supabase.url +
-    "/rest/v1/signups?select=event,adults,kids,items,tasks&event=in.(" + encodeURIComponent(list) + ")",
-    { headers: anonHead() });
+  // Zahlen ohne Namen und Anmerkungen, über die Datenbankfunktion (migration-26.sql)
+  const r = await fetch(CONFIG.supabase.url + "/rest/v1/rpc/anmeldungen_oeffentlich", {
+    method:"POST", headers:anonHead({ "Content-Type":"application/json" }),
+    body:JSON.stringify({ p_events:slugs })
+  });
   if(!r.ok) return [];
   return r.json();
 }
 
 function stats(ev, rows){
-  const mine = rows.filter(s=>s.event===ev.slug);
+  const mine = rows.filter(s=>s.event===ev.slug && s.status !== "absage");
   const people = mine.reduce((a,s)=>a+(+s.adults||0)+(+s.kids||0),0);
   const items = mine.flatMap(s=>s.items||[]);
   const gaps = (ev.categories||[]).filter(c=>c.target)
@@ -132,8 +133,8 @@ function preisPill(ev){
       (!nichtFrei && nochNicht) ? '<span class="pill need">Anmeldung ab ' +
         new Date(ev.signup_from+"T12:00:00").toLocaleDateString("de-DE") + "</span>" : "",
       zu ? '<span class="pill need">Anmeldung geschlossen</span>' : "",
-      '<span class="pill">' + s.count + (s.count===1?" Anmeldung":" Anmeldungen") + "</span>",
-      s.people ? '<span class="pill">' + s.people + " Personen</span>" : "",
+      vis(ev).totals ? '<span class="pill">' + s.count + (s.count===1?" Anmeldung":" Anmeldungen") + "</span>" : "",
+      vis(ev).totals && s.people ? '<span class="pill">' + s.people + " Personen</span>" : "",
       ...s.gaps.map(g=>'<span class="pill need">' + g.fehlt + " × " + esc(g.label) + " gesucht</span>"),
       s.helperGap ? '<span class="pill need">' + s.helperGap + " Helferplätze offen</span>" : "",
       preisPill(ev)

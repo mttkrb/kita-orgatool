@@ -54,6 +54,7 @@ docs/                   Projekthandbuch, Migrationsanleitung, Aufgabenliste
 umzug/                  Umzug in ein anderes Supabase-Projekt: Skripte (sh, ps1) und Anleitung
 einrichtung/            Neuinstallation: Anleitung, SQL-Vorlage und Skript, das sie erzeugt
 aktualisierung/         Update einer laufenden Installation: Anleitung
+anleitungen/            Bedienungsanleitungen je Rolle: Eltern, Orgateam, Melden, Technik
 ```
 
 Supabase-URL und anonKey stehen einmal in `config.js` (`SUPABASE`). Seitenspezifische
@@ -89,7 +90,7 @@ Felder je Veranstaltung unterscheiden.
 | Tabelle | Inhalt | Wer liest |
 | --- | --- | --- |
 | `events` | Termin, Kategorien, Aufgaben, Zusatzfragen, Sichtbarkeit, Fristen | alle |
-| `signups` | Anmeldungen und Absagen | alle außer Spalte `token` |
+| `signups` | Anmeldungen und Absagen | Orga und eigener Eintrag (Token); Elternseiten nur über `anmeldungen_oeffentlich()` |
 | `task_claims` | Aufgabenübernahmen am Tag, mit Erledigt-Haken | alle |
 | `task_images` | Fotos zu Aufgaben, verkleinertes JPEG in der Zeile | alle |
 | `templates` | Vorlagen für wiederkehrende Veranstaltungen | nur Orga |
@@ -143,6 +144,10 @@ Daraus folgt:
 
 - **Nie nach `token` filtern.** `?token=eq.…` scheitert mit 42501, weil Filtern
   Leserecht voraussetzt. Änderungen laufen über `?id=eq.…` plus Token im Header.
+- **Anmeldungen liest anon nicht direkt** (ab `migration-26.sql`). Die Elternseiten holen
+  Zahlen, Mitbringsel, Aufgaben und gekürzte Namen über `anmeldungen_oeffentlich()`;
+  die eigene Zeile liest nur, wer `X-Entry-Token` mitschickt. `intern.kurzname()` kürzt
+  wie `shortName()` in `fest-anmeldung.html` — wer eines ändert, ändert beide.
 - **Spaltenrechte gelten auch fürs Orgateam**, weil es dieselbe Rolle nutzt. Interne
   Daten gehören in eigene Tabellen, nicht in versteckte Spalten.
 - **Alles, was `anon` schreiben darf, kann jeder schreiben.** Neue Schreibpfade
@@ -192,6 +197,9 @@ Daraus folgt:
 - Keine typografischen Anführungszeichen in JavaScript-Zeichenketten.
 - Tagesdatum immer über `heute()` bzw. `isoDatum(d)` aus `common.js`, nie über
   `toISOString().slice(0,10)` — das ist UTC und liefert nach Mitternacht den Vortag.
+
+- Wer Bedienung, Knopftexte oder Verhalten ändert, passt die Anleitung der betroffenen
+  Rolle in `anleitungen/` mit an.
 
 **Tests**
 

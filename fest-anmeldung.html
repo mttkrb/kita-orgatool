@@ -224,9 +224,9 @@
         <div id="extra-fields"></div>
 
         <div id="absage-block" class="hidden">
-          <label for="f-grund">Warum könnt ihr nicht? <span style="color:var(--berry)">*</span></label>
+          <label for="f-grund">Warum könnt ihr nicht? <span id="grund-pflicht" style="color:var(--berry)">*</span></label>
           <textarea id="f-grund" placeholder="Kurz genügt — Urlaub, Schichtdienst, krank …"></textarea>
-          <p class="hint">Das Orgateam braucht die Begründung für die Übersicht, wer gefehlt hat.</p>
+          <p class="hint">Das Orgateam sieht die Begründung in seiner Übersicht.</p>
         </div>
 
         <div id="note-block">
@@ -291,14 +291,21 @@ const vergessen = () => { try{ localStorage.removeItem(MERK); }catch(e){} };
 let MEIN = null;
 
 let absage = false;
+let warAbsage = false;   // gespeicherte Anmeldung ist eine Absage
 
 const absendenText = () => absage ? "Abmeldung abschicken"
+  : myToken && mySid && MEIN ? "Änderungen speichern"
   : checkinModus() && !(myToken && mySid) ? "Anmelden und einchecken" : "Anmeldung abschicken";
 
 function wahlAnzeigen(){
-  // Wer am Eingang eincheckt, ist da: dann keine Wahl zwischen Zu- und Absage
+  // Wer am Eingang eincheckt, ist da: dann keine Wahl zwischen Zu- und Absage,
+  // außer die eigene Anmeldung ist eine Absage und soll zur Zusage werden.
+  // Über den persönlichen Link kann jede Anmeldung absagen, verbindlich oder nicht.
   const pflicht = EV && EV.mandatory === true && !checkinModus();
-  $("wahl-block").classList.toggle("hidden", !pflicht);
+  const eigene = !!(myToken && mySid && MEIN);
+  const wahl = pflicht || (eigene && (!checkinModus() || warAbsage));
+  $("wahl-block").classList.toggle("hidden", !wahl);
+  $("grund-pflicht").classList.toggle("hidden", !(EV && EV.mandatory === true));
   $("pflicht-hinweis").classList.toggle("hidden", !pflicht);
   if(pflicht){
     $("pflicht-hinweis").innerHTML = "<strong>Diese Veranstaltung ist verbindlich.</strong> " +
@@ -316,7 +323,20 @@ function wahlAnzeigen(){
   renderKosten();
 }
 
+// Satz zur Löschfrist. Der früher vorbelegte Hinweistext versprach immer zwei Wochen;
+// passt er nicht zur eingestellten Frist, gilt der aus der Frist gebildete Satz.
+const ALTER_LOESCHSATZ = "Alle Angaben werden zwei Wochen nach der Veranstaltung gelöscht.";
+const loeschSatz = () => {
+  const tage = EV.retention_days || 14;
+  const eigen = EV.retention_note && !(EV.retention_note === ALTER_LOESCHSATZ && tage !== 14);
+  return eigen ? EV.retention_note : "Alle Angaben werden " +
+    (tage === 1 ? "einen Tag" : tage + " Tage") + " nach der Veranstaltung gelöscht.";
+};
+
+// Wie intern.kurzname() in migration-26.sql. Namen anderer kommen schon gekürzt
+// oder gar nicht, wenn die Veranstaltung keine Namen zeigt.
 const shortName = n => {
+  if(!n) return "";
   const p = String(n).trim().split(/\s+/);
   return p.length<2 ? p[0] : p[0] + " " + p[p.length-1][0] + ".";
 };
@@ -388,8 +408,11 @@ const api = {
   },
   async list(){
     if(!live) return demo.map(e=>({...e}));
-    const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?select=" + SIGNUP_COLS +
-      "&event=eq." + slug + "&order=created_at.asc", { headers: anonHead() });
+    // Nur was die Seite zeigen darf: gekürzte Namen, keine Anmerkungen (migration-26.sql)
+    const r = await fetch(CONFIG.supabase.url + "/rest/v1/rpc/anmeldungen_oeffentlich", {
+      method:"POST", headers:anonHead({ "Content-Type":"application/json" }),
+      body:JSON.stringify({ p_events:[slug] })
+    });
     if(!r.ok) throw new Error("Liste konnte nicht geladen werden." + await fehlertext(r));
     return r.json();
   },
@@ -495,8 +518,9 @@ const api = {
   async mine(token, id){
     if(!live) return demo.find(e=>e.token===token) || null;
     if(!id) return null;
+    // Die eigene Zeile liest nur, wer das Token aus dem persönlichen Link mitschickt
     const r = await fetch(CONFIG.supabase.url + "/rest/v1/signups?select=" + SIGNUP_COLS +
-      "&id=eq." + id, { headers: anonHead() });
+      "&id=eq." + id, { headers: anonHead({ "X-Entry-Token":token }) });
     if(!r.ok) return null;
     const [mine] = await r.json();
     return mine || null;
@@ -531,9 +555,7 @@ function renderHead(){
     (kostetEtwas(EV) ? " und hält fest, ob bezahlt ist. " : ". ") +
     (EV.checkin ? "Beim Check-in am Eingang hält das Orgateam fest, wann ihr gekommen und gegangen seid. " +
       "Dieses Handy merkt sich die Anmeldung, damit der Check-in mit einem Tipp geht. " : "") +
-    (EV.retention_note ||
-      ("Alle Angaben werden " + (EV.retention_days === 1 ? "einen Tag" :
-        (EV.retention_days || 14) + " Tage") + " nach der Veranstaltung gelöscht."));
+    loeschSatz();
   entries = entries.filter(e=>e.status !== "absage");
   const ppl = entries.reduce((a,e)=>a+(+e.adults||0),0);
   const kids = entries.reduce((a,e)=>a+(+e.kids||0),0);
@@ -900,8 +922,8 @@ const CHECKIN_FEHLER = {
   aus: "Für diese Veranstaltung gibt es keinen Check-in.",
   anmeldung: "Die gespeicherte Anmeldung gibt es nicht mehr. Meldet euch bitte unten neu an.",
   nicht_da: "Ihr seid noch nicht eingecheckt.",
-  absage: "Ihr habt für diese Veranstaltung abgesagt. Wenn ihr doch da seid, ändert unten " +
-    "eure Antwort auf Zusage und schickt sie ab, dann seid ihr eingecheckt."
+  absage: "Ihr habt für diese Veranstaltung abgesagt. Wenn ihr doch da seid, tippt unten auf " +
+    "'Wir kommen' und speichert, dann seid ihr eingecheckt."
 };
 
 async function renderCheckin(meldung){
@@ -1089,14 +1111,14 @@ function fillForm(e){
   $("brings").innerHTML = "";
   (e.items||[]).forEach(i=>$("brings").appendChild(bringRow(i)));
   if(!$("brings").children.length) $("brings").appendChild(bringRow());
-  absage = e.status === "absage";
+  absage = warAbsage = e.status === "absage";
   if(absage) $("f-grund").value = e.note || "";
   wahlAnzeigen();
   renderTaskChecks(e.tasks||[]);
   renderFields(e.fields||{});
   $("f-consent").checked = true;
   $("form-title").textContent = "Deine Anmeldung ändern";
-  $("form-lead").textContent = "Änderungen sind sofort für alle sichtbar.";
+  $("form-lead").textContent = "Hier kannst du alles ändern oder absagen.";
   $("submit").textContent = "Änderungen speichern";
 }
 
@@ -1107,7 +1129,7 @@ $("form").addEventListener("submit", async ev=>{
   $("error").classList.add("hidden");
   const data = readForm();
   if(!data.name){ showError("Bitte trag deinen Namen ein."); return; }
-  if(absage && !data.note){
+  if(absage && !data.note && EV.mandatory === true){
     showError("Bitte schreib kurz dazu, warum ihr nicht könnt.");
     return;
   }
@@ -1123,18 +1145,19 @@ $("form").addEventListener("submit", async ev=>{
     if(EV.checkin) merken();
     await load();
     if(checkinModus() && !absage){
+      try{ MEIN = await api.mine(myToken, mySid); }catch(e){}
       let r = null;
       try{ r = await api.checkin(false); }catch(e){}
       try{ MEIN = await api.mine(myToken, mySid); }catch(e){}
       await renderCheckin(r && r.ok === false ? (CHECKIN_FEHLER[r.fehler] || "") : "");
     }
-    const link = location.origin + location.pathname + "?event=" + slug +
-      "&entry=" + token + "&sid=" + mySid;
+    const link = new URL("?event=" + encodeURIComponent(slug) + "&entry=" + token +
+      "&sid=" + mySid, location.href).href;
     $("form").classList.add("hidden");
-    $("form-title").textContent = "Du bist angemeldet";
+    $("form-title").textContent = absage ? "Du hast abgesagt" : "Du bist angemeldet";
     $("form-lead").textContent = "";
     $("done").classList.remove("hidden");
-    $("done").innerHTML = '<p style="margin-top:0"><strong>Danke, '+esc(shortName(data.name))+
+    $("done").innerHTML = '<p style="margin-top:0"><strong>Danke, '+esc(shortName(data.name).replace(/\.$/, ""))+
       (absage ? ".</strong> Die Abmeldung ist beim Orgateam angekommen. "
               : ".</strong> ") + "Über diesen Link kannst du deine Angaben später ändern" +
       (absage ? " oder doch noch zusagen. " : " oder dich abmelden. ")+
@@ -1187,8 +1210,7 @@ async function load(){
   renderKosten();
   $("status").textContent = (live
     ? "Zuletzt aktualisiert: " + new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}) + ". "
-    : "Demo-Modus: Einträge verschwinden beim Neuladen. ") + (EV.retention_note ||
-    ("Alle Angaben werden " + (EV.retention_days || 14) + " Tage nach der Veranstaltung gelöscht."));
+    : "Demo-Modus: Einträge verschwinden beim Neuladen. ") + loeschSatz();
 }
 
 (async function init(){
