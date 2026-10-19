@@ -47,7 +47,7 @@ manifest-orga.json      Installation Startbildschirm, dunkles Symbol
 icons/                  App-Symbole (aus dem Logo, einrichtung/symbole-erzeugen.sh), Standard-Logo und -Favicon
 fonts/                  Fraunces und Work Sans als woff2, Lizenztexte OFL-*.txt
 sql/                    schema.sql, migration-2.sql … migration-N.sql (keine Daten)
-tests/                  Node mit jsdom, Nachbau der Datenbank inkl. Rechteprüfung
+tests/                  Node mit jsdom gegen Nachbau der Schnittstelle; sql/: Rechte in temporärem Postgres
 deploy/.htaccess        Für den Zielordner /orga/ auf dem Webspace
 nas/                    Backup- und Keep-alive-Skripte für das Vereins-NAS
 aufgaben.md             Offene Aufgaben
@@ -203,12 +203,15 @@ Daraus folgt:
 
 **Tests**
 
-- `npm test` im Ordner `tests/`. Vor jedem Commit laufen lassen.
+- `npm test` im Ordner `tests/` (einmalig `npm install`). Vor jedem Commit laufen lassen.
+  Die Seitentests laufen in jsdom gegen den Nachbau `tests/fake-db.js`, ohne Netz.
+  Die Rechteprüfung `tests/sql/pruefen.sh` startet einen eigenen temporären Postgres
+  (braucht `initdb`), nie gegen Supabase oder einen vorhandenen Server.
 - Der Datenbank-Nachbau bildet auch die Fehler der echten Datenbank nach,
   insbesondere die gesperrte Token-Spalte. Tests, die freundlicher sind als die
   Wirklichkeit, nicht einbauen.
 - Neue Policies brauchen einen Test, der den verbotenen Zugriff nachweist,
-  nicht nur den erlaubten.
+  nicht nur den erlaubten: in `tests/sql/rechte.sql`, und `fake-db.js` angleichen.
 
 **Deployment**
 

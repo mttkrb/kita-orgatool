@@ -1,0 +1,11 @@
+{
+  "name": "kita-orgatool-tests",
+  "private": true,
+  "description": "Tests für die Seiten. Node wird nur hier benutzt, nie im Auslieferungsstand.",
+  "scripts": {
+    "test": "node --test && sh sql/pruefen.sh"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.3"
+  }
+}
