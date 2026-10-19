@@ -39,7 +39,7 @@ const vis = ev => {
   return { totals:on("totals"), items:on("items"), itemNames:on("itemNames"), taskNames:on("taskNames") };
 };
 
-// Aufgabe nur fürs Orgateam (Geldsammlung, Besorgung …): keine Anmeldung, nicht in der
+// Projekt nur fürs Orgateam (Geldsammlung, Besorgung …): keine Anmeldung, nicht in der
 // Übersicht, nicht auf der Meldeseite. Nur ausgeblendet, nicht geheim: events ist lesbar.
 const nurOrga = ev => !!(ev && ev.visibility && ev.visibility.intern === true);
 

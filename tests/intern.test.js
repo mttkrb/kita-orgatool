@@ -1,4 +1,4 @@
-// Aufgaben nur fürs Orgateam (visibility.intern): nicht in der Übersicht, keine Seite für
+// Projekte nur fürs Orgateam (visibility.intern): nicht in der Übersicht, keine Seite für
 // Eltern, nicht auf der Meldeseite. Im Orga-Bereich ein eigener Editor-Modus.
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -10,7 +10,7 @@ const FEST = { id:"e1", slug:"fest", title:"Sommerfest", event_on:"2099-06-20", 
 const GESCHENK = { id:"e2", slug:"geschenk", title:"Abschiedsgeschenk Frau Müller", event_on:"2099-06-10",
   archived:false, categories:[], tasks:[], fields:[], visibility:{ intern:true } };
 
-test("Übersicht zeigt Aufgaben nur fürs Orgateam nicht", async () => {
+test("Übersicht zeigt Projekte nur fürs Orgateam nicht", async () => {
   const db = fakeDb({ events:[FEST, GESCHENK] });
   const s = ladeSeite("index.html", { supabase:SUPABASE, fetch:db.fetch });
   const $ = id => s.window.document.getElementById(id);
@@ -23,7 +23,7 @@ test("Übersicht zeigt Aufgaben nur fürs Orgateam nicht", async () => {
   }finally{ s.schliessen(); }
 });
 
-test("Anmeldeseite einer Aufgabe nur fürs Orgateam zeigt weder Titel noch Formular", async () => {
+test("Anmeldeseite eines Projekts nur fürs Orgateam zeigt weder Titel noch Formular", async () => {
   const db = fakeDb({ events:[GESCHENK] });
   const s = ladeSeite("fest-anmeldung.html", { supabase:SUPABASE, fetch:db.fetch, query:"?event=geschenk" });
   const $ = id => s.window.document.getElementById(id);
@@ -37,7 +37,7 @@ test("Anmeldeseite einer Aufgabe nur fürs Orgateam zeigt weder Titel noch Formu
   }finally{ s.schliessen(); }
 });
 
-test("Meldeseite bietet Aufgaben nur fürs Orgateam nicht an", async () => {
+test("Meldeseite bietet Projekte nur fürs Orgateam nicht an", async () => {
   const db = fakeDb({ events:[FEST, GESCHENK] });
   const s = ladeSeite("vorschlag.html", { supabase:SUPABASE, fetch:db.fetch });
   const $ = id => s.window.document.getElementById(id);
@@ -49,7 +49,7 @@ test("Meldeseite bietet Aufgaben nur fürs Orgateam nicht an", async () => {
   }finally{ s.schliessen(); }
 });
 
-test("Orga-Bereich: neue Aufgabe blendet alles für Eltern aus und speichert intern", async () => {
+test("Orga-Bereich: neues Projekt blendet alles für Eltern aus und speichert intern", async () => {
   const s = ladeSeite("orga.html");
   const w = s.window, $ = id => w.document.getElementById(id);
   const sichtbar = el => !el.classList.contains("hidden") && !el.closest(".hidden");
@@ -60,7 +60,7 @@ test("Orga-Bereich: neue Aufgabe blendet alles für Eltern aus und speichert int
     $("new-intern").click();
     await warte(() => sichtbar($("view-edit")), "Editor");
     assert.equal($("e-intern").checked, true);
-    assert.equal($("edit-title").textContent, "Neue Aufgabe fürs Orgateam");
+    assert.equal($("edit-title").textContent, "Neues Projekt");
     for(const id of ["e-p-adults", "v-totals", "cats", "fields", "e-released", "e-days", "copy-link", "copy-melde"])
       assert.ok(!sichtbar($(id)), id + " ausgeblendet");
     for(const id of ["e-title", "e-on", "e-intro", "checks", "einkauf", "save"])

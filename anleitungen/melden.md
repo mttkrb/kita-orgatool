@@ -45,7 +45,7 @@ dort „Noch nichts gemeldet“.
 
 | Feld | Pflicht | Was hinein gehört |
 | --- | --- | --- |
-| „Für welchen Termin?“ | ja | Veranstaltung auswählen. Angeboten werden alle nicht archivierten Veranstaltungen, deren Datum heute oder später ist, und solche ohne Datum. Aufgaben nur fürs Orgateam stehen nicht in der Liste. |
+| „Für welchen Termin?“ | ja | Veranstaltung auswählen. Angeboten werden alle nicht archivierten Veranstaltungen, deren Datum heute oder später ist, und solche ohne Datum. Projekte nur fürs Orgateam stehen nicht in der Liste. |
 | „Was ist zu tun?“ | ja | Kurzer Titel, z. B. „Ablaufgitter im Außengelände freilegen“. Höchstens 200 Zeichen. |
 | „Erklärung für die Eltern“ | nein | Wo genau, worauf achten, was gebraucht wird. Höchstens 2000 Zeichen. Das lesen am Tag die Eltern. |
 | „Wie viele Hände?“ | ja | 1 bis 6 Personen, vorausgewählt sind 2. |

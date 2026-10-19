@@ -350,7 +350,7 @@ create policy "eigene loeschen" on signups for delete to anon
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
         <h2>Veranstaltungen</h2>
         <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-          <button class="ghost" id="new-intern" style="padding:10px 14px">+ Aufgabe nur fürs Orgateam</button>
+          <button class="ghost" id="new-intern" style="padding:10px 14px">+ Projekt</button>
           <button class="primary" id="new-event" style="padding:10px 14px">+ Neue Veranstaltung</button>
         </div>
       </div>
@@ -385,12 +385,12 @@ create policy "eigene loeschen" on signups for delete to anon
     <fieldset>
       <legend>Eckdaten</legend>
       <label class="check" style="margin-top:0"><input type="checkbox" id="e-intern">
-        <span><strong>Nur fürs Orgateam</strong> — eine Aufgabe ohne Anmeldung, etwa eine Geldsammlung
+        <span><strong>Projekt nur fürs Orgateam</strong> — ohne Anmeldung, etwa eine Geldsammlung
           für ein Geschenk oder eine Besorgung</span></label>
       <p class="hint" id="e-intern-hint">Erscheint nicht in der Übersicht der Eltern und nicht auf der
         Meldeseite. Checkliste und To-dos funktionieren wie bei jeder Veranstaltung. Nur ausgeblendet,
         nicht geheim: Wer die Schnittstelle direkt abfragt, findet den Titel.</p>
-      <label for="e-title"><span class="oeffentlich">Name der Veranstaltung</span><span class="nur-intern hidden">Name der Aufgabe</span></label>
+      <label for="e-title"><span class="oeffentlich">Name der Veranstaltung</span><span class="nur-intern hidden">Name des Projekts</span></label>
       <input type="text" id="e-title" placeholder="Oma-Opa-Tag">
       <label for="e-slug">Kurzname für den Link</label>
       <input type="text" id="e-slug" placeholder="oma-opa-tag-2026">
@@ -403,7 +403,7 @@ create policy "eigene loeschen" on signups for delete to anon
           <input type="text" id="e-time" placeholder="15–18 Uhr"></div>
       </div>
       <p class="hint oeffentlich">Nach diesem Datum verschwindet die Veranstaltung automatisch von der Startseite.</p>
-      <p class="hint nur-intern hidden">Stichtag der Aufgabe. Danach ist sie aus den To-dos raus. Die Fristen
+      <p class="hint nur-intern hidden">Stichtag des Projekts. Danach ist es aus den To-dos raus. Die Fristen
         der Checkliste rechnen von diesem Tag zurück.</p>
       <label for="e-date">Abweichender Anzeigetext <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
       <input type="text" id="e-date" placeholder="leer lassen, dann wird das Datum ausgeschrieben">
@@ -1276,7 +1276,7 @@ async function loadList(){
     return String(a.event_on||"9999").localeCompare(String(b.event_on||"9999"));
   });
 
-  $("list").innerHTML = events.length ? events.map(e=>
+  const karte = e =>
     '<div class="card"><div class="card-head"><div><h3>'+esc(e.title)+'</h3>'+
     '<p class="card-meta">'+esc(e.event_date || fmtDate(e.event_on) || "ohne Datum")+" · "+esc(e.place||"ohne Ort")+
     (tplName(e.template_id)?'<br><span class="tag ochre">Vorlage: '+esc(tplName(e.template_id))+'</span>':"")+
@@ -1284,7 +1284,7 @@ async function loadList(){
     (e.mandatory ? '<br><span class="tag" style="background:var(--berry-soft);color:var(--berry)">Pflicht</span>' : "")+
     '<span class="tag'+(e.archived||vorbei(e)?" grey":"")+'">'+
     (e.archived ? "archiviert"
-      : nurOrga(e) ? (vorbei(e) ? "Stichtag vorbei" : "nur Orgateam")
+      : nurOrga(e) ? (vorbei(e) ? "Stichtag vorbei" : "Projekt")
       : vorbei(e) ? "Nachbereitung"
       : (e.signup_released === false) ? "Anmeldung gesperrt"
       : (e.signup_from && e.signup_from > heute()) ? "Anmeldung ab " +
@@ -1298,9 +1298,15 @@ async function loadList(){
     '<button class="ghost" data-act="copy" data-id="'+e.id+'">Anmeldelink</button>'+
     '<button class="ghost" data-act="melde" data-id="'+e.id+'">Meldelink</button>')+
     '<button class="ghost" data-act="dupe" data-id="'+e.id+'">Duplizieren</button>'+
-    '<button class="ghost danger" data-act="del" data-id="'+e.id+'">Löschen</button></div></div>').join("")
+    '<button class="ghost danger" data-act="del" data-id="'+e.id+'">Löschen</button></div></div>';
+  // Projekte nur fürs Orgateam in einem eigenen Block unter den Veranstaltungen
+  const feste = events.filter(e=>!nurOrga(e)), projekte = events.filter(nurOrga);
+  $("list").innerHTML = (feste.length ? feste.map(karte).join("")
     : '<div class="card"><p style="margin:0">Noch keine Veranstaltung angelegt. Am besten zuerst eine Vorlage bauen — '+
-      'dann erbt jede Veranstaltung Kategorien, Aufgaben und Checkliste.</p></div>';
+      'dann erbt jede Veranstaltung Kategorien, Aufgaben und Checkliste.</p></div>') +
+    (projekte.length ? '<h2 style="margin:26px 0 4px">Projekte</h2>' +
+      '<p class="hint" style="margin:0 0 10px">Nur fürs Orgateam, ohne Anmeldung. Eltern sehen sie nicht.</p>' +
+      projekte.map(karte).join("") : "");
   $("list").querySelectorAll("button[data-act]").forEach(b=>
     b.onclick = () => handleCard(b.dataset.act, b.dataset.id));
 
@@ -1673,7 +1679,7 @@ async function handleCard(act, id){
     const antwort = await loeschDialog({
       titel: ev.title + " löschen?",
       was: teile.length
-        ? "Gelöscht wird die Veranstaltung mit allem, was daran hängt:<br>• " +
+        ? "Gelöscht wird " + (nurOrga(ev) ? "das Projekt" : "die Veranstaltung") + " mit allem, was daran hängt:<br>• " +
           teile.join("<br>• ") + "<br><br>Das lässt sich nicht rückgängig machen. " +
           "Wenn du sie nur aus der Übersicht nehmen willst, ist <b>Archivieren</b> im Editor der sanftere Weg."
         : "Es hängen keine Daten daran. Wenn du sie nur aus der Übersicht nehmen willst, " +
@@ -2490,13 +2496,13 @@ const DEFAULTS = {
          {label:"Abbau",when:"ab 19 Uhr",needed:8}]
 };
 
-// Aufgabe nur fürs Orgateam: alles ausblenden, was nur Eltern betrifft
+// Projekt nur fürs Orgateam: alles ausblenden, was nur Eltern betrifft
 function internAnzeigen(){
   const intern = $("e-intern").checked;
   document.querySelectorAll("#view-edit .oeffentlich").forEach(el=>el.classList.toggle("hidden", intern));
   document.querySelectorAll("#view-edit .nur-intern").forEach(el=>el.classList.toggle("hidden", !intern));
   $("edit-title").textContent = intern
-    ? (current && current.id ? "Aufgabe bearbeiten" : "Neue Aufgabe fürs Orgateam")
+    ? (current && current.id ? "Projekt bearbeiten" : "Neues Projekt")
     : (current && current.id ? "Veranstaltung bearbeiten" : "Neue Veranstaltung");
 }
 $("e-intern").addEventListener("change", internAnzeigen);
@@ -3006,7 +3012,7 @@ $("save").onclick = async () => {
     const offen = planning.checklist.filter(c=>!c.done).length;
     msg($("edit-msg"), "Gespeichert. " + (offen ? offen + (offen === 1 ? " Punkt" : " Punkte") + " auf der Checkliste noch offen. " : "") +
       (nurOrga(ev)
-        ? "Nur fürs Orgateam, Eltern sehen davon nichts. Die Checkliste steht in den To-dos, " +
+        ? "Projekt nur fürs Orgateam, Eltern sehen davon nichts. Die Checkliste steht in den To-dos, " +
           "wenn ein Stichtag eingetragen ist."
         : ohneAbfrage
         ? "Diese Veranstaltung fragt nichts ab — die Anmeldeseite zeigt nur Datum und Ort. " +
