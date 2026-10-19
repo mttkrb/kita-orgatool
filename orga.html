@@ -349,7 +349,10 @@ create policy "eigene loeschen" on signups for delete to anon
     <div id="pane-events" class="hidden">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
         <h2>Veranstaltungen</h2>
-        <button class="primary" id="new-event" style="padding:10px 14px">+ Neue Veranstaltung</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="ghost" id="new-intern" style="padding:10px 14px">+ Aufgabe nur fürs Orgateam</button>
+          <button class="primary" id="new-event" style="padding:10px 14px">+ Neue Veranstaltung</button>
+        </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
         <button class="ghost" id="dump-json">Alles sichern (JSON)</button>
@@ -381,7 +384,13 @@ create policy "eigene loeschen" on signups for delete to anon
 
     <fieldset>
       <legend>Eckdaten</legend>
-      <label for="e-title">Name der Veranstaltung</label>
+      <label class="check" style="margin-top:0"><input type="checkbox" id="e-intern">
+        <span><strong>Nur fürs Orgateam</strong> — eine Aufgabe ohne Anmeldung, etwa eine Geldsammlung
+          für ein Geschenk oder eine Besorgung</span></label>
+      <p class="hint" id="e-intern-hint">Erscheint nicht in der Übersicht der Eltern und nicht auf der
+        Meldeseite. Checkliste und To-dos funktionieren wie bei jeder Veranstaltung. Nur ausgeblendet,
+        nicht geheim: Wer die Schnittstelle direkt abfragt, findet den Titel.</p>
+      <label for="e-title"><span class="oeffentlich">Name der Veranstaltung</span><span class="nur-intern hidden">Name der Aufgabe</span></label>
       <input type="text" id="e-title" placeholder="Oma-Opa-Tag">
       <label for="e-slug">Kurzname für den Link</label>
       <input type="text" id="e-slug" placeholder="oma-opa-tag-2026">
@@ -393,9 +402,12 @@ create policy "eigene loeschen" on signups for delete to anon
         <div><label for="e-time">Uhrzeit</label>
           <input type="text" id="e-time" placeholder="15–18 Uhr"></div>
       </div>
-      <p class="hint">Nach diesem Datum verschwindet die Veranstaltung automatisch von der Startseite.</p>
+      <p class="hint oeffentlich">Nach diesem Datum verschwindet die Veranstaltung automatisch von der Startseite.</p>
+      <p class="hint nur-intern hidden">Stichtag der Aufgabe. Danach ist sie aus den To-dos raus. Die Fristen
+        der Checkliste rechnen von diesem Tag zurück.</p>
       <label for="e-date">Abweichender Anzeigetext <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
       <input type="text" id="e-date" placeholder="leer lassen, dann wird das Datum ausgeschrieben">
+      <div class="oeffentlich">
       <label class="check" style="margin-top:14px"><input type="checkbox" id="e-mandatory">
         <span><strong>Pflichtveranstaltung</strong> — wer nicht kann, muss sich mit Begründung abmelden</span></label>
       <label class="check" style="margin-top:14px"><input type="checkbox" id="e-checkin">
@@ -423,12 +435,15 @@ create policy "eigene loeschen" on signups for delete to anon
       </div>
       <p class="hint">Nur nötig, wenn ihr ein festes Datum kennt. Ohne Anmeldeschluss läuft die
         Anmeldung bis zum Veranstaltungstag.</p>
+      </div>
       <label for="e-place">Ort</label>
       <input type="text" id="e-place" placeholder="Kita-Außengelände">
-      <label for="e-intro">Begrüßungstext <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <label for="e-intro"><span class="oeffentlich">Begrüßungstext</span><span class="nur-intern hidden">Notizen,
+        z. B. Link zum PayPal-Pool</span> <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
       <textarea id="e-intro" rows="5"></textarea>
       <p class="hint">Leerzeile = neuer Absatz. Wie in WhatsApp: *fett*, _kursiv_, ~durchgestrichen~.
         Aus Google Forms, Word oder Mail eingefügt, wird Fett und Kursiv automatisch umgesetzt.</p>
+      <div class="oeffentlich">
       <label for="e-days">Anmeldungen löschen nach</label>
       <select id="e-days">
         <option value="14">14 Tagen (empfohlen)</option>
@@ -454,11 +469,12 @@ create policy "eigene loeschen" on signups for delete to anon
           <input type="text" id="e-g2-label" value="Kinder">
           <label>höchstens</label><input type="number" id="e-g2-max" min="1" max="30" value="6"></div>
       </div>
+      </div>
       <label class="check"><input type="checkbox" id="e-archived">
         <span>Archivieren — verschwindet von der Startseite, der direkte Link bleibt gültig</span></label>
     </fieldset>
 
-    <fieldset>
+    <fieldset class="oeffentlich">
       <legend>Kosten und Bezahlung</legend>
       <p class="hint" style="margin:0 0 6px">Leer lassen, wenn die Veranstaltung nichts kostet. Die Eltern
         sehen beim Anmelden, was es für sie zusammen kostet.</p>
@@ -480,7 +496,7 @@ create policy "eigene loeschen" on signups for delete to anon
         Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.</p>
     </fieldset>
 
-    <fieldset>
+    <fieldset class="oeffentlich">
       <legend>Was sehen die Gäste auf der Seite?</legend>
       <p class="hint" style="margin:0 0 10px">Betrifft nur die öffentliche Anmeldeseite. Im Orga-Bereich
         siehst du immer alles.</p>
@@ -498,7 +514,7 @@ create policy "eigene loeschen" on signups for delete to anon
         <span>Aufgaben werden vor Ort verteilt — keine Plätze, kein Eintragen vorab</span></label>
     </fieldset>
 
-    <fieldset>
+    <fieldset class="oeffentlich">
       <legend>Mitbringsel-Kategorien</legend>
       <p class="hint" style="margin:0 0 10px">Zielwert steuert den Fortschrittsbalken. 0 = kein Ziel.</p>
       <div id="cats"></div>
@@ -513,7 +529,7 @@ create policy "eigene loeschen" on signups for delete to anon
       <div id="vorschlaege"></div>
     </fieldset>
 
-    <fieldset>
+    <fieldset class="oeffentlich">
       <legend>Aufgaben am Veranstaltungstag</legend>
       <div id="tasks"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -523,7 +539,7 @@ create policy "eigene loeschen" on signups for delete to anon
       </div>
     </fieldset>
 
-    <fieldset>
+    <fieldset class="oeffentlich">
       <legend>Zusätzliche Fragen an die Gäste</legend>
       <div id="fields"></div>
       <button type="button" class="ghost" id="add-field">+ Frage</button>
@@ -552,7 +568,7 @@ create policy "eigene loeschen" on signups for delete to anon
       <p class="hint" id="kauf-msg"></p>
     </fieldset>
 
-    <fieldset>
+    <fieldset class="oeffentlich">
       <legend>Rückblick — für das nächste Mal</legend>
       <p class="hint" style="margin:0 0 10px">Nach der Veranstaltung ausfüllen. Die Ist-Zahlen sind aus den
         Anmeldungen vorbelegt und überschreibbar. Die Bewertung wird beim nächsten Veranstaltung aus derselben
@@ -576,9 +592,9 @@ create policy "eigene loeschen" on signups for delete to anon
       <div id="edit-msg" class="msg hidden" style="width:100%;margin:0 0 10px"></div>
       <button class="primary" id="save">Speichern</button>
       <button class="ghost" id="fertig">Fertig, zur Übersicht</button>
-      <button class="ghost" id="preview">Anmeldeseite öffnen</button>
-      <button class="ghost" id="copy-link">Anmeldelink kopieren</button>
-      <button class="ghost" id="copy-melde">Meldelink kopieren</button>
+      <button class="ghost oeffentlich" id="preview">Anmeldeseite öffnen</button>
+      <button class="ghost oeffentlich" id="copy-link">Anmeldelink kopieren</button>
+      <button class="ghost oeffentlich" id="copy-melde">Meldelink kopieren</button>
     </div>
   </div>
 
@@ -1268,6 +1284,7 @@ async function loadList(){
     (e.mandatory ? '<br><span class="tag" style="background:var(--berry-soft);color:var(--berry)">Pflicht</span>' : "")+
     '<span class="tag'+(e.archived||vorbei(e)?" grey":"")+'">'+
     (e.archived ? "archiviert"
+      : nurOrga(e) ? (vorbei(e) ? "Stichtag vorbei" : "nur Orgateam")
       : vorbei(e) ? "Nachbereitung"
       : (e.signup_released === false) ? "Anmeldung gesperrt"
       : (e.signup_from && e.signup_from > heute()) ? "Anmeldung ab " +
@@ -1276,9 +1293,10 @@ async function loadList(){
       : "aktiv")+'</span></div>'+
     '<div class="card-actions">'+
     '<button class="ghost" data-act="edit" data-id="'+e.id+'">Bearbeiten</button>'+
+    (nurOrga(e) ? "" :
     '<button class="ghost" data-act="signups" data-id="'+e.id+'">Anmeldungen</button>'+
     '<button class="ghost" data-act="copy" data-id="'+e.id+'">Anmeldelink</button>'+
-    '<button class="ghost" data-act="melde" data-id="'+e.id+'">Meldelink</button>'+
+    '<button class="ghost" data-act="melde" data-id="'+e.id+'">Meldelink</button>')+
     '<button class="ghost" data-act="dupe" data-id="'+e.id+'">Duplizieren</button>'+
     '<button class="ghost danger" data-act="del" data-id="'+e.id+'">Löschen</button></div></div>').join("")
     : '<div class="card"><p style="margin:0">Noch keine Veranstaltung angelegt. Am besten zuerst eine Vorlage bauen — '+
@@ -1788,6 +1806,13 @@ $("dump-csv").onclick = async () => {
 };
 
 $("new-event").onclick = () => { aktiverTab = "events"; openEditor(null); };
+$("new-intern").onclick = () => {
+  aktiverTab = "events";
+  openEditor({ title:"", slug:"", event_date:"", event_time:"", place:"", intro:"", retention_note:"",
+    ask_people:false, archived:false, template_id:null, signup_released:false,
+    people:{ adults:{on:false}, kids:{on:false} },
+    categories:[], tasks:[], fields:[], visibility:{ intern:true } });
+};
 $("new-template").onclick = () => openTemplate(null);
 $("back-1").onclick = () => { if(leaveOk()){ clearDirty(); loadList(); } };
 $("fertig").onclick = () => { if(leaveOk()){ clearDirty(); loadList(); } };
@@ -2465,6 +2490,17 @@ const DEFAULTS = {
          {label:"Abbau",when:"ab 19 Uhr",needed:8}]
 };
 
+// Aufgabe nur fürs Orgateam: alles ausblenden, was nur Eltern betrifft
+function internAnzeigen(){
+  const intern = $("e-intern").checked;
+  document.querySelectorAll("#view-edit .oeffentlich").forEach(el=>el.classList.toggle("hidden", intern));
+  document.querySelectorAll("#view-edit .nur-intern").forEach(el=>el.classList.toggle("hidden", !intern));
+  $("edit-title").textContent = intern
+    ? (current && current.id ? "Aufgabe bearbeiten" : "Neue Aufgabe fürs Orgateam")
+    : (current && current.id ? "Veranstaltung bearbeiten" : "Neue Veranstaltung");
+}
+$("e-intern").addEventListener("change", internAnzeigen);
+
 async function openEditor(ev, opts){
   opts = opts || {};
   current = ev ? {...ev} : {
@@ -2476,8 +2512,11 @@ async function openEditor(ev, opts){
   };
   if(opts.fresh) delete current.id;
 
-  $("edit-title").textContent = current.id ? "Veranstaltung bearbeiten" : "Neue Veranstaltung";
-  $("edit-sub").textContent = tplName(current.template_id)
+  $("e-intern").checked = nurOrga(current);
+  internAnzeigen();
+  $("edit-sub").textContent = nurOrga(current)
+    ? "Nur fürs Orgateam. Eltern sehen davon nichts."
+    : tplName(current.template_id)
     ? 'Aus der Vorlage ' + tplName(current.template_id) + '. Änderungen hier gelten nur für diese Veranstaltung.'
     : "Alles hier steuert, was die Gäste auf der Anmeldeseite sehen.";
 
@@ -2879,7 +2918,8 @@ function collectEvent(){
                  itemNames:$("v-item-names").checked, taskNames:$("v-task-names").checked,
                  tasksFirst:$("v-tasks-first").checked,
                  feedback:$("v-feedback").checked,
-                 taskSignup:!$("v-no-signup").checked },
+                 taskSignup:!$("v-no-signup").checked,
+                 intern:$("e-intern").checked },
     ask_people:$("e-g1-on").checked || $("e-g2-on").checked,
     archived:$("e-archived").checked,
     template_id:current.template_id || null,
@@ -2965,11 +3005,14 @@ $("save").onclick = async () => {
     clearDirty();
     const offen = planning.checklist.filter(c=>!c.done).length;
     msg($("edit-msg"), "Gespeichert. " + (offen ? offen + (offen === 1 ? " Punkt" : " Punkte") + " auf der Checkliste noch offen. " : "") +
-      (ohneAbfrage
+      (nurOrga(ev)
+        ? "Nur fürs Orgateam, Eltern sehen davon nichts. Die Checkliste steht in den To-dos, " +
+          "wenn ein Stichtag eingetragen ist."
+        : ohneAbfrage
         ? "Diese Veranstaltung fragt nichts ab — die Anmeldeseite zeigt nur Datum und Ort. " +
           "Für eine reine Orga-Planung ist das genau richtig."
         : "Link: " + publicLink(current.slug)) +
-      (gesperrt ? " Die Anmeldung ist noch gesperrt — setz den Haken bei Anmeldung freigegeben, " +
+      (gesperrt && !nurOrga(ev) ? " Die Anmeldung ist noch gesperrt — setz den Haken bei Anmeldung freigegeben, " +
         "wenn die Eltern loslegen sollen." : "") +
       " Der Editor bleibt offen, Fertig bringt dich zurück zur Übersicht.");
   }catch(err){ msg($("edit-msg"), err.message, true); dirty = true; }

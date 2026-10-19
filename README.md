@@ -26,6 +26,8 @@ gemeinsamen Skript- und Stildateien, kein Build, kein Framework. Wer HTML lesen 
 - Veranstaltungen anlegen, aus Vorlagen für wiederkehrende Feste
 - Kategorien, Aufgaben, Zusatzfragen und Sichtbarkeit je Veranstaltung einstellen
 - To-dos über alle Veranstaltungen, Checkliste mit Fristen, Einkaufsliste
+- Aufgaben nur fürs Orgateam ohne Anmeldung, etwa eine Geldsammlung für ein Geschenk:
+  mit Stichtag, Notizen und Checkliste, für Eltern nicht in der Übersicht
 - Anmeldungen einsehen, von Hand eintragen oder bearbeiten
 - Gemeldete Aufgaben übernehmen oder ablehnen
 - Check-in per QR-Code: Aushang drucken, sehen, wer da war und wie lange, von Hand abhaken

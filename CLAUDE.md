@@ -76,7 +76,7 @@ Laden feststehen, über `titel(text)` setzen, nicht über `document.title`.
 Namen aus `common.js` (`live`, `$`, `esc`, `bildUrl`, `SIGNUP_COLS`, `anonHead`,
 `isoDatum`, `heute`, `fmtDate`, `vis`, `groups`, `verkleinern`, `EINSTELLUNG`,
 `kitaName`, `eigeneAdresse`, `farbe`, `titel`, `euro`, `preisZahl`, `bestellArtikel`, `bestellMenge`,
-`kostetEtwas`, `kosten`, `paypalName`, `paypalMail`, `paypalLink`, `zahlLink`, `zahlweg`, `textMitFormat`) in den Seiten nicht auf oberster Ebene
+`kostetEtwas`, `kosten`, `paypalName`, `paypalMail`, `paypalLink`, `zahlLink`, `zahlweg`, `textMitFormat`, `nurOrga`) in den Seiten nicht auf oberster Ebene
 neu deklarieren — das ergibt einen SyntaxError und die ganze Seite bleibt stehen.
 
 Im Repo bleibt `SUPABASE.url` in `config.js` leer (Demo-Modus). Die echte Projektadresse wird
