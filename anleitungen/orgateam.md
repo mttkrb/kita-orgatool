@@ -77,8 +77,9 @@ der Veranstaltung.
 Auf der Startseite des Orga-Bereichs steht die Karte „Anmelden“. Gib im Feld „Orga-Passwort“
 das gemeinsame Passwort ein und tippe auf „Weiter“ (oder drück Enter).
 
-Rechts im Feld steht „Zeigen“. Damit siehst du das Passwort im Klartext und kannst prüfen, ob du
-dich vertippt hast. „Verbergen“ macht es wieder zu Punkten. Beim Abmelden ist es wieder verborgen.
+Rechts im Feld ist ein Auge. Ein Tipp darauf zeigt das Passwort im Klartext, damit du prüfen
+kannst, ob du dich vertippt hast. Das durchgestrichene Auge macht es wieder zu Punkten. Beim
+Abmelden ist es wieder verborgen.
 Achte darauf, wer dir dabei über die Schulter schaut.
 
 | Meldung | Bedeutung |
