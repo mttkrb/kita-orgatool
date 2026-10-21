@@ -58,7 +58,7 @@ die neuen Dateien holen (`Cache-Control: no-cache`).
 ### Datenbank
 
 Supabase ist ein Postgres-Datenbankdienst. Die Seiten sprechen ihn direkt über seine
-Schnittstelle an. Es gibt zwölf Tabellen:
+Schnittstelle an. Es gibt dreizehn Tabellen:
 
 | Tabelle | Inhalt | Wer liest |
 | --- | --- | --- |
@@ -73,12 +73,13 @@ Schnittstelle an. Es gibt zwölf Tabellen:
 | `payments` | Zahlungseingang je Anmeldung | nur Orgateam |
 | `attendance` | Check-in: gekommen, gegangen, Stunden | nur Orgateam |
 | `checkin_codes` | Code vom Aushang je Veranstaltung | nur Orgateam |
+| `receipts` | Belege zur Einkaufsliste: Foto vom Kassenbon, Laden, Datum, Betrag, Posten; bleiben dauerhaft | nur Orgateam |
 | `orga_keys` | Orga-Passwort | niemand über die Schnittstelle |
 
 Die SQL-Dateien im Ordner `sql/`:
 
 - `schema.sql`: der erste Stand der Datenbank
-- `migration-2.sql` bis `migration-27.sql`: alle späteren Änderungen, in dieser
+- `migration-2.sql` bis `migration-28.sql`: alle späteren Änderungen, in dieser
   Reihenfolge. Oben in jeder Datei steht, was sie ändert.
 
 Für eine Neuinstallation werden sie nicht einzeln ausgeführt, sondern
@@ -187,7 +188,7 @@ Die Frist stellt das Orgateam je Veranstaltung ein, unter „Anmeldungen lösche
 14 Tage (Standard), 30, 60, 90 Tage oder ein halbes Jahr. **Veranstaltungen ohne Datum
 werden nie aufgeräumt.**
 
-Planung, Rückblick, Fotos und Zahlen bleiben dauerhaft.
+Planung, Rückblick, Fotos der Aufgaben, Belege (`receipts`) und Zahlen bleiben dauerhaft.
 
 ### Wann es läuft
 
