@@ -1,5 +1,5 @@
 -- Rechteprüfung für Migration 22 (Zahlungseingang), 23 und 25 (Check-in), 24 (Abmelden mit
--- Zahlung, Aufräumen), dazu die gesperrte Token-Spalte aus schema.sql.
+-- Zahlung, Aufräumen), 27 (orga_keys), dazu die gesperrte Token-Spalte aus schema.sql.
 -- Weist auch nach, was verboten ist. Jede Zeile beginnt mit OK oder FEHLER.
 \set QUIET on
 \pset tuples_only on
@@ -41,6 +41,13 @@ do $$ begin insert into attendance (signup_id, checked_in_at) values ('aaaaaaaa-
   exception when others then perform pruef('anon schreibt attendance nicht ('||sqlstate||')', true); end $$;
 do $$ begin perform 1 from checkin_codes where code = 'richtiger-code';
   perform pruef('anon findet Code nicht per Filter', not found); end $$;
+-- Migration 27: orga_keys schon über das Tabellenrecht gesperrt, nicht nur über RLS
+do $$ begin perform 1 from orga_keys;
+  perform pruef('anon liest orga_keys nicht', false);
+  exception when insufficient_privilege then perform pruef('anon liest orga_keys nicht (42501)', true); end $$;
+do $$ begin insert into orga_keys (secret, label) values ('eingeschleust', 'X');
+  perform pruef('anon schreibt orga_keys nicht', false);
+  exception when insufficient_privilege then perform pruef('anon schreibt orga_keys nicht (42501)', true); end $$;
 do $$ begin perform token from signups;
   perform pruef('token bleibt gesperrt', false);
   exception when insufficient_privilege then perform pruef('token bleibt gesperrt (42501)', true); end $$;

@@ -238,7 +238,7 @@ eine Neuinstallation genau dem Stand, der im Betrieb erprobt ist.
 laufenden Projekt eingespielt wurde. Die Vorlage im selben Commit wie die Migration
 mitliefern, dann passt sie immer zu den Seiten im Repo.
 
-**Was gelesen wird:** nur die Struktur im Schema `public` (Tabellen, Funktionen,
+**Was gelesen wird:** nur die Struktur in den Schemas `public` und `intern` (Tabellen, Funktionen,
 Policies, Trigger, Rechte), die Liste der Erweiterungen und die Cron-Aufträge. Keine
 Anmeldungen, keine Veranstaltungen, kein Orga-Passwort. Das Projekt wird nicht
 verändert.

@@ -4,8 +4,8 @@
 #   sql/neuinstallation.sql   Tabellen, Funktionen, Policies, Rechte, Cron, Orga-Passwort
 #   sql/pruefen.sql           Prüft ein neu eingerichtetes Projekt gegen die Vorlage
 #
-# Gelesen wird nur die Struktur, keine Daten: keine Anmeldungen, keine Veranstaltungen,
-# kein Orga-Passwort. Das Quellprojekt wird nicht verändert.
+# Gelesen wird nur die Struktur der Schemas public und intern, keine Daten: keine
+# Anmeldungen, keine Veranstaltungen, kein Orga-Passwort. Das Quellprojekt wird nicht verändert.
 # Ausführliche Anleitung: ANLEITUNG.md im selben Ordner, Abschnitt "Für Betreuer".
 #
 #   ./vorlage-erzeugen.sh            Vorlage erzeugen
@@ -21,6 +21,10 @@ ENV_DATEI="${VORLAGE_ENV:-$HIER/vorlage.env}"
 ARBEIT="$HIER/arbeit"
 ZIEL="$HIER/sql"
 UMZUG_SQL="../../umzug/sql"   # relativ zu arbeit/
+# Was Supabase in neuen Projekten selbst anlegt. Gehört nicht in die Vorlage, sonst
+# scheitert dort "create function" und die ganze Neuinstallation wird zurückgerollt.
+# pruefen.sql übergeht es ebenfalls, ob es im neuen Projekt vorhanden ist oder nicht.
+SUPABASE_EIGENES='rls_auto_enable'
 
 if [ -t 1 ]; then ROT=$'\033[31m'; GRUEN=$'\033[32m'; GELB=$'\033[33m'; FETT=$'\033[1m'; AUS=$'\033[0m'
 else ROT=""; GRUEN=""; GELB=""; FETT=""; AUS=""; fi
@@ -152,7 +156,7 @@ cmd_erzeugen() {
   local stamp orga_spalten cron
   stamp="$(date '+%Y-%m-%d %H:%M')"
 
-  pg pg_dump --format=custom --schema=public --schema-only \
+  pg pg_dump --format=custom --schema=public --schema=intern --schema-only \
       --no-publications --no-subscriptions --no-security-labels \
       --file=schema.dump \
     || fehler "pg_dump ist gescheitert, siehe Meldung oben."
@@ -162,9 +166,9 @@ cmd_erzeugen() {
   # getrennt, damit vorher die Standardrechte von Supabase entfernt werden können.
   pg pg_restore --list --file=inhalt.list schema.dump || fehler "Sicherung nicht lesbar."
   grep -v -E '^[0-9]+; [0-9]+ [0-9]+ (DEFAULT ACL|ACL) | SCHEMA - public |COMMENT - SCHEMA public| EXTENSION ' \
-    "$ARBEIT/inhalt.list" > "$ARBEIT/haupt.list" || true
+    "$ARBEIT/inhalt.list" | grep -v -E "$SUPABASE_EIGENES" > "$ARBEIT/haupt.list" || true
   grep -E '^[0-9]+; [0-9]+ [0-9]+ ACL ' "$ARBEIT/inhalt.list" \
-    | grep -v -E 'SCHEMA public' > "$ARBEIT/rechte.list" || true
+    | grep -v -E "SCHEMA public|$SUPABASE_EIGENES" > "$ARBEIT/rechte.list" || true
   pg pg_restore --no-owner --use-list=haupt.list --file=haupt.sql schema.dump \
     || fehler "Struktur ließ sich nicht als SQL schreiben."
   pg pg_restore --no-owner --use-list=rechte.list --file=rechte.sql schema.dump \
@@ -183,7 +187,8 @@ cmd_erzeugen() {
   if [ "$cron" = t ]; then ok "Cron-Aufträge gelesen"
   else hinweis "Im Quellprojekt gibt es keine aktiven Cron-Aufträge; daten_aufraeumen() läuft dann nicht von selbst."; fi
 
-  sql_datei "$UMZUG_SQL/struktur.sql" > "$ARBEIT/struktur.txt" || fehler "Struktur nicht lesbar."
+  sql_datei "$UMZUG_SQL/struktur.sql" | grep -v -E "$SUPABASE_EIGENES" > "$ARBEIT/struktur.txt" \
+    || fehler "Struktur nicht lesbar."
 
   orga_spalten="$(abfrage "select string_agg(column_name, ' ' order by column_name)
       from information_schema.columns where table_schema = 'public' and table_name = 'orga_keys'")"
@@ -321,8 +326,10 @@ schreibe_pruefen() {
 with soll(zeile) as (values
 EOF
   sed -e "s/'/''/g" -e "s/^/  ('/" -e "s/\$/'),/" "$ARBEIT/struktur.txt" | sed '$ s/),$/))/'
-  echo ", ist(zeile) as ("
+  echo ", ist_alles(zeile) as ("
   sed -e '/^--/d' -e 's/;[[:space:]]*$//' "$REPO/umzug/sql/struktur.sql" | sed 's/^/  /'
+  echo "), ist as ("
+  echo "  select zeile from ist_alles where zeile !~ '$SUPABASE_EIGENES'"
   cat <<'EOF'
 ), fehlt as (
   select zeile from soll except select zeile from ist
