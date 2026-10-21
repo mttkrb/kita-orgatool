@@ -387,7 +387,8 @@ function Api-Test {
   if ($r.Code -eq 200) { Ok 'Veranstaltungen lesbar' } else { Rot 'FEHLT:' "Veranstaltungen nicht lesbar (HTTP $($r.Code))"; $gut = $false }
 
   $r = Hole 'signups?select=id,name&limit=1'
-  if ($r.Code -eq 200) { Ok 'Anmeldungen lesbar' } else { Rot 'FEHLT:' "Anmeldungen nicht lesbar (HTTP $($r.Code))"; $gut = $false }
+  if ($r.Code -ne 200 -or $r.Text -eq '[]') { Ok 'Anmeldungen ohne Token nicht lesbar' }
+  else { Rot 'GEFAHR:' 'Anmeldungen sind für jeden lesbar! Rechte prüfen, Seiten NICHT umstellen.'; $gut = $false }
 
   $r = Hole 'signups?select=token&limit=1'
   if ($r.Code -ne 200) { Ok 'Spalte signups.token ist gesperrt' }

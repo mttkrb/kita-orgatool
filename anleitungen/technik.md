@@ -78,7 +78,7 @@ Schnittstelle an. Es gibt zwölf Tabellen:
 Die SQL-Dateien im Ordner `sql/`:
 
 - `schema.sql`: der erste Stand der Datenbank
-- `migration-2.sql` bis `migration-26.sql`: alle späteren Änderungen, in dieser
+- `migration-2.sql` bis `migration-27.sql`: alle späteren Änderungen, in dieser
   Reihenfolge. Oben in jeder Datei steht, was sie ändert.
 
 Für eine Neuinstallation werden sie nicht einzeln ausgeführt, sondern
@@ -132,7 +132,9 @@ Wichtig:
 - Die Symbole für „Zum Startbildschirm hinzufügen“ (`icons/eltern-*.png`,
   `icons/orga-*.png`) ändern sich nicht von selbst. Nach einem Logowechsel
   `einrichtung/symbole-erzeugen.sh` laufen lassen (braucht ImageMagick) und die sechs
-  PNG-Dateien hochladen. Das Skript nimmt das Logo aus `config.js`. Name und Farben
+  PNG-Dateien hochladen. Das Skript nimmt das Logo aus `config.js`. Liegt es woanders,
+  etwa im WordPress, die Datei oder die volle https-Adresse mitgeben:
+  `einrichtung/symbole-erzeugen.sh https://…/logo.png`. Name und Farben
   stehen fest in `manifest-eltern.json` und `manifest-orga.json`.
 - Eine ältere `config.js` ohne `SETTINGS` funktioniert weiter, dann gilt überall der
   Standard.

@@ -345,8 +345,8 @@ api_test() {
   else printf '%sFEHLT:%s Veranstaltungen nicht lesbar (HTTP %s)\n' "$ROT" "$AUS" "$code"; fehlt=1; fi
 
   code="$(holen "$basis/signups?select=id,name&limit=1")"
-  if [ "$code" = 200 ]; then ok "Anmeldungen lesbar"
-  else printf '%sFEHLT:%s Anmeldungen nicht lesbar (HTTP %s)\n' "$ROT" "$AUS" "$code"; fehlt=1; fi
+  if [ "$code" != 200 ] || [ "$(cat "$antwort")" = "[]" ]; then ok "Anmeldungen ohne Token nicht lesbar"
+  else printf '%sGEFAHR:%s Anmeldungen sind für jeden lesbar! Rechte prüfen, Seiten NICHT umstellen.\n' "$ROT" "$AUS"; fehlt=1; fi
 
   code="$(holen "$basis/signups?select=token&limit=1")"
   if [ "$code" != 200 ]; then ok "Spalte signups.token ist gesperrt"

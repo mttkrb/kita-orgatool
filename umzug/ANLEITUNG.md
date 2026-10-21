@@ -189,8 +189,8 @@ Die Schritte lassen sich auch einzeln aufrufen: `pruefen`, `sichern`, `einspiele
   und Prüfsummen, keine Inhalte.
 - **Altes Projekt:** Ist dort seit der Sicherung etwas dazugekommen, meldet das
   Skript das.
-- **Schnittstelle** (nur mit `NEU_URL` und `NEU_ANON_KEY`): Veranstaltungen und
-  Anmeldungen sind lesbar, `signups.token` ist gesperrt, `orga_keys`, Vorlagen,
+- **Schnittstelle** (nur mit `NEU_URL` und `NEU_ANON_KEY`): Veranstaltungen sind
+  lesbar, Anmeldungen ohne Token nicht, `signups.token` ist gesperrt, `orga_keys`, Vorlagen,
   Planung und Rückmeldungen geben ohne Orga-Passwort nichts heraus, ein falsches
   Orga-Passwort wird abgelehnt.
 

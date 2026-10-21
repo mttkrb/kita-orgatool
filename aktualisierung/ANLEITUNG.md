@@ -123,7 +123,10 @@ icons/               ← nur neue Standarddateien, siehe unten
   geändert, die neuen Einträge von Hand in die eigene Kopie übernehmen. Fehlende
   Einträge führen nicht zu Fehlern, die Seiten nehmen dann den Standard.
 - **Eigene Bilder in `icons/`** – Eigenes Logo und Favicon bleiben liegen. Nur Dateien
-  hochladen, die im Repo neu dazugekommen sind.
+  hochladen, die im Repo neu dazugekommen sind. Die App-Symbole `eltern-*.png` und
+  `orga-*.png` im Repo zeigen das Standard-Logo. Mit eigenem Logo nicht diese hochladen,
+  sondern mit `einrichtung/symbole-erzeugen.sh` aus dem eigenen Logo erzeugen
+  ([Technik](../anleitungen/technik.md), Abschnitt 2).
 - **`.htaccess`** auf dem Webspace – nur anpassen, wenn das Update das ausdrücklich
   verlangt, etwa eine neue Quelle in der Content-Security-Policy.
 

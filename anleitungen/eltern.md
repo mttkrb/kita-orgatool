@@ -56,6 +56,17 @@ Veranstaltung anlegt, taucht es hier auf.“
 
 Tipp auf eine Karte, um zur Anmeldeseite der Veranstaltung zu kommen.
 
+### Als App auf dem Handy
+
+Du kannst die Übersicht wie eine App auf den Startbildschirm legen:
+
+- **iPhone (Safari):** Teilen-Symbol, dann „Zum Home-Bildschirm“.
+- **Android (Chrome):** Menü mit den drei Punkten, dann „Zum Startbildschirm hinzufügen“
+  oder „App installieren“.
+
+Danach öffnet ein Tipp auf das Symbol direkt die Übersicht. Es ist dieselbe Seite wie im
+Browser, nur ohne Adresszeile.
+
 ---
 
 ## 2. Die Anmeldeseite im Überblick

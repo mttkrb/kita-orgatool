@@ -109,6 +109,14 @@ ein neues erzeugt (etwa nach einem Vorstandswechsel), steht in `einrichtung/ANLE
 Oben rechts steht „Abmelden“. Der Knopf löscht das Passwort aus dem Tab und bringt dich zurück
 zur Anmeldekarte. Auf gemeinsam genutzten Rechnern immer abmelden oder den Tab schließen.
 
+### Als App auf dem Handy
+
+Den Orga-Bereich kannst du wie eine App auf den Startbildschirm legen, mit dunklem Symbol,
+damit er sich von der Elternübersicht unterscheidet: auf dem iPhone in Safari über das
+Teilen-Symbol und „Zum Home-Bildschirm“, auf Android in Chrome über das Menü und „Zum
+Startbildschirm hinzufügen“. Das Passwort merkt sich die App nur, solange sie geöffnet ist;
+nach dem Schließen fragt sie wieder danach.
+
 ### Was beim Anmelden noch passiert
 
 Jedes Mal, wenn du dich anmeldest oder zur Übersicht zurückkehrst, räumt der Orga-Bereich die
