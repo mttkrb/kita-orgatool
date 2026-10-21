@@ -65,8 +65,9 @@ der Veranstaltung.
     Rückmeldelink verteilen. Preise in der Einkaufsliste nachtragen. Den Rückblick ausfüllen,
     **bevor die Löschfrist abläuft**.
 15. **Nach der Löschfrist** löscht das Tool Anmeldungen und Aufgabenzusagen, behält eine
-    Zusammenfassung ohne Namen und archiviert die Veranstaltung. Beim nächsten Mal aus derselben
-    Vorlage erscheinen Rückblick und Zielvorschläge.
+    Zusammenfassung ohne Namen und archiviert die Veranstaltung. Die Zahlen lassen sich danach
+    im Archivmodus weiter pflegen. Beim nächsten Mal aus derselben Vorlage erscheinen Rückblick
+    und Zielvorschläge.
 
 ---
 
@@ -622,10 +623,33 @@ eingegangenen Rückmeldungen nicht mehr (sie bleiben aber gespeichert).
 | „Bewertung“ | Je Kategorie: „noch offen“, „zu wenig“, „hat gepasst“, „zu viel“. |
 | „Was war gut, was fehlte?“ | Freier Text. |
 
-Wichtig: Fülle den Rückblick aus und speichere, **bevor die Löschfrist abläuft**. Danach gibt es
-keine Anmeldungen mehr, aus denen „Angemeldet waren“ und die Vorbelegung gerechnet werden; beide
-zeigen dann 0. Die Zusammenfassung, die das Aufräumen vorher schreibt, bleibt erhalten und
-erscheint beim nächsten Mal im Kasten „Aus den letzten Malen“.
+Am besten füllst du den Rückblick aus, solange die Anmeldungen noch da sind. Vor dem Löschen
+hält das Tool eine Zusammenfassung ohne Namen fest: Zusagen, Erwachsene, Kinder, Mitbringsel je
+Kategorie, Zusagen je Aufgabe, Anwesenheit und Geld.
+
+### Archivdaten pflegen
+
+Hat eine Veranstaltung keine Anmeldungen mehr, weil die Löschfrist vorbei ist oder weil sie
+nachgetragen wurde (siehe [Abschnitt 12](#12-reiter-vorlagen)), und ist sie vorbei oder
+archiviert, schaltet der Rückblick in den Archivmodus. Oben steht dann
+„Archivdaten, ohne Namen.“, und diese Felder lassen sich bearbeiten:
+
+| Feld | Inhalt |
+| --- | --- |
+| „Zusagen (Familien)“ | Zahl der Anmeldungen mit Zusage |
+| „Absagen“ | Zahl der Absagen |
+| Personen beider Gruppen | beschriftet wie in der Veranstaltung, etwa „Erwachsene“ und „Kinder“ oder „Großeltern“ |
+| „Zusagen je Aufgabe“ | ein Feld je Aufgabe, etwa „Aufbau 9“ |
+| „Einnahmen (€)“, „davon bezahlt (€)“, „Ausgaben (€)“ | was festgehalten ist; leer heißt unbekannt |
+
+„Angemeldet waren“ rechnet sich dann aus den Personen. Die Mitbringsel je Kategorie und die
+Bewertung stehen wie gewohnt darunter. Unter den Feldern steht, wann die Zahlen festgehalten oder
+zuletzt von Hand gepflegt wurden. Was du hier speicherst, erscheint beim nächsten Mal unter
+„Aus den letzten Malen“ und fließt in die Zielvorschläge.
+
+Felder, die du nicht anfasst, bleiben, wie sie sind. Leere Felder bedeuten „unbekannt“, nicht 0.
+Namen gibt es im Archivmodus keine, nur Summen. So kann das ganze Orgateam alte Zahlen
+nachtragen und korrigieren.
 
 ### Geld
 
@@ -637,15 +661,18 @@ Sobald es Einnahmen oder Ausgaben gibt, zeigt der Rückblick den Block „Geld�
 | „Ausgaben laut Einkaufsliste“ | Summe der Preise in der Einkaufsliste |
 | „Saldo“ | Einnahmen minus Ausgaben, rot wenn negativ |
 
-Beim Speichern werden Einnahmen und Ausgaben im Rückblick festgehalten. Sind die Anmeldungen
-nach der Frist gelöscht, zeigt der Block den zuletzt festgehaltenen Wert.
+Beim Speichern werden Einnahmen und Ausgaben im Rückblick festgehalten. Andere festgehaltene
+Werte, etwa wie viel schon bezahlt ist, bleiben dabei stehen. Im Archivmodus ersetzen die Felder
+„Einnahmen“, „davon bezahlt“ und „Ausgaben“ diesen Block.
 
 ### Zielwerte aus dem Rückblick
 
 Wird eine Veranstaltung aus einer Vorlage angelegt, die schon gelaufen ist, steht oben im Editor
 „Aus den letzten Malen“: für jede frühere Veranstaltung Anmeldungen, Personen (und „tatsächlich
 da“), eine Tabelle mit Kategorie, Ziel, Ist und Bewertung und die Notiz. Sind die Anmeldungen
-schon gelöscht, steht dabei „(aus der Zusammenfassung, die Anmeldungen sind gelöscht)“.
+schon gelöscht, steht dabei „(aus der Zusammenfassung, die Anmeldungen sind gelöscht)“, und
+Absagen werden mitgenannt, falls sie gepflegt sind. Ist-Werte, die nicht festgehalten sind, stehen
+als „–“.
 
 Gibt es beim jüngsten Rückblick Bewertungen, erscheint „Zielwerte aus dem Rückblick übernehmen“.
 Der Knopf setzt die Ziele der Kategorien so:
@@ -849,6 +876,7 @@ Checklistenpunkte und ein Etikett: „neu“ oder „2× gelaufen“.
 | Knopf | Was er tut |
 | --- | --- |
 | „Veranstaltung daraus anlegen“ | Öffnet den Editor einer neuen Veranstaltung |
+| „Vergangene nachtragen“ | Öffnet den Editor für eine Veranstaltung, die schon war, etwa aus der Zeit mit Google Forms. Sie ist gleich archiviert, Eltern sehen sie nicht. Datum eintragen, Zahlen im Rückblick ausfüllen (Archivmodus), speichern. Ab dann steht sie in der Historie der Vorlage. |
 | „Bearbeiten“ | Öffnet den Vorlagen-Editor |
 | „Löschen“ | Löscht nach Rückfrage (Name abtippen). Veranstaltungen daraus bleiben, verlieren aber die Verbindung und damit Historie und Zielvorschläge. |
 
