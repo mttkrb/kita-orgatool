@@ -204,6 +204,7 @@ Daraus folgt:
 **Tests**
 
 - `npm test` im Ordner `tests/` (einmalig `npm install`). Vor jedem Commit laufen lassen.
+  GitHub führt dieselben Tests bei jedem Push aus (`.github/workflows/tests.yml`).
   Die Seitentests laufen in jsdom gegen den Nachbau `tests/fake-db.js`, ohne Netz.
   Die Rechteprüfung `tests/sql/pruefen.sh` startet einen eigenen temporären Postgres
   (braucht `initdb`), nie gegen Supabase oder einen vorhandenen Server.
