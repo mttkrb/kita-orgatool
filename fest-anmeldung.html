@@ -905,7 +905,7 @@ function renderFields(pre){
       '" '+(v==="ja"?"checked":"")+'><span>ja</span></label>';
     else if(f.type==="number") input = '<input type="number" data-f="'+esc(f.label)+'" value="'+esc(v)+'">';
     else if(f.type==="order") input = '<input type="number" data-f="'+esc(f.label)+'" data-order="'+
-      (+f.max || 20)+'" min="0" max="'+(+f.max || 20)+'" step="1" placeholder="0" value="'+esc(v)+'">';
+      bestellMax(f)+'" min="0" max="'+bestellMax(f)+'" step="1" placeholder="0" value="'+esc(v)+'">';
     else input = '<input type="text" data-f="'+esc(f.label)+'" value="'+esc(v)+'">';
     const stueck = f.type==="order" && preisZahl(f.price)
       ? ' <span style="font-weight:400;color:var(--ink-soft)">('+euro(preisZahl(f.price))+' pro Stück)</span>' : "";

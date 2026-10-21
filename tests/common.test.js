@@ -64,6 +64,8 @@ test("Bestellartikel ohne max kappen bei 99", async () => {
   const s = await common();
   assert.equal(s.g("bestellMenge")({ fields:{ Brezel:500 } }, { label:"Brezel" }), 99);
   assert.equal(s.g("bestellMenge")({ fields:{ Brezel:-3 } }, { label:"Brezel" }), 0);
+  assert.equal(s.g("bestellMax")({ label:"Brezel" }), 99);
+  assert.equal(s.g("bestellMax")({ label:"Brezel", max:5 }), 5);
 });
 
 test("Absagen kosten nichts", async () => {

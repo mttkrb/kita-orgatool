@@ -3635,7 +3635,7 @@ function openManual(entry){
   $("m-orders").innerHTML = bestellArtikel(current).map(f=>
     '<label>'+esc(f.label)+(preisZahl(f.price) ? ' <span style="font-weight:400;color:var(--ink-soft)">('+
       euro(preisZahl(f.price))+' pro Stück)</span>' : "")+'</label>'+
-    '<input type="number" min="0" max="'+(+f.max||20)+'" data-order="'+esc(f.label)+'" value="'+
+    '<input type="number" min="0" max="'+bestellMax(f)+'" data-order="'+esc(f.label)+'" value="'+
       (bestellMenge(entry, f) || "")+'" placeholder="0">').join("");
   msg($("m-msg"),"");
   $("manual-form").classList.remove("hidden");

@@ -70,8 +70,10 @@ const preisZahl = v => {
 const bestellArtikel = ev => ((ev && ev.fields) || []).filter(f=>f.type === "order");
 // Die Höchstmenge gilt nur hier im Browser; die Datenbank begrenzt Antworten nicht.
 // Wer über die API mehr einträgt, wird beim Rechnen auf max gekappt, damit der
-// Soll-Betrag im Orga-Bereich nicht ausufert.
-const bestellMenge = (e, f) => Math.min(+f.max || 99,
+// Soll-Betrag im Orga-Bereich nicht ausufert. Ohne max gelten 99, wie in
+// intern.anmeldung_betrag() in der Datenbank.
+const bestellMax = f => +f.max || 99;
+const bestellMenge = (e, f) => Math.min(bestellMax(f),
   Math.max(0, Math.floor(+(((e && e.fields) || {})[f.label]) || 0)));
 
 // Kostet die Veranstaltung überhaupt etwas?
