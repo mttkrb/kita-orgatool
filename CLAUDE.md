@@ -225,6 +225,17 @@ aktualisiert, überschreibt seine `config.js` nicht: Neue Einträge in `config.j
 brauchen einen Standardwert im Code. Migration, erneuerte Vorlage und geänderte Seiten
 in einen Commit.
 
+## Arbeiten am Repo
+
+- **`main` ist geschützt.** Direkt pushen geht nicht. Jede Änderung auf einem eigenen
+  Branch und als Pull Request. Gemergt wird erst, wenn die Tests auf GitHub grün sind.
+- **Das Repo ist öffentlich.** Alles, was hier landet, kann jeder lesen, auch in der
+  Historie. Keine echten Namen, Orte, Beträge, Adressen oder Termine, auch nicht in
+  Testdaten, Beispielen, Commit-Nachrichten oder PR-Texten. Beispieldaten sind erfunden.
+- **Keine Zugangsdaten.** Weder Supabase (URL, anonKey, Service-Key, Datenbankpasswort)
+  noch Webspace, SFTP oder NAS. GitHub blockiert erkannte Zugangsdaten beim Push, darauf
+  nicht verlassen.
+
 ## Nicht ins Repo
 
 `supabase.env`, `pgpass`, `*.dump`, echte Supabase-URL und anonKey, Einwilligungstexte
