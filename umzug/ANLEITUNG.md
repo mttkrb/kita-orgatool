@@ -191,7 +191,7 @@ Die Schritte lassen sich auch einzeln aufrufen: `pruefen`, `sichern`, `einspiele
   Skript das.
 - **Schnittstelle** (nur mit `NEU_URL` und `NEU_ANON_KEY`): Veranstaltungen sind
   lesbar, Anmeldungen ohne Token nicht, `signups.token` ist gesperrt, `orga_keys`, Vorlagen,
-  Planung und Rückmeldungen geben ohne Orga-Passwort nichts heraus, ein falsches
+  Planung, Rückmeldungen, Zahlungen und Belege geben ohne Orga-Passwort nichts heraus, ein falsches
   Orga-Passwort wird abgelehnt.
 
 ## 6. Seiten umstellen

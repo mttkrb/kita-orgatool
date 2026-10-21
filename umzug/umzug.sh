@@ -352,7 +352,7 @@ api_test() {
   if [ "$code" != 200 ]; then ok "Spalte signups.token ist gesperrt"
   else printf '%sGEFAHR:%s signups.token ist für jeden lesbar! Rechte prüfen, Seiten NICHT umstellen.\n' "$ROT" "$AUS"; fehlt=1; fi
 
-  for t in orga_keys templates planning feedback; do
+  for t in orga_keys templates planning feedback payments receipts; do
     code="$(holen "$basis/$t?select=*&limit=1")"
     if [ "$code" != 200 ] || [ "$(cat "$antwort")" = "[]" ]; then ok "$t ohne Orga-Passwort nicht lesbar"
     else printf '%sGEFAHR:%s %s liefert ohne Orga-Passwort Daten!\n' "$ROT" "$AUS" "$t"; fehlt=1; fi

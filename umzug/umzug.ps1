@@ -394,7 +394,7 @@ function Api-Test {
   if ($r.Code -ne 200) { Ok 'Spalte signups.token ist gesperrt' }
   else { Rot 'GEFAHR:' 'signups.token ist für jeden lesbar! Rechte prüfen, Seiten NICHT umstellen.'; $gut = $false }
 
-  foreach ($t in 'orga_keys', 'templates', 'planning', 'feedback') {
+  foreach ($t in 'orga_keys', 'templates', 'planning', 'feedback', 'payments', 'receipts') {
     $r = Hole "$($t)?select=*&limit=1"
     if ($r.Code -ne 200 -or $r.Text -eq '[]') { Ok "$t ohne Orga-Passwort nicht lesbar" }
     else { Rot 'GEFAHR:' "$t liefert ohne Orga-Passwort Daten!"; $gut = $false }
