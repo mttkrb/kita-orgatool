@@ -528,7 +528,7 @@ const api = {
 };
 
 let EV = null, EVENT_ID = null, BELEGT = [];
-let DEMO_ANWESEND = {};
+let DEMO_ANWESEND = Object.create(null); // ohne Prototyp: sid kommt aus der Adresse
 let DEMO_CLAIMS = [{id:"c1", task_id:"aufbau", name:"Sarah Klein", done:true}];
 let entries = [];
 const cat = id => (EV.categories||[]).find(c=>c.id===id);
