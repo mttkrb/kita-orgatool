@@ -116,7 +116,7 @@ function preisPill(ev){
   try{
     events = await loadEvents();
     events = events
-      .filter(e=>!e.event_on || e.event_on >= heute())
+      .filter(e=>!nurOrga(e) && (!e.event_on || e.event_on >= heute()))
       .sort((a,b)=>String(a.event_on||"9999").localeCompare(String(b.event_on||"9999")));
     rows = await loadSignups(events.map(e=>e.slug));
   }catch(err){

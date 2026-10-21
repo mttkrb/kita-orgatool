@@ -146,10 +146,10 @@ $("foto").onchange = async ev => {
 async function feste(){
   if(!live) return [{id:"demo", title:"Familiensamstag", event_on:"2026-11-28"}];
   const r = await fetch(CONFIG.supabase.url +
-    "/rest/v1/events?select=id,title,event_on,event_date&archived=eq.false&order=event_on.asc",
+    "/rest/v1/events?select=id,title,event_on,event_date,visibility&archived=eq.false&order=event_on.asc",
     { headers: kopf() });
   if(!r.ok) throw new Error("Termine konnten nicht geladen werden.");
-  return (await r.json()).filter(e=>!e.event_on || e.event_on >= heute());
+  return (await r.json()).filter(e=>!nurOrga(e) && (!e.event_on || e.event_on >= heute()));
 }
 
 (async function(){

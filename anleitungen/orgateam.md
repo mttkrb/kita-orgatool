@@ -77,6 +77,11 @@ der Veranstaltung.
 Auf der Startseite des Orga-Bereichs steht die Karte „Anmelden“. Gib im Feld „Orga-Passwort“
 das gemeinsame Passwort ein und tippe auf „Weiter“ (oder drück Enter).
 
+Rechts im Feld ist ein Auge. Ein Tipp darauf zeigt das Passwort im Klartext, damit du prüfen
+kannst, ob du dich vertippt hast. Das durchgestrichene Auge macht es wieder zu Punkten. Beim
+Abmelden ist es wieder verborgen.
+Achte darauf, wer dir dabei über die Schulter schaut.
+
 | Meldung | Bedeutung |
 | --- | --- |
 | „Bitte Passwort eingeben.“ | Das Feld ist leer. |
@@ -185,6 +190,8 @@ das Etikett „Pflicht“. Rechts steht der Zustand:
 | „Anmeldung zu“ | „Anmeldeschluss“ ist vorbei |
 | „Nachbereitung“ | Das Datum der Veranstaltung ist vorbei |
 | „archiviert“ | Haken „Archivieren“ gesetzt oder automatisch archiviert |
+| „Projekt“ | Projekt nur fürs Orgateam (siehe unten), Stichtag noch nicht erreicht |
+| „Stichtag vorbei“ | Projekt, dessen Stichtag vorbei ist |
 
 Sortiert ist so: erst laufende, dann vergangene, dann archivierte Veranstaltungen, innerhalb
 davon nach Datum. Veranstaltungen ohne Datum stehen am Ende ihrer Gruppe.
@@ -200,6 +207,8 @@ davon nach Datum. Veranstaltungen ohne Datum stehen am Ende ihrer Gruppe.
 | „Duplizieren“ | Öffnet den Editor mit einer Kopie (siehe unten). |
 | „Löschen“ | Löscht die Veranstaltung nach Rückfrage (siehe unten). |
 
+Projekte stehen in einem eigenen Block „Projekte“ unter den Veranstaltungen. Bei ihnen fehlen „Anmeldungen“, „Anmeldelink“ und „Meldelink“.
+
 Klappt das Kopieren in die Zwischenablage nicht, zeigt der Browser ein Fenster mit dem Link
 zum Markieren.
 
@@ -213,6 +222,36 @@ Abbau) vorbelegt. Was nicht passt, entfernst du mit „×“. Gespeichert wird e
 Am besten legst du wiederkehrende Veranstaltungen aus einer Vorlage an
 ([Abschnitt 12](#12-reiter-vorlagen)), dann sind Kategorien, Aufgaben, Fragen, Kosten,
 Checkliste und Einkaufsliste schon da.
+
+### Projekt nur fürs Orgateam
+
+Für alles, was das Orgateam erledigt, ohne dass sich Eltern anmelden: Geld für ein Geschenk
+sammeln, etwas besorgen, einen Termin mit der Leitung vorbereiten.
+
+„+ Projekt“ öffnet den Editor im Modus „Neues Projekt“. Der Haken „Projekt nur fürs Orgateam“
+ist gesetzt, und alles, was nur Eltern betrifft, ist ausgeblendet:
+Anmeldung, Kosten, Sichtbarkeit, Mitbringsel, Aufgaben am Tag, Fragen, Löschfrist, Rückblick
+und die Knöpfe für Anmelde- und Meldelink. Übrig bleiben:
+
+| Feld | Wofür |
+| --- | --- |
+| „Name des Projekts“ | z. B. „Abschiedsgeschenk Frau Müller“ |
+| „Datum“ | der Stichtag. Danach fällt das Projekt aus den To-dos. |
+| „Notizen, z. B. Link zum PayPal-Pool“ | alles, was das Orgateam dazu wissen muss |
+| „Planung — interne Checkliste“ | die einzelnen Schritte mit „Wer“ und „Vorlauf“, z. B. „Pool eröffnen und Link in die Elterngruppe“, „Geschenk kaufen“, „Karte unterschreiben lassen“ |
+| „Einkaufsliste“ | falls etwas zu besorgen ist |
+
+Die Schritte der Checkliste erscheinen wie bei jeder Veranstaltung im Reiter „To-dos“, sobald
+sie in den nächsten zwei Wochen fällig sind.
+
+Eltern sehen das Projekt nicht: Sie steht nicht in der Übersicht und nicht auf der Meldeseite.
+Wer den Link zur Anmeldeseite doch aufruft, liest nur „Diese Seite ist nicht öffentlich“, ohne
+Titel. **Ausgeblendet heißt nicht geheim:** Wer die Schnittstelle direkt abfragt, findet den
+Titel. Für eine Überraschung reicht das. Namen von Kindern oder Familien gehören trotzdem
+nicht in Titel oder Notizen.
+
+Den Haken kannst du auch bei einer bestehenden Veranstaltung setzen oder wieder entfernen.
+Ohne Haken ist sie wieder eine normale Veranstaltung mit allen Feldern.
 
 ### Duplizieren
 

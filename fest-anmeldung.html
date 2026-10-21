@@ -1222,6 +1222,15 @@ async function load(){
       ' <a href="' + CONFIG.startPage + '">Hier stehen alle offenen Veranstaltungen.</a>';
     return;
   }
+  // Projekte nur fürs Orgateam haben keine Seite für Eltern; auch den Titel nicht zeigen
+  if(nurOrga(EV)){
+    EV = null;
+    titel("Nicht öffentlich");
+    $("ev-title").textContent = "Diese Seite ist nicht öffentlich";
+    $("ev-meta").innerHTML = 'Hier gibt es nichts zum Anmelden. ' +
+      '<a href="' + CONFIG.startPage + '">Hier stehen alle offenen Veranstaltungen.</a>';
+    return;
+  }
   if(EV.checkin){
     if(myToken && mySid) merken();
     // Wiedererkennen nur beim Scan am Eingang, sonst stünde auf einem geteilten Handy
