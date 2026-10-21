@@ -250,6 +250,12 @@ create policy "eigene loeschen" on signups for delete to anon
   .pw-zeigen:hover{color:var(--ink)}
   .pw-zeigen svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   #aushang-ansicht{position:fixed;inset:0;background:#fff;z-index:70;overflow:auto;padding:24px 16px}
+  .beleg{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+  .beleg img{width:56px;height:56px;object-fit:cover;border-radius:5px;cursor:zoom-in;border:1px solid var(--line)}
+  .beleg .was{flex:1;font-size:.9rem}
+  #beleg-gross{position:fixed;inset:0;background:rgba(0,0,0,.86);z-index:80;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:12px;padding:16px}
+  #beleg-gross img{max-width:100%;max-height:82vh;background:#fff;border-radius:4px}
   .aushang{max-width:560px;margin:0 auto;text-align:center}
   .aushang h1{font-size:2.1rem;margin:6px 0 4px}
   .aushang .gross{font-family:'Fraunces',Georgia,serif;font-size:1.6rem;margin:18px 0 6px}
@@ -579,6 +585,29 @@ create policy "eigene loeschen" on signups for delete to anon
         <button type="button" class="ghost" id="kauf-csv">Als CSV</button>
       </div>
       <p class="hint" id="kauf-msg"></p>
+
+      <div id="belege-box">
+        <label style="margin-top:16px">Belege</label>
+        <p class="hint" style="margin:0 0 8px">Foto vom Kassenbon, damit klar ist, was wo gekauft wurde.
+          <strong>Kartennummer, Namen oder Kundennummer vorher abdecken oder abschneiden.</strong>
+          Belege bleiben dauerhaft, wie die Fotos der Aufgaben, und sind nur fürs Orgateam sichtbar.</p>
+        <div id="belege"></div>
+        <p class="hint" id="belege-summe" style="margin:6px 0 8px"></p>
+        <div class="row">
+          <div><label for="b-laden">Laden</label>
+            <input type="text" id="b-laden" maxlength="120" placeholder="Aldi"></div>
+          <div><label for="b-datum">Gekauft am</label>
+            <input type="date" id="b-datum"></div>
+          <div><label for="b-betrag">Betrag (€)</label>
+            <input type="text" id="b-betrag" inputmode="decimal" placeholder="12,90"></div>
+        </div>
+        <label for="b-posten">Zu welchem Posten? <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+        <select id="b-posten"></select>
+        <label for="b-foto">Foto</label>
+        <input type="file" id="b-foto" accept="image/*">
+        <div style="margin-top:8px"><button type="button" class="ghost" id="b-dazu">Beleg hinzufügen</button></div>
+        <p class="hint" id="beleg-msg"></p>
+      </div>
     </fieldset>
 
     <fieldset class="oeffentlich">
@@ -639,6 +668,11 @@ create policy "eigene loeschen" on signups for delete to anon
   </div>
 
   <!-- VORLAGEN-EDITOR -->
+  <div id="beleg-gross" class="hidden" role="dialog" aria-label="Beleg">
+    <img id="beleg-bild" alt="Beleg">
+    <button type="button" class="ghost" id="beleg-zu" style="background:#fff">Schließen</button>
+  </div>
+
   <div id="view-template" class="hidden">
     <button class="linkish" id="back-3">← Zurück zur Übersicht</button>
     <h2 style="margin-top:12px" id="tpl-title">Neue Vorlage</h2>
@@ -916,6 +950,7 @@ let demoSignups = [
     adults:1, kids:2, items:[{cat:"salat",what:"Nudelsalat"}], tasks:[], fields:{}, note:"" }
 ];
 let demoCodes = {};
+let demoReceipts = [];
 let demoAttendance = [{ signup_id:"s2", checked_in_at:new Date(Date.now()-3*36e5).toISOString(),
   checked_out_at:new Date(Date.now()-36e5*0.5).toISOString(), hours:null, source:"qr" }];
 let demoPayments = [{ signup_id:"s2", amount:18.5, paid_at:new Date().toISOString() }];
@@ -1128,6 +1163,19 @@ const db = {
     await req("task_images", { method:"POST", headers:head(),
       body: JSON.stringify({ event_id:eventId, task_id:taskId, data }) });
   },
+  async receipts(eventId){
+    if(!eventId) return [];
+    if(!live) return demoReceipts.filter(r=>r.event_id===eventId).map(r=>({...r}));
+    return req("receipts?select=*&event_id=eq."+eventId+"&order=created_at.asc", { headers: head() });
+  },
+  async addReceipt(r){
+    if(!live){ demoReceipts.push({ ...r, id:"r"+Date.now()+Math.random(), created_at:new Date().toISOString() }); return; }
+    await req("receipts", { method:"POST", headers:head(), body: JSON.stringify(r) });
+  },
+  async delReceipt(id){
+    if(!live){ demoReceipts = demoReceipts.filter(r=>r.id!==id); return; }
+    await req("receipts?id=eq."+id, { method:"DELETE", headers: head() });
+  },
   async delImage(id){
     if(!live) return;
     await req("task_images?id=eq."+id, { method:"DELETE", headers: head() });
@@ -1278,7 +1326,8 @@ const NEEDED = {
   task_claims: ["done"],
   payments: ["amount","paid_at"],
   attendance: ["checked_in_at","hours"],
-  checkin_codes: ["code"]
+  checkin_codes: ["code"],
+  receipts: ["amount", "item_id"]
 };
 
 async function checkSchema(){
@@ -1596,14 +1645,15 @@ async function bestandAufnehmen(ev){
     try{ const r = await req(pfad, { headers: head() }); return (r || []).length; }
     catch(e){ return 0; }
   };
-  const [anmeldungen, belegungen, bilder, meldungen, rueckmeldungen] = await Promise.all([
+  const [anmeldungen, belegungen, bilder, meldungen, rueckmeldungen, belege] = await Promise.all([
     zahl("signups?select=id&event=eq." + ev.slug),
     zahl("task_claims?select=id&event_id=eq." + ev.id),
     zahl("task_images?select=id&event_id=eq." + ev.id),
     zahl("proposals?select=id&event_id=eq." + ev.id),
-    zahl("feedback?select=id&event_id=eq." + ev.id)
+    zahl("feedback?select=id&event_id=eq." + ev.id),
+    zahl("receipts?select=id&event_id=eq." + ev.id)
   ]);
-  return { anmeldungen, belegungen, bilder, meldungen, rueckmeldungen };
+  return { anmeldungen, belegungen, bilder, meldungen, rueckmeldungen, belege };
 }
 
 async function sicherungZiehen(ev, art){
@@ -1611,17 +1661,18 @@ async function sicherungZiehen(ev, art){
   const hol = async pfad => {
     try{ return await req(pfad, { headers: head() }) || []; }catch(e){ return []; }
   };
-  const [signups, planung, claims, bilder, meldungen, feedbackListe] = await Promise.all([
+  const [signups, planung, claims, bilder, meldungen, feedbackListe, belegListe] = await Promise.all([
     hol("signups?select=" + SIGNUP_COLS + "&event=eq." + ev.slug),
     hol("planning?select=*&event_id=eq." + ev.id),
     hol("task_claims?select=*&event_id=eq." + ev.id),
     hol("task_images?select=*&event_id=eq." + ev.id),
     hol("proposals?select=*&event_id=eq." + ev.id),
-    hol("feedback?select=*&event_id=eq." + ev.id)
+    hol("feedback?select=*&event_id=eq." + ev.id),
+    hol("receipts?select=*&event_id=eq." + ev.id)
   ]);
   const daten = { gesichert_am:new Date().toISOString(), grund:"vor dem Löschen",
     event:ev, planning:planung, signups, task_claims:claims, task_images:bilder,
-    proposals:meldungen, feedback:feedbackListe };
+    proposals:meldungen, feedback:feedbackListe, receipts:belegListe };
   if(art === "zahlen"){
     // Absagen zählen nicht mit, sie stehen nur als Anzahl daneben
     const zusagen = signups.filter(s=>s.status !== "absage");
@@ -1642,11 +1693,15 @@ async function sicherungZiehen(ev, art){
         kinder: zusagen.reduce((a,s)=>a+(+s.kids||0),0),
         kategorien: proKat, aufgaben: proAufgabe,
         aufgabenzusagen: claims.length,
-        rueckmeldungen: feedbackListe.length
+        rueckmeldungen: feedbackListe.length,
+        belege: (belegListe||[]).length,
+        belege_summe: Math.round((belegListe||[]).reduce((a,r)=>a + (+r.amount || 0), 0)*100)/100
       },
       planung: (planung||[]).map(p=>({ review:p.review, checklist:p.checklist, shopping:p.shopping })),
       rueckmeldungen: (feedbackListe||[]).map(r=>({ rating:r.rating, good:r.good, better:r.better })),
-      meldungen: (meldungen||[]).map(m=>({ title:m.title, info:m.info, status:m.status }))
+      meldungen: (meldungen||[]).map(m=>({ title:m.title, info:m.info, status:m.status })),
+      belege: (belegListe||[]).map(r=>({ laden:r.shop, datum:r.bought_on, betrag:r.amount,
+        posten:((planung||[]).flatMap(p=>p.shopping||[]).find(k=>k.id === r.item_id) || {}).artikel || null }))
     };
     const kname = "zahlen-" + ev.slug + "-" + heute() + ".json";
     download(kname, JSON.stringify(knapp, null, 2), "application/json");
@@ -1722,13 +1777,14 @@ async function handleCard(act, id){
   }
   if(act==="del"){
     const b = live ? await bestandAufnehmen(ev)
-                   : {anmeldungen:0,belegungen:0,bilder:0,meldungen:0,rueckmeldungen:0};
+                   : {anmeldungen:0,belegungen:0,bilder:0,meldungen:0,rueckmeldungen:0,belege:0};
     const teile = [
       b.anmeldungen ? b.anmeldungen + " Anmeldungen mit Namen" : "",
       b.belegungen ? b.belegungen + " übernommene Aufgaben" : "",
       b.bilder ? b.bilder + " Fotos" : "",
       b.meldungen ? b.meldungen + " gemeldete Aufgaben" : "",
-      b.rueckmeldungen ? b.rueckmeldungen + " Rückmeldungen" : ""
+      b.rueckmeldungen ? b.rueckmeldungen + " Rückmeldungen" : "",
+      b.belege ? b.belege + (b.belege === 1 ? " Beleg" : " Belege") : ""
     ].filter(Boolean);
 
     const antwort = await loeschDialog({
@@ -2307,6 +2363,101 @@ $("view-edit").addEventListener("input", ev => {
   if(ev.target.closest("#fields") || /^e-(p-|g\d)/.test(ev.target.id || "")) renderGeld();
 });
 
+/* ---------- Belege: Fotos vom Kassenbon, nur fürs Orgateam, gelöscht mit der Frist ---------- */
+let belege = [];
+async function ladeBelege(){
+  belege = current && current.id ? await db.receipts(current.id).catch(()=>[]) : [];
+  renderBelege();
+}
+function belegPosten(){
+  const sel = $("b-posten"), alt = sel.value;
+  sel.innerHTML = '<option value="">—</option>' + readKauf($("einkauf")).map(p=>
+    '<option value="'+esc(p.id)+'">'+esc([p.menge, p.einheit, p.artikel].filter(Boolean).join(" "))+'</option>').join("");
+  sel.value = [...sel.options].some(o=>o.value === alt) ? alt : "";
+}
+function renderBelege(){
+  belegPosten();
+  const posten = Object.fromEntries(readKauf($("einkauf")).map(p=>[p.id, p.artikel]));
+  const box = $("belege");
+  box.innerHTML = "";
+  belege.forEach(r=>{
+    const d = document.createElement("div");
+    d.className = "beleg";
+    const bild = bildUrl(r.image);
+    d.innerHTML = (bild ? '<img alt="Beleg ansehen" tabindex="0">' : "") + '<div class="was"></div>' +
+      '<button type="button" class="ghost">Löschen</button>';
+    const img = d.querySelector("img");
+    if(img){
+      img.src = bild;
+      const zeigen = () => { $("beleg-bild").src = bild; $("beleg-gross").classList.remove("hidden"); $("beleg-zu").focus(); };
+      img.onclick = zeigen;
+      img.onkeydown = e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); zeigen(); } };
+    }
+    d.querySelector(".was").textContent = [r.shop,
+      r.bought_on && new Date(r.bought_on + "T12:00:00").toLocaleDateString("de-DE"),
+      r.amount != null && euro(+r.amount),
+      r.item_id && posten[r.item_id] && "für " + posten[r.item_id]].filter(Boolean).join(" · ") || "Beleg";
+    d.querySelector("button").onclick = async () => {
+      if(!confirm("Beleg" + (r.shop ? " von " + r.shop : "") + " löschen?")) return;
+      try{ await db.delReceipt(r.id); }catch(e){ msg($("beleg-msg"), "Löschen hat nicht geklappt: " + e.message, true); return; }
+      msg($("beleg-msg"), "Beleg gelöscht.");
+      ladeBelege();
+    };
+    box.appendChild(d);
+  });
+  const summe = Math.round(belege.reduce((a,r)=>a + (+r.amount || 0), 0)*100)/100;
+  const liste = Math.round(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0)*100)/100;
+  $("belege-summe").textContent = belege.length
+    ? belege.length + (belege.length === 1 ? " Beleg" : " Belege") +
+      (summe ? ", zusammen " + euro(summe) : "") +
+      (summe && liste && summe !== liste ? " — Einkaufsliste sagt " + euro(liste) : "")
+    : "";
+}
+$("einkauf").addEventListener("change", renderBelege);
+$("add-kauf").addEventListener("click", () => setTimeout(belegPosten));
+
+// Kassenbons sind lang und schmal; die längere Kante darf deshalb mehr Pixel haben als bei
+// Aufgabenfotos. Passt das Bild nicht unter die Grenze der Datenbank, wird es kleiner.
+async function belegBild(datei){
+  for(const [kante, guete] of [[2000, .75], [1500, .7], [1100, .65]]){
+    const bild = await verkleinern(datei, kante, guete);
+    if(bild.length < 1400000) return bild;
+  }
+  throw new Error("Bild zu groß");
+}
+$("b-dazu").addEventListener("click", async () => {
+  const m = $("beleg-msg");
+  if(!current || !current.id){ msg(m, "Erst speichern, dann Belege anhängen.", true); return; }
+  const datei = $("b-foto").files && $("b-foto").files[0];
+  if(!datei){ msg(m, "Bitte ein Foto vom Beleg auswählen.", true); return; }
+  const betrag = $("b-betrag").value.trim();
+  if(betrag && !preisZahl(betrag)){ msg(m, "Betrag bitte als Zahl, zum Beispiel 12,90.", true); return; }
+  $("b-dazu").disabled = true;
+  try{
+    await db.addReceipt({ event_id:current.id,
+      shop:$("b-laden").value.trim() || null,
+      bought_on:$("b-datum").value || null,
+      amount:betrag ? preisZahl(betrag) : null,
+      item_id:$("b-posten").value || null,
+      image:await belegBild(datei) });
+  }catch(e){
+    msg(m, "Beleg wurde nicht gespeichert: " + e.message, true);
+    $("b-dazu").disabled = false;
+    return;
+  }
+  $("b-dazu").disabled = false;
+  ["b-laden", "b-datum", "b-betrag", "b-foto"].forEach(id=>$(id).value = "");
+  $("b-posten").value = "";
+  msg(m, "Beleg gespeichert.");
+  ladeBelege();
+});
+const belegZu = () => { $("beleg-gross").classList.add("hidden"); $("beleg-bild").removeAttribute("src"); };
+$("beleg-zu").addEventListener("click", belegZu);
+$("beleg-gross").addEventListener("click", e => { if(e.target.id === "beleg-gross") belegZu(); });
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape" && !$("beleg-gross").classList.contains("hidden")) belegZu();
+});
+
 function checkRow(c, imTpl){
   c = c || {};
   const d = document.createElement("div"); d.className = "item";
@@ -2678,7 +2829,8 @@ async function openEditor(ev, opts){
   renderReview();
   renderKaufSumme();
   renderFeedback();
-  msg($("edit-msg"), "");
+  msg($("edit-msg"), ""); msg($("beleg-msg"), "");
+  belege = []; renderBelege(); ladeBelege();
   clearDirty();
   show("edit");
   renderHistory(current);

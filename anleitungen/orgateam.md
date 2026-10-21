@@ -62,7 +62,7 @@ der Veranstaltung.
 13. **Am Tag:** Eltern checken am Aushang ein. In den Anmeldungen siehst du, wer da ist, und
     hakst von Hand ab, wer ohne Handy kam.
 14. **Danach:** Haken bei „Rückmeldungen der Eltern einsammeln“ setzen, speichern, den
-    Rückmeldelink verteilen. Preise in der Einkaufsliste nachtragen. Den Rückblick ausfüllen,
+    Rückmeldelink verteilen. Preise in der Einkaufsliste nachtragen, Kassenbons als Belege anhängen. Den Rückblick ausfüllen,
     **bevor die Löschfrist abläuft**.
 15. **Nach der Löschfrist** löscht das Tool Anmeldungen und Aufgabenzusagen, behält eine
     Zusammenfassung ohne Namen und archiviert die Veranstaltung. Die Zahlen lassen sich danach
@@ -267,22 +267,22 @@ Ohne Haken ist sie wieder eine normale Veranstaltung mit allen Feldern.
 „Duplizieren“ öffnet den Editor mit einer Kopie: Name mit „(Kopie)“, Kurzname mit „-kopie“,
 nicht archiviert. Übernommen werden alle Einstellungen der Veranstaltung (Datum, Ort, Kosten,
 Sichtbarkeit, Kategorien, Aufgaben, Fragen, Check-in, Vorlage). **Nicht übernommen** werden
-Checkliste, Einkaufsliste, Rückblick, Fotos der Aufgaben und natürlich die Anmeldungen. Der
+Checkliste, Einkaufsliste, Belege, Rückblick, Fotos der Aufgaben und natürlich die Anmeldungen. Der
 Haken „Anmeldung freigegeben“ ist bei der Kopie aus. Die Kopie entsteht erst mit „Speichern“;
 vorher Name, Kurzname und Datum anpassen.
 
 ### Löschen
 
 „Löschen“ öffnet ein eigenes Fenster. Es zählt zuerst, was an der Veranstaltung hängt
-(Anmeldungen mit Namen, übernommene Aufgaben, Fotos, gemeldete Aufgaben, Rückmeldungen), und
+(Anmeldungen mit Namen, übernommene Aufgaben, Fotos, gemeldete Aufgaben, Rückmeldungen, Belege), und
 weist darauf hin, dass „Archivieren“ im Editor der sanftere Weg ist.
 
 Hängen Daten dran, wählst du unter „Sicherung vorher herunterladen“:
 
 | Auswahl | Was du bekommst |
 | --- | --- |
-| „Vollständig“ | Datei `geloescht-<kurzname>-<datum>.json` mit Veranstaltung, Planung, Anmeldungen samt Namen und Anmerkungen, Aufgabenzusagen, Fotos, Meldungen, Rückmeldungen. Nur damit ließe sich später etwas wiederherstellen. |
-| „Nur Zahlen“ | Datei `zahlen-<kurzname>-<datum>.json` ohne Namen: Anzahl Zusagen und Absagen, Erwachsene, Kinder, Mengen je Kategorie und Aufgabe, Rückblick, Checkliste, Einkaufsliste, Bewertungen und Texte der Rückmeldungen, Meldungen. |
+| „Vollständig“ | Datei `geloescht-<kurzname>-<datum>.json` mit Veranstaltung, Planung, Anmeldungen samt Namen und Anmerkungen, Aufgabenzusagen, Fotos, Belege, Meldungen, Rückmeldungen. Nur damit ließe sich später etwas wiederherstellen. |
+| „Nur Zahlen“ | Datei `zahlen-<kurzname>-<datum>.json` ohne Namen: Anzahl Zusagen und Absagen, Erwachsene, Kinder, Mengen je Kategorie und Aufgabe, Rückblick, Checkliste, Einkaufsliste, Belege ohne Foto (Laden, Datum, Betrag, Posten), Bewertungen und Texte der Rückmeldungen, Meldungen. |
 | „Keine Sicherung“ | Direkt löschen. |
 
 Zahlungseingänge und Anwesenheit stehen in keiner der beiden Sicherungen.
@@ -600,6 +600,39 @@ geht in den Rückblick ein (Saldo).
 | „Als CSV“ | Lädt `einkauf-<kurzname>.csv` herunter mit Menge, Einheit, Was, Wer besorgt, Preis (EUR), gekauft (ja/nein). Öffnet sich in Excel. |
 
 Was in die Einkaufsliste geht, wird wie alles andere erst mit „Speichern“ dauerhaft.
+
+### Belege
+
+Unter der Einkaufsliste hängst du Fotos der Kassenbons an, damit später klar ist, was wo
+gekauft wurde. Das geht erst, wenn die Veranstaltung gespeichert ist; sonst steht dort „Erst
+speichern, dann Belege anhängen.“ Belege sieht nur das Orgateam.
+
+> **Vor dem Foto:** Kartennummer, Namen oder Kundennummer auf dem Bon abdecken oder
+> abschneiden. Das Tool erkennt so etwas nicht, und Belege bleiben dauerhaft gespeichert.
+
+| Feld | Bedeutung |
+| --- | --- |
+| „Laden“ | etwa „Aldi“ (optional) |
+| „Gekauft am“ | Datum des Einkaufs (optional) |
+| „Betrag (€)“ | Summe auf dem Bon, etwa „12,90“ (optional) |
+| „Zu welchem Posten?“ | ein Posten der Einkaufsliste (optional) |
+| „Foto“ | Bild vom Bon, Pflicht. Das Handy bietet Kamera oder Galerie an. |
+
+Was im Einzelnen gekauft wurde, steht auf dem Bon selbst; abtippen musst du nichts.
+
+„Beleg hinzufügen“ verkleinert das Foto und speichert es sofort, ohne „Speichern“ oben. Danach
+steht der Beleg in der Liste: kleines Bild, Laden, Datum, Betrag und „für <Posten>“. Ein Tipp
+aufs Bild zeigt es groß und lesbar, „Schließen“, Esc oder ein Tipp daneben schließt es wieder.
+„Löschen“ entfernt den Beleg nach Rückfrage.
+
+Unter der Liste steht „2 Belege, zusammen 41,37 €“. Weicht das von den Preisen der
+Einkaufsliste ab, folgt „— Einkaufsliste sagt 44,90 €“. Für den Saldo im Rückblick zählt
+weiterhin die Einkaufsliste.
+
+Belege bleiben dauerhaft, wie die Fotos der Aufgaben, auch nach der Löschfrist und an
+archivierten Veranstaltungen. Beim nächsten Mal siehst du so an der alten Veranstaltung, wo
+es was zu welchem Preis gab. Weg sind sie nur, wenn du sie löschst oder die ganze
+Veranstaltung löschst.
 
 ---
 
@@ -1006,7 +1039,7 @@ den letzten Malen“.
 ### Was dauerhaft bleibt
 
 Veranstaltungen, Vorlagen, Checklisten, Einkaufslisten, Rückblicke mit Zahlen und Geld, Fotos
-der Aufgaben, Texte und Noten der Rückmeldungen, Texte der Meldungen. Was du löschen willst,
+der Aufgaben, Belege zur Einkaufsliste, Texte und Noten der Rückmeldungen, Texte der Meldungen. Was du löschen willst,
 löschst du mit „Löschen“ auf der Karte.
 
 ### Sichtbarkeit und Löschfrist sind ein Versprechen

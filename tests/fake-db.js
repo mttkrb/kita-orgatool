@@ -16,7 +16,7 @@ const kurzname = n => {
 
 function fakeDb(start = {}){
   const db = {
-    events: [], signups: [], payments: [], task_claims: [], task_images: [],
+    events: [], signups: [], payments: [], task_claims: [], task_images: [], receipts: [],
     ...JSON.parse(JSON.stringify(start)),
     anfragen: []
   };
@@ -97,6 +97,31 @@ function fakeDb(start = {}){
     if(tabelle === "task_images" && methode === "GET"){
       const ev = eq(q, "event_id");
       return antwort(200, db.task_images.filter(c => c.event_id === ev));
+    }
+
+    // Belege (migration-28): nur das Orgateam. Ohne Orga-Passwort liefert die Policy
+    // keine Zeilen, und Schreiben scheitert an ihr.
+    if(tabelle === "receipts"){
+      const ev = eq(q, "event_id"), id = eq(q, "id");
+      const treffer = () => orga ? db.receipts.filter(r => (!ev || r.event_id === ev) && (!id || r.id === id)) : [];
+      if(methode === "GET") return antwort(200, treffer());
+      if(methode === "POST"){
+        if(!orga) return antwort(403, { code:"42501", message:"new row violates row-level security policy for table receipts" });
+        const ok = body.event_id && typeof body.image === "string" && body.image.length <= 1500000 &&
+          /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(body.image) &&
+          String(body.shop || "").length <= 120 &&
+          String(body.item_id || "").length <= 100 &&
+          (body.amount == null || (body.amount >= 0 && body.amount <= 100000));
+        if(!ok) return antwort(400, { code:"23514", message:"receipts_grenzen_chk" });
+        db.receipts.push({ id:"rc-" + (db.receipts.length + 1), created_at:new Date().toISOString(),
+          shop:null, bought_on:null, amount:null, item_id:null, ...body });
+        return antwort(201);
+      }
+      if(methode === "DELETE"){
+        const weg = treffer();
+        db.receipts = db.receipts.filter(r => !weg.includes(r));
+        return antwort(204);
+      }
     }
 
     // Was hier nicht nachgebaut ist, soll im Test auffallen

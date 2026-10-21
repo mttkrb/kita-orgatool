@@ -84,7 +84,7 @@ erst beim Deployment eingetragen und nie committet.
 
 ## Datenmodell
 
-Zwölf Tabellen. Veränderliche Strukturen liegen als JSON in Spalten, weil sich die
+Dreizehn Tabellen. Veränderliche Strukturen liegen als JSON in Spalten, weil sich die
 Felder je Veranstaltung unterscheiden.
 
 | Tabelle | Inhalt | Wer liest |
@@ -100,6 +100,7 @@ Felder je Veranstaltung unterscheiden.
 | `payments` | Zahlungseingang je Anmeldung (Haken, Betrag, Datum), Kaskade mit `signups` | nur Orga |
 | `attendance` | Check-in: gekommen, gegangen, Stunden je Anmeldung, Kaskade mit `signups` | nur Orga |
 | `checkin_codes` | Code vom Aushang je Veranstaltung | nur Orga |
+| `receipts` | Belege zur Einkaufsliste: Foto vom Bon, Laden, Datum, Betrag, Posten (ab `migration-28.sql`) | nur Orga |
 | `orga_keys` | Orga-Passwort | niemand über die API |
 
 JSON-Strukturen: `categories`, `tasks`, `fields`, `checklist`, `shopping`, `review`,
@@ -158,7 +159,7 @@ Daraus folgt:
 - Anmeldungen und Aufgabenübernahmen: Löschung nach der Frist der Veranstaltung,
   Standard 14 Tage, je Veranstaltung über `retention_days` einstellbar.
 - Namen unter Rückmeldungen und Meldungen: nach 60 Tagen anonymisiert, Texte bleiben.
-- Planung, Rückblick, Fotos und Zahlen: bleiben dauerhaft.
+- Planung, Rückblick, Fotos der Aufgaben, Belege und Zahlen: bleiben dauerhaft.
 - `daten_aufraeumen()` schreibt vor dem Löschen eine Zusammenfassung ohne
   Personenbezug nach `planning.review.zahlen` (dazu Anwesenheit und Stunden) und die
   Einnahmen nach `planning.review.geld`. Die Historie überlebt die Namen.
