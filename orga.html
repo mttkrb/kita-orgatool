@@ -2521,11 +2521,26 @@ async function belegBild(datei){
   }
   throw new Error("Bild zu groß");
 }
+// Das Foto wird gleich beim Auswählen gelesen und verkleinert. Android entzieht den Zugriff
+// auf die Datei, wenn der Browser zwischendurch im Hintergrund war; später ginge es dann
+// nicht mehr ("Foto nicht lesbar").
+let belegFoto = null;    // Promise mit dem verkleinerten Bild
+const FOTO_NEU = "Das Foto ließ sich nicht lesen. Bitte noch einmal auswählen, am besten direkt " +
+  "aus der Kamera; liegt es nur in der Cloud, erst in der Galerie öffnen.";
+$("b-foto").addEventListener("change", () => {
+  const datei = $("b-foto").files && $("b-foto").files[0];
+  belegFoto = datei ? belegBild(datei) : null;
+  if(!belegFoto) return;
+  msg($("beleg-msg"), "Foto wird vorbereitet …");
+  const dieses = belegFoto;
+  dieses.then(() => { if(belegFoto === dieses) msg($("beleg-msg"), "Foto bereit."); },
+    () => { if(belegFoto !== dieses) return; belegFoto = null; $("b-foto").value = ""; msg($("beleg-msg"), FOTO_NEU, true); });
+});
 $("b-dazu").addEventListener("click", async () => {
   const m = $("beleg-msg");
   if(!current || !current.id){ msg(m, "Erst speichern, dann Belege anhängen.", true); return; }
   const datei = $("b-foto").files && $("b-foto").files[0];
-  if(!datei){ msg(m, "Bitte ein Foto vom Beleg auswählen.", true); return; }
+  if(!datei && !belegFoto){ msg(m, "Bitte ein Foto vom Beleg auswählen.", true); return; }
   const betrag = $("b-betrag").value.trim();
   if(betrag && !preisZahl(betrag)){ msg(m, "Betrag bitte als Zahl, zum Beispiel 12,90.", true); return; }
   $("b-dazu").disabled = true;
@@ -2535,12 +2550,14 @@ $("b-dazu").addEventListener("click", async () => {
       bought_on:$("b-datum").value || null,
       amount:betrag ? preisZahl(betrag) : null,
       item_id:$("b-posten").value || null,
-      image:await belegBild(datei) });
+      image:await (belegFoto || belegBild(datei)) });
   }catch(e){
-    msg(m, "Beleg wurde nicht gespeichert: " + e.message, true);
+    if(e.message === "Foto nicht lesbar"){ belegFoto = null; $("b-foto").value = ""; msg(m, FOTO_NEU, true); }
+    else msg(m, "Beleg wurde nicht gespeichert: " + e.message, true);
     $("b-dazu").disabled = false;
     return;
   }
+  belegFoto = null;
   $("b-dazu").disabled = false;
   ["b-laden", "b-datum", "b-betrag", "b-foto"].forEach(id=>$(id).value = "");
   $("b-posten").value = "";
@@ -2971,6 +2988,7 @@ async function openEditor(ev, opts){
   renderFeedback();
   msg($("edit-msg"), ""); msg($("beleg-msg"), "");
   belege = []; renderBelege(); ladeBelege(); ladeKasse();
+  belegFoto = null; $("b-foto").value = "";
   clearDirty();
   show("edit");
   renderHistory(current);
