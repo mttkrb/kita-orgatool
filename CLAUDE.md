@@ -105,6 +105,8 @@ Felder je Veranstaltung unterscheiden.
 
 JSON-Strukturen: `categories`, `tasks`, `fields`, `checklist`, `shopping`, `review`,
 `people`, `visibility`, `payment` — Felder siehe Kommentare in `sql/` und der Code in `orga.html`.
+`planning.review.entscheidungen` hält `[{ id, thema, ergebnis, warum, datum }]`; die Historie
+(„Aus den letzten Malen“) zeigt sie beim nächsten Mal aus derselben Vorlage.
 
 Kosten (ab `migration-22.sql`): `events.payment` und `templates.payment` halten
 `{ adults, kids, note, link }` — Preis je Person der beiden Gruppen, Zahlungshinweis und
