@@ -619,6 +619,16 @@ create policy "eigene loeschen" on signups for delete to anon
       </div>
     </fieldset>
 
+    <fieldset>
+      <legend>Spenden</legend>
+      <p class="hint" style="margin:0 0 10px">Nur fürs Orgateam. Geld, das für diese Veranstaltung
+        gespendet wurde und eingegangen ist, etwa aus der Spendendose. Ohne Namen von Privatpersonen.
+        Zählt im Kassensturz als Einnahme und bleibt im Rückblick.</p>
+      <div id="spenden"></div>
+      <p class="hint" id="spenden-summe" style="margin:0 0 8px"></p>
+      <button type="button" class="ghost" id="add-spende">+ Spende</button>
+    </fieldset>
+
     <fieldset class="oeffentlich">
       <legend>Rückblick — für das nächste Mal</legend>
       <p class="hint" style="margin:0 0 10px">Nach der Veranstaltung ausfüllen. Die Ist-Zahlen sind aus den
@@ -2323,6 +2333,49 @@ function kaufRow(p){
   return d;
 }
 
+function spendeRow(p){
+  p = p || {};
+  const d = document.createElement("div");
+  d.className = "item";
+  d.innerHTML = TOOLS +
+    '<div class="row"><div style="flex:0 0 120px;min-width:100px"><label>Betrag (€)</label>'+
+    '<input type="text" inputmode="decimal" class="sp-betrag" value="'+
+      esc(preisZahl(p.betrag) ? String(preisZahl(p.betrag).toFixed(2)).replace(".", ",") : "")+'" placeholder="50,00"></div>'+
+    '<div style="flex:0 0 150px;min-width:130px"><label>Eingegangen am</label>'+
+    '<input type="date" class="sp-datum" value="'+esc(p.datum||"")+'"></div></div>'+
+    '<label>Notiz <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>'+
+    '<input type="text" class="sp-notiz" maxlength="200" value="'+esc(p.notiz||"")+'" placeholder="Spendendose am Kuchenstand">';
+  d.dataset.id = p.id || "";
+  wireTools(d);
+  faltbar(d, x=>{
+    const betrag = preisZahl(x.querySelector(".sp-betrag").value);
+    if(!betrag) return "";
+    const datum = x.querySelector(".sp-datum").value;
+    const notiz = x.querySelector(".sp-notiz").value.trim();
+    return "<b>" + euro(betrag) + "</b>" + ((datum || notiz) ? " <span>" + [
+      datum && new Date(datum + "T12:00:00").toLocaleDateString("de-DE"), notiz && esc(notiz)
+    ].filter(Boolean).join(" · ") + "</span>" : "");
+  });
+  d._auf(!preisZahl(p.betrag));
+  return d;
+}
+// Spenden stehen im Rückblick unter geld.spenden, damit sie die Löschfrist überdauern
+const readSpenden = box => [...box.children].map(d=>{
+  const betrag = preisZahl(d.querySelector(".sp-betrag").value);
+  return betrag ? { id:d.dataset.id || uid(), betrag,
+    datum:d.querySelector(".sp-datum").value || null,
+    notiz:d.querySelector(".sp-notiz").value.trim() } : null;
+}).filter(Boolean);
+const spendenSumme = () => rund(readSpenden($("spenden")).reduce((a,s)=>a + s.betrag, 0));
+function renderSpendenSumme(){
+  const n = readSpenden($("spenden")).length;
+  $("spenden-summe").textContent = n ? n + (n === 1 ? " Spende" : " Spenden") + ", zusammen " + euro(spendenSumme()) : "";
+  renderGeld();
+}
+$("add-spende").onclick = () => { $("spenden").appendChild(spendeRow()); refreshTools($("spenden")); };
+$("spenden").addEventListener("input", renderSpendenSumme);
+$("spenden").addEventListener("change", renderSpendenSumme);
+
 const readKauf = box => [...box.children].map(d=>{
   const artikel = d.querySelector(".k-artikel").value.trim();
   return artikel ? { id:d.dataset.id || uid(), artikel,
@@ -2375,13 +2428,14 @@ function kassenWerte(){
   const ausPlan = liste || (archiv ? feld("r-a-aus") : null) || null;
   const mitBetrag = belege.filter(r=>r.amount != null);
   const ausIst = mitBetrag.length ? rund(mitBetrag.reduce((a,r)=>a + (+r.amount || 0), 0)) : null;
-  return { einSoll, einIst, ausPlan, ausIst, ohneBetrag: belege.length - mitBetrag.length };
+  const spenden = spendenSumme() || null;
+  return { einSoll, einIst, spenden, ausPlan, ausIst, ohneBetrag: belege.length - mitBetrag.length };
 }
 function renderGeld(){
   const box = $("kasse");
   if(!box || !current) return;
   const k = kassenWerte();
-  if(![k.einSoll, k.einIst, k.ausPlan, k.ausIst].some(v => v)){ box.classList.add("hidden"); return; }
+  if(![k.einSoll, k.einIst, k.spenden, k.ausPlan, k.ausIst].some(v => v)){ box.classList.add("hidden"); return; }
   const zahl = v => v == null ? "–" : v < 0 ? "−" + euro(-v) : euro(v);
   const delta = (ist, plan, gutWennMehr) => {
     if(ist == null || plan == null) return "–";
@@ -2391,18 +2445,22 @@ function renderGeld(){
     return '<span' + (schlecht ? ' class="minus"' : "") + '>' + (d > 0 ? "+" : "−") + euro(Math.abs(d)) + '</span>';
   };
   const saldo = (e, a) => (e == null && a == null) ? null : rund((e || 0) - (a || 0));
-  const sPlan = saldo(k.einSoll, k.ausPlan), sIst = saldo(k.einIst, k.ausIst);
+  // Spenden zählen nur tatsächlich: geplant sind allein die Anmeldungen
+  const sPlan = saldo(k.einSoll, k.ausPlan);
+  const sIst = saldo(k.einIst == null && k.spenden == null ? null : (k.einIst || 0) + (k.spenden || 0), k.ausIst);
   box.classList.remove("hidden");
   box.innerHTML = '<h3>Kassensturz</h3><table>' +
     '<tr><th></th><th>geplant</th><th>tatsächlich</th><th>Delta</th></tr>' +
     '<tr><td>Einnahmen</td><td>' + zahl(k.einSoll) + '</td><td>' + zahl(k.einIst) + '</td><td>' +
       delta(k.einIst, k.einSoll, true) + '</td></tr>' +
+    (k.spenden ? '<tr><td>Spenden</td><td>–</td><td>' + zahl(k.spenden) + '</td><td>–</td></tr>' : "") +
     '<tr><td>Ausgaben</td><td>' + zahl(k.ausPlan) + '</td><td>' + zahl(k.ausIst) + '</td><td>' +
       delta(k.ausIst, k.ausPlan, false) + '</td></tr>' +
     '<tr class="saldo"><td>Saldo</td><td' + (sPlan < 0 ? ' class="minus"' : "") + '>' + zahl(sPlan) + '</td><td' +
       (sIst < 0 ? ' class="minus"' : "") + '>' + zahl(sIst) + '</td><td>' + delta(sIst, sPlan, true) + '</td></tr>' +
     '</table><p class="hint" style="margin:8px 0 0">Geplant: Einnahmen, was die Anmeldungen kosten; ' +
-    'Ausgaben laut Preisen der Einkaufsliste. Tatsächlich: eingetragene Zahlungen und Belege.' +
+    'Ausgaben laut Preisen der Einkaufsliste. Tatsächlich: eingetragene Zahlungen' +
+    (k.spenden ? ", eingegangene Spenden" : "") + ' und Belege.' +
     (k.ohneBetrag ? " " + k.ohneBetrag + (k.ohneBetrag === 1 ? " Beleg hat" : " Belege haben") +
       " noch keinen Betrag und fehlen in der Summe." : "") + '</p>';
 }
@@ -2866,6 +2924,10 @@ async function openEditor(ev, opts){
                             : await db.getPlanning(current.id);
   $("einkauf").innerHTML = "";
   (planning.shopping||[]).forEach(p=>$("einkauf").appendChild(kaufRow(p)));
+  $("spenden").innerHTML = "";
+  (((planning.review||{}).geld||{}).spenden||[]).forEach(p=>$("spenden").appendChild(spendeRow(p)));
+  refreshTools($("spenden"));
+  $("spenden-summe").textContent = "";
   refreshTools($("einkauf"));
   $("kauf-summe").textContent = "";
   $("kauf-tpl").classList.toggle("hidden",
@@ -2878,6 +2940,7 @@ async function openEditor(ev, opts){
   archivGefuellt = false;
   renderReview();
   renderKaufSumme();
+  renderSpendenSumme();
   renderFeedback();
   msg($("edit-msg"), ""); msg($("beleg-msg"), "");
   belege = []; renderBelege(); ladeBelege(); ladeKasse();
@@ -3292,6 +3355,7 @@ function collectPlanning(){
     review.expected = +$("r-expected").value || 0;
     review.geld = { ...(alt.geld || {}), einnahmen: einnahmenJetzt(), ausgaben: ausgabenListe };
   }
+  review.geld.spenden = readSpenden($("spenden"));
   return {
     shopping: readKauf($("einkauf")),
     checklist: readChecks($("checks")),

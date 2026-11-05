@@ -59,3 +59,47 @@ test("Ohne Geld kein Kassensturz", async () => {
     assert.deepEqual(s.fehler, []);
   }finally{ s.schliessen(); }
 });
+
+test("Spenden: zählen tatsächlich als Einnahme und bleiben im Rückblick", async () => {
+  const { s, w, $ } = await editor("e-neu");
+  try{
+    $("add-spende").click();
+    const d = $("spenden").lastElementChild;
+    d.querySelector(".sp-betrag").value = "120,50";
+    d.querySelector(".sp-datum").value = "2026-09-26";
+    d.querySelector(".sp-notiz").value = "Spendendose";
+    d.querySelector(".sp-betrag").dispatchEvent(new w.Event("input", { bubbles:true }));
+    assert.match($("spenden-summe").textContent, /1 Spende, zusammen 120,50/);
+    const t = zeilen($);
+    assert.deepEqual(t[2], ["Spenden", "–", "120,50 €", "–"]);
+    // Saldo tatsächlich: 18,50 bezahlt + 120,50 Spenden − 0 Belege; geplant ohne Spenden
+    assert.deepEqual(t[4], ["Saldo", "−13,40 €", "139,00 €", "+152,40 €"]);
+
+    $("save").click();
+    await warte(() => /Gespeichert/.test($("edit-msg").textContent), "Speichern");
+    const sp = w.eval(`demoPlanning["e-neu"] ? demoPlanning["e-neu"].review.geld.spenden : null`) ||
+      w.eval("planning.review.geld.spenden");
+    assert.equal(sp.length, 1);
+    assert.equal(sp[0].betrag, 120.5);
+    assert.equal(sp[0].datum, "2026-09-26");
+    assert.equal(sp[0].notiz, "Spendendose");
+
+    // Neu öffnen: Spende steht wieder da
+    await w.eval(`openEditor(events.find(e => e.id === "e-neu"))`);
+    await warte(() => $("spenden").children.length === 1, "Spende geladen");
+    assert.match($("spenden").textContent, /120,50/);
+    assert.deepEqual(s.fehler, []);
+  }finally{ s.schliessen(); }
+});
+
+test("Nur Spenden, sonst kein Geld: Kassensturz erscheint", async () => {
+  const { s, w, $ } = await editor("");
+  try{
+    assert.ok($("kasse").classList.contains("hidden"));
+    $("add-spende").click();
+    const b = $("spenden").lastElementChild.querySelector(".sp-betrag");
+    b.value = "30"; b.dispatchEvent(new w.Event("input", { bubbles:true }));
+    assert.ok(!$("kasse").classList.contains("hidden"));
+    assert.deepEqual(zeilen($)[2], ["Spenden", "–", "30,00 €", "–"]);
+  }finally{ s.schliessen(); }
+});

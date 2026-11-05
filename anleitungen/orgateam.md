@@ -634,6 +634,22 @@ archivierten Veranstaltungen. Beim nächsten Mal siehst du so an der alten Veran
 es was zu welchem Preis gab. Weg sind sie nur, wenn du sie löschst oder die ganze
 Veranstaltung löschst.
 
+### Spenden
+
+Bekommt ihr für eine Veranstaltung Geld geschenkt, etwa aus der Spendendose oder als
+Firmenspende, trägst du es unter „Spenden“ ein. Den Abschnitt sieht nur das Orgateam.
+
+| Feld | Bedeutung |
+| --- | --- |
+| „Betrag (€)“ | etwa „120,50“, Pflicht |
+| „Eingegangen am“ | Datum (optional) |
+| „Notiz“ | etwa „Spendendose am Kuchenstand“ (optional). **Keine Namen von Privatpersonen.** |
+
+„+ Spende“ fügt eine Zeile hinzu, darunter steht „2 Spenden, zusammen 170,50 €“. Gespeichert
+wird mit „Speichern“. Spenden zählen im [Kassensturz](#kassensturz) als tatsächliche Einnahme;
+eingetragen wird nur, was eingegangen ist, Zusagen nicht. Sie stehen im Rückblick und bleiben
+dauerhaft, auch nach der Löschfrist.
+
 ---
 
 ## 9. Auswertung: Rückblick, Kassensturz und Rückmeldungen
@@ -700,8 +716,9 @@ siehst du beim Öffnen sofort, wie die Kasse steht:
 | | geplant | tatsächlich | Delta |
 | --- | --- | --- | --- |
 | Einnahmen | was die Anmeldungen kosten (Soll) | eingetragene Zahlungen (Haken „bezahlt“ bei den Anmeldungen) | tatsächlich minus geplant; negativ heißt: noch offen |
+| Spenden | – | Summe der eingetragenen [Spenden](#spenden); Zeile nur, wenn es welche gibt | – |
 | Ausgaben | Summe der Preise in der Einkaufsliste | Summe der Belege mit Betrag | tatsächlich minus geplant; positiv heißt: mehr ausgegeben als geplant |
-| Saldo | Einnahmen minus Ausgaben, geplant | Einnahmen minus Ausgaben, tatsächlich | Unterschied der beiden |
+| Saldo | Einnahmen minus Ausgaben, geplant | Einnahmen plus Spenden minus Ausgaben, tatsächlich | Unterschied der beiden |
 
 Rot steht, was ungünstig ist: offene Einnahmen, mehr Ausgaben als geplant, ein negativer
 Saldo. Ein „–“ heißt: dazu gibt es noch nichts, etwa noch keinen Beleg. Haben Belege keinen
