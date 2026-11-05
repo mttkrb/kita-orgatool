@@ -22,7 +22,7 @@ der Veranstaltung.
 6. [Der Editor einer Veranstaltung](#6-der-editor-einer-veranstaltung)
 7. [Gemeldete Aufgaben](#7-gemeldete-aufgaben)
 8. [Planung: Checkliste und Einkaufsliste](#8-planung-checkliste-und-einkaufsliste)
-9. [Auswertung: Rückblick, Geld und Rückmeldungen](#9-auswertung-rückblick-geld-und-rückmeldungen)
+9. [Auswertung: Rückblick, Kassensturz und Rückmeldungen](#9-auswertung-rückblick-kassensturz-und-rückmeldungen)
 10. [Anmeldungen](#10-anmeldungen)
 11. [Check-in am Eingang](#11-check-in-am-eingang)
 12. [Reiter „Vorlagen“](#12-reiter-vorlagen)
@@ -614,7 +614,7 @@ Offene Punkte mit Vorlauf erscheinen zwei Wochen vor ihrer Fälligkeit im Reiter
 | „Preis (€)“ | Ausgabe für diesen Posten, etwa „12,90“ |
 
 Unter der Liste steht die Summe: „Ausgaben: 44,90 €, davon schon gekauft 32,00 €“. Die Summe
-geht in den Rückblick ein (Saldo).
+ist im [Kassensturz](#kassensturz) die geplante Ausgabe.
 
 | Knopf | Was er tut |
 | --- | --- |
@@ -650,8 +650,8 @@ aufs Bild zeigt es groß und lesbar, „Schließen“, Esc oder ein Tipp daneben
 „Löschen“ entfernt den Beleg nach Rückfrage.
 
 Unter der Liste steht „2 Belege, zusammen 41,37 €“. Weicht das von den Preisen der
-Einkaufsliste ab, folgt „— Einkaufsliste sagt 44,90 €“. Für den Saldo im Rückblick zählt
-weiterhin die Einkaufsliste.
+Einkaufsliste ab, folgt „— Einkaufsliste sagt 44,90 €“. Im [Kassensturz](#kassensturz) sind
+die Belege die tatsächliche Ausgabe, die Einkaufsliste die geplante.
 
 Belege bleiben dauerhaft, wie die Fotos der Aufgaben, auch nach der Löschfrist und an
 archivierten Veranstaltungen. Beim nächsten Mal siehst du so an der alten Veranstaltung, wo
@@ -660,7 +660,7 @@ Veranstaltung löschst.
 
 ---
 
-## 9. Auswertung: Rückblick, Geld und Rückmeldungen
+## 9. Auswertung: Rückblick, Kassensturz und Rückmeldungen
 
 Der letzte Abschnitt im Editor heißt „Rückblick — für das nächste Mal“. Du füllst ihn nach der
 Veranstaltung aus.
@@ -716,19 +716,29 @@ Felder, die du nicht anfasst, bleiben, wie sie sind. Leere Felder bedeuten „un
 Namen gibt es im Archivmodus keine, nur Summen. So kann das ganze Orgateam alte Zahlen
 nachtragen und korrigieren.
 
-### Geld
+### Kassensturz
 
-Sobald es Einnahmen oder Ausgaben gibt, zeigt der Rückblick den Block „Geld“:
+Sobald es Einnahmen oder Ausgaben gibt, steht ganz oben im Editor der Kasten „Kassensturz“. So
+siehst du beim Öffnen sofort, wie die Kasse steht:
 
-| Wert | Woher |
-| --- | --- |
-| „Einnahmen laut Anmeldungen“ | Summe der Beträge aller Anmeldungen (Soll), nicht was schon bezahlt ist |
-| „Ausgaben laut Einkaufsliste“ | Summe der Preise in der Einkaufsliste |
-| „Saldo“ | Einnahmen minus Ausgaben, rot wenn negativ |
+| | geplant | tatsächlich | Delta |
+| --- | --- | --- | --- |
+| Einnahmen | was die Anmeldungen kosten (Soll) | eingetragene Zahlungen (Haken „bezahlt“ bei den Anmeldungen) | tatsächlich minus geplant; negativ heißt: noch offen |
+| Ausgaben | Summe der Preise in der Einkaufsliste | Summe der Belege mit Betrag | tatsächlich minus geplant; positiv heißt: mehr ausgegeben als geplant |
+| Saldo | Einnahmen minus Ausgaben, geplant | Einnahmen minus Ausgaben, tatsächlich | Unterschied der beiden |
+
+Rot steht, was ungünstig ist: offene Einnahmen, mehr Ausgaben als geplant, ein negativer
+Saldo. Ein „–“ heißt: dazu gibt es noch nichts, etwa noch keinen Beleg. Haben Belege keinen
+Betrag, steht darunter „1 Beleg hat noch keinen Betrag und fehlt in der Summe.“
+
+Der Kasten rechnet sofort mit, wenn du Preise in der Einkaufsliste änderst oder Belege
+anhängst. Zahlungen hakst du in der Ansicht der Anmeldungen ab; beim nächsten Öffnen des
+Editors stehen sie im Kassensturz.
 
 Beim Speichern werden Einnahmen und Ausgaben im Rückblick festgehalten. Andere festgehaltene
-Werte, etwa wie viel schon bezahlt ist, bleiben dabei stehen. Im Archivmodus ersetzen die Felder
-„Einnahmen“, „davon bezahlt“ und „Ausgaben“ diesen Block.
+Werte, etwa wie viel schon bezahlt ist, bleiben dabei stehen. Im Archivmodus rechnet der
+Kassensturz mit den Feldern „Einnahmen“, „davon bezahlt“ und „Ausgaben“ des Rückblicks und mit
+den Belegen, die dauerhaft bleiben.
 
 ### Zielwerte aus dem Rückblick
 
