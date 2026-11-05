@@ -7,9 +7,8 @@
 --
 -- Eigene Tabelle statt Spalte in signups: Eltern dürfen ihre eigene Zeile ändern, und
 -- Spaltenrechte gelten auch fürs Orgateam (dieselbe Rolle anon). Eine Spalte könnte
--- also jede Familie selbst setzen. Hier schreibt nur, wer das Orga-Passwort hat.
--- Die eigene Zeile lesen darf auch, wer das Token aus dem persönlichen Link schickt,
--- damit die Anmeldeseite "du zahlst nichts" zeigen kann.
+-- also jede Familie selbst setzen. Hier liest und schreibt nur, wer das Orga-Passwort
+-- hat; die Anmeldeseite der Eltern kennt den Erlass nicht.
 --
 -- intern.anmeldung_betrag() rechnet wie kosten() in common.js und gibt für erlassene
 -- Anmeldungen 0 zurück. Damit hält daten_aufraeumen() die richtigen Einnahmen fest.
@@ -17,7 +16,7 @@
 -- Erlass und Zahlungseingang sind getrennt: intern.hat_zahlung() sieht nur payments,
 -- eine erlassene Anmeldung ohne Zahlung können die Eltern weiter selbst löschen.
 --
--- Erst diese Migration, dann common.js, orga.html und fest-anmeldung.html hochladen.
+-- Erst diese Migration, dann common.js und orga.html hochladen.
 -- Danach einrichtung/vorlage-erzeugen.sh. Setzt migration-24.sql voraus.
 -- Mehrfach ausführbar.
 -- ============================================================
@@ -29,24 +28,9 @@ create table if not exists fee_waivers (
 
 alter table fee_waivers enable row level security;
 
--- Ob die Anfrage das Token dieser Anmeldung mitschickt. Läuft mit den Rechten des
--- Eigentümers, weil anon die Spalte token nicht lesen darf.
-create or replace function intern.eigene_anmeldung(p_signup uuid)
-returns boolean language sql security definer stable set search_path = public as $$
-  select exists (select 1 from signups
-    where id = p_signup
-      and token = (current_setting('request.headers', true)::json ->> 'x-entry-token'));
-$$;
-revoke all on function intern.eigene_anmeldung(uuid) from public;
-grant execute on function intern.eigene_anmeldung(uuid) to anon;
-
 drop policy if exists "erlass orga" on fee_waivers;
 create policy "erlass orga" on fee_waivers for all to anon
   using (is_orga()) with check (is_orga());
-
-drop policy if exists "erlass eigener eintrag" on fee_waivers;
-create policy "erlass eigener eintrag" on fee_waivers for select to anon
-  using (intern.eigene_anmeldung(signup_id));
 
 revoke all on fee_waivers from anon, authenticated;
 grant select, insert, delete on fee_waivers to anon;

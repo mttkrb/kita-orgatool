@@ -74,7 +74,7 @@ Schnittstelle an. Es gibt vierzehn Tabellen:
 | `attendance` | Check-in: gekommen, gegangen, Stunden | nur Orgateam |
 | `checkin_codes` | Code vom Aushang je Veranstaltung | nur Orgateam |
 | `receipts` | Belege zur Einkaufsliste: Foto vom Kassenbon, Laden, Datum, Betrag, Posten; bleiben dauerhaft | nur Orgateam |
-| `fee_waivers` | Zahlung erlassen je Anmeldung, Kaskade mit `signups` | Orgateam; die Familie selbst nur ihre eigene Zeile (Token) |
+| `fee_waivers` | Zahlung erlassen je Anmeldung, Kaskade mit `signups` | nur Orgateam |
 | `orga_keys` | Orga-Passwort | niemand über die Schnittstelle |
 
 Die SQL-Dateien im Ordner `sql/`:

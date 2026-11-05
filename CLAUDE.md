@@ -101,7 +101,7 @@ Felder je Veranstaltung unterscheiden.
 | `attendance` | Check-in: gekommen, gegangen, Stunden je Anmeldung, Kaskade mit `signups` | nur Orga |
 | `checkin_codes` | Code vom Aushang je Veranstaltung | nur Orga |
 | `receipts` | Belege zur Einkaufsliste: Foto vom Bon, Laden, Datum, Betrag, Posten (ab `migration-28.sql`) | nur Orga |
-| `fee_waivers` | Zahlung erlassen je Anmeldung, Kaskade mit `signups` (ab `migration-29.sql`) | Orga; eigener Eintrag (Token) nur lesend |
+| `fee_waivers` | Zahlung erlassen je Anmeldung, Kaskade mit `signups` (ab `migration-29.sql`) | nur Orga |
 | `orga_keys` | Orga-Passwort | niemand über die API |
 
 JSON-Strukturen: `categories`, `tasks`, `fields`, `checklist`, `shopping`, `review`,
@@ -132,10 +132,10 @@ für Policies liegen im Schema `intern`, das die Schnittstelle nicht erreicht.
 ändert beide.
 
 Zahlung erlassen (ab `migration-29.sql`): Das Orgateam erlässt einer Anmeldung den Beitrag
-(Tabelle `fee_waivers`, nur Orga schreibt). Die Seiten setzen dann `erlassen: true` an der
-Anmeldung, und `kosten()` gibt 0 zurück, wie `intern.anmeldung_betrag()`. Das Feld wird nie
-an `signups` geschickt. Die Anmeldeseite liest den eigenen Erlass mit `X-Entry-Token`
-(Policy über `intern.eigene_anmeldung()`).
+(Tabelle `fee_waivers`, nur Orga liest und schreibt). `orga.html` setzt dann
+`erlassen: true` an der Anmeldung, und `kosten()` gibt 0 zurück, wie
+`intern.anmeldung_betrag()`. Das Feld wird nie an `signups` geschickt. Die Anmeldeseite der
+Eltern kennt den Erlass nicht.
 
 ## Sicherheitsmodell
 

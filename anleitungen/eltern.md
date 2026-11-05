@@ -385,10 +385,6 @@ Im Kostenkasten steht jede Zeile einzeln, zum Beispiel:
 Hast du noch nichts gewählt, was etwas kostet, steht dort „Noch nichts ausgewählt, das etwas
 kostet.“ Eine Absage kostet nichts; bei einer Absage verschwindet der Kasten.
 
-Hat das Orgateam dir den Beitrag erlassen, etwa weil du als Erzieherin oder Erzieher dabei bist,
-steht über deinen persönlichen Link im Kostenkasten „Du zahlst nichts. Das Orgateam hat dir den
-Beitrag erlassen.“ Einen Bezahlknopf gibt es dann nicht.
-
 Änderst du später über den persönlichen Link die Personenzahl oder Bestellungen, ändert sich
 der Betrag mit.
 

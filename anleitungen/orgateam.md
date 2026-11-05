@@ -873,8 +873,14 @@ Niemand ist mehr offen.“ Anmeldungen mit zu viel gezahltem Betrag zeigt der Fi
 
 ### Zahlung erlassen
 
-Manche nehmen teil, zahlen aber nichts, etwa Erzieherinnen und Erzieher. Sie melden sich ganz
-normal an, und unter dem Betrag ihrer Anmeldung setzt du den Haken **„Zahlung erlassen“**.
+Manche nehmen teil, zahlen aber nichts, etwa Erzieherinnen und Erzieher. Das geht nur im
+Orga-Bereich, an zwei Stellen:
+
+- **Beim Eintragen:** In „+ Anmeldung eintragen“ (und „bearbeiten“) steht unter der Anmerkung
+  der Haken „Zahlung erlassen, etwa für Erzieherinnen und Erzieher“. So meldest du sie gleich
+  richtig an.
+- **In der Liste:** Bei jeder Anmeldung, die etwas kostet, steht unter „offen“ bzw. „bezahlt“
+  der Haken **„Zahlung erlassen“**. Das gilt auch für Anmeldungen, die über den Link kamen.
 
 | Was passiert | |
 | --- | --- |
@@ -884,9 +890,9 @@ normal an, und unter dem Betrag ihrer Anmeldung setzt du den Haken **„Zahlung 
 | „Nur offene Zahlungen“ | erlassene Anmeldungen erscheinen nicht |
 | Kassensturz und Rückblick | rechnen mit 0 €, auch beim Festhalten nach der Löschfrist |
 | CSV | Spalte „Zahlung erlassen“ mit „ja“ |
-| Anmeldeseite | Die Person sieht über ihren persönlichen Link „Du zahlst nichts. Das Orgateam hat dir den Beitrag erlassen.“ und keinen Bezahlknopf. |
+| Anmeldeseite | unverändert: Wer sich selbst über den Link angemeldet hat, sieht dort weiter den vollen Betrag. Sag der Person Bescheid, dass sie nichts zahlen muss. |
 
-Den Haken setzt nur das Orgateam; die Datenbank lässt es den Eltern nicht. Haken weg nimmt den
+Den Haken setzt und sieht nur das Orgateam; die Datenbank lässt Eltern weder lesen noch schreiben. Haken weg nimmt den
 Erlass zurück, dann gilt wieder der volle Betrag. Den Haken gibt es nur bei Anmeldungen, die
 etwas kosten würden, nicht bei Absagen.
 

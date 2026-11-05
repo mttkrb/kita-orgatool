@@ -124,14 +124,13 @@ function fakeDb(start = {}){
       }
     }
 
-    // Zahlung erlassen (migration-29): Orgateam liest und schreibt, Eltern lesen nur den
-    // Erlass der eigenen Anmeldung (Token im Header). Schreiben ohne Orga scheitert.
+    // Zahlung erlassen (migration-29): nur das Orgateam liest und schreibt. Ohne Orga-
+    // Passwort liefert die Policy keine Zeilen, und Schreiben scheitert.
     if(tabelle === "fee_waivers"){
       const sid = eq(q, "signup_id");
       const inListe = ((q.get("signup_id") || "").match(/^in\.\((.*)\)$/) || [])[1];
       const ids = inListe ? inListe.split(",") : sid ? [sid] : null;
-      const eigen = w => token && db.signups.some(s => s.id === w.signup_id && s.token === token);
-      const treffer = () => db.fee_waivers.filter(w => (orga || eigen(w)) && (!ids || ids.includes(w.signup_id)));
+      const treffer = () => orga ? db.fee_waivers.filter(w => !ids || ids.includes(w.signup_id)) : [];
       if(methode === "GET") return antwort(200, treffer().map(w => ({ signup_id:w.signup_id })));
       if(!orga) return antwort(403, { code:"42501", message:"new row violates row-level security policy for table fee_waivers" });
       if(methode === "POST"){

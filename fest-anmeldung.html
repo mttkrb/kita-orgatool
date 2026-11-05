@@ -523,14 +523,7 @@ const api = {
       "&id=eq." + id, { headers: anonHead({ "X-Entry-Token":token }) });
     if(!r.ok) return null;
     const [mine] = await r.json();
-    if(!mine) return null;
-    // Erlass lesen darf, wer das Token schickt; ohne Tabelle (Migration 29 fehlt) kein Erlass
-    try{
-      const w = await fetch(CONFIG.supabase.url + "/rest/v1/fee_waivers?select=signup_id&signup_id=eq." + id,
-        { headers: anonHead({ "X-Entry-Token":token }) });
-      mine.erlassen = w.ok && (await w.json()).length > 0;
-    }catch(e){ mine.erlassen = false; }
-    return mine;
+    return mine || null;
   }
 };
 
@@ -1007,12 +1000,8 @@ function zahlHtml(summe, name, mitLink){
     '</div>';
 }
 
-// Hat das Orgateam der eigenen Anmeldung den Beitrag erlassen, steht das an MEIN.
-const mitErlass = entry => ({ ...entry, erlassen: !!(MEIN && MEIN.erlassen) });
 function kostenHtml(entry, mitLink){
-  const k = kosten(EV, mitErlass(entry));
-  if(k.erlassen) return '<p style="margin:0"><strong>Du zahlst nichts.</strong> Das Orgateam hat dir ' +
-    'den Beitrag erlassen.</p>';
+  const k = kosten(EV, entry);
   return '<table>' + (k.zeilen.length
       ? k.zeilen.map(z=>'<tr><td>' + z.menge + ' × ' + esc(z.label) + ' zu je ' + euro(z.preis) +
           '</td><td class="betrag">' + euro(z.summe) + '</td></tr>').join("")
@@ -1175,7 +1164,7 @@ $("form").addEventListener("submit", async ev=>{
       'Speicher ihn dir — ohne ihn kommst du nicht mehr an deinen Eintrag.</p><code>'+esc(link)+'</code>'+
       '<div class="row" style="gap:8px"><button type="button" class="ghost" id="copy">Link kopieren</button>'+
       '<button type="button" class="ghost danger" id="remove">Abmelden</button></div>' +
-      (!absage && kostetEtwas(EV) && (kosten(EV, mitErlass(data)).summe > 0 || (MEIN && MEIN.erlassen))
+      (!absage && kostetEtwas(EV) && kosten(EV, data).summe > 0
         ? '<div class="kosten">' + kostenHtml(data, true) + '</div>' : "");
     $("copy").onclick = async () => {
       try{ await navigator.clipboard.writeText(link); $("copy").textContent="Kopiert"; }

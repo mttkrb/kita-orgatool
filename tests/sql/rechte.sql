@@ -96,9 +96,8 @@ do $$ begin insert into fee_waivers (signup_id) values ('aaaaaaaa-0000-0000-0000
   perform pruef('Eltern erlassen sich nicht selbst', false);
   exception when others then perform pruef('Eltern erlassen sich nicht selbst ('||sqlstate||')', true); end $$;
 set request.headers = '{"x-entry-token":"token-b-12345"}';
-select pruef('Token liest eigenen Erlass', (select count(*) from fee_waivers) = 1);
+select pruef('Token liest auch eigenen Erlass nicht', (select count(*) from fee_waivers) = 0);
 delete from fee_waivers where signup_id = 'aaaaaaaa-0000-0000-0000-000000000002';
-select pruef('Eltern nehmen Erlass nicht weg', (select count(*) from fee_waivers) = 1);
 set request.headers = '{"x-entry-token":"falsch-12345"}';
 select pruef('falsches Token liest nichts', (select count(*) from signups) = 0);
 set request.headers = '{}';
@@ -138,7 +137,7 @@ do $$ begin insert into receipts (event_id, shop, image) values ('11111111-1111-
   exception when check_violation then perform pruef('Beleg mit zu langem Text abgelehnt', true); end $$;
 delete from receipts where shop = 'Markt';
 select pruef('Orga löscht Beleg', (select count(*) from receipts) = 1);
-select pruef('Orga liest Erlass', (select count(*) from fee_waivers) = 1);
+select pruef('Orga liest Erlass, Eltern haben ihn nicht weggenommen', (select count(*) from fee_waivers) = 1);
 insert into fee_waivers (signup_id) values ('aaaaaaaa-0000-0000-0000-000000000001');
 select pruef('Orga erlässt', (select count(*) from fee_waivers) = 2);
 delete from fee_waivers where signup_id = 'aaaaaaaa-0000-0000-0000-000000000001';

@@ -817,6 +817,8 @@ create policy "eigene loeschen" on signups for delete to anon
       <div id="m-orders"></div>
       <label for="m-note">Anmerkung</label>
       <textarea id="m-note"></textarea>
+      <label class="check hidden" id="m-erlass-box" style="margin-top:10px"><input type="checkbox" id="m-erlass">
+        <span>Zahlung erlassen, etwa für Erzieherinnen und Erzieher</span></label>
       <div id="m-msg" class="msg hidden"></div>
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
         <button class="primary" id="m-save">Eintragen</button>
@@ -1252,13 +1254,17 @@ const db = {
         const i = demoSignups.findIndex(s=>s.id===id);
         if(i>-1) demoSignups[i] = {...demoSignups[i], ...data};
       } else {
-        demoSignups.push({...data, id:"m"+Date.now(), event:slug, created_at:new Date().toISOString()});
+        id = "m"+Date.now();
+        demoSignups.push({...data, id, event:slug, created_at:new Date().toISOString()});
       }
-      return;
+      return id;
     }
     const body = JSON.stringify(id ? data : {...data, event:slug});
-    if(id) await req("signups?id=eq."+id, { method:"PATCH", headers:head(), body });
-    else   await req("signups", { method:"POST", headers:head(), body });
+    if(id){ await req("signups?id=eq."+id, { method:"PATCH", headers:head(), body }); return id; }
+    // Nur die Kennung zurück: die Spalte token liest auch das Orgateam nicht
+    const neu = await req("signups?select=id", { method:"POST",
+      headers:head({ Prefer:"return=representation" }), body });
+    return Array.isArray(neu) && neu[0] ? neu[0].id : null;
   },
   async deleteSignup(id){
     if(!live){ demoSignups = demoSignups.filter(s=>s.id!==id); return; }
@@ -3995,6 +4001,8 @@ function openManual(entry){
   $("m-adults").innerHTML = opts(g.adults.max, entry ? (entry.adults||0) : 1);
   $("m-kids").innerHTML   = opts(g.kids.max,   entry ? (entry.kids||0)   : 0);
   $("m-note").value = entry ? (entry.note||"") : "";
+  $("m-erlass").checked = !!(entry && entry.erlassen);
+  $("m-erlass-box").classList.toggle("hidden", !kostetEtwas(current));
   $("m-lbl1").textContent = g.adults.label;
   $("m-lbl2").textContent = g.kids.label;
   $("m-grp1").classList.toggle("hidden", !g.adults.on);
@@ -4052,7 +4060,9 @@ $("m-save").onclick = async () => {
   });
   $("m-save").disabled = true;
   try{
-    await db.saveSignup(editingSignup ? editingSignup.id : null, data, current.slug);
+    const id = await db.saveSignup(editingSignup ? editingSignup.id : null, data, current.slug);
+    const erlass = kostetEtwas(current) && $("m-erlass").checked;
+    if(id && erlass !== !!(editingSignup && editingSignup.erlassen)) await db.setWaived(id, erlass);
     $("manual-form").classList.add("hidden");
     editingSignup = null;
     await loadSignups();
