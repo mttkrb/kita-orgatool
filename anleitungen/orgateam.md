@@ -332,7 +332,7 @@ zeigen eine Kurzfassung. Rechts oben an jeder Zeile:
 | --- | --- |
 | ✎ | Zeile aufklappen oder zuklappen |
 | ↑ / ↓ | Zeile nach oben oder unten schieben. Die Reihenfolge gilt auch auf der Anmeldeseite. |
-| × | Zeile entfernen. Darunter erscheint 30 Sekunden lang „… entfernt“ mit „Rückgängig“. |
+| × | Zeile entfernen. Darunter erscheint 30 Sekunden lang „… entfernt“ mit „Rückgängig“. Bei Aufgaben einer Veranstaltung fragt das Tool vorher, ob du sie löschen oder verschieben willst (siehe [Aufgabe entfernen oder verschieben](#aufgabe-entfernen-oder-verschieben)). |
 
 Neue, leere Zeilen sind gleich aufgeklappt. Erst „Speichern“ macht alles dauerhaft. Leere
 Zeilen ohne Namen werden beim Speichern weggelassen.
@@ -494,6 +494,30 @@ Jede Aufgabe ist eine Zeile:
 | „Wie viele“ | Gesuchte Helfer, Standard 4 |
 | „Erklärung für die Eltern“ (optional) | Was genau zu tun ist |
 | „Fotos“ (optional) | Mehrere Bilder möglich. Werden im Browser verkleinert und erst beim Speichern hochgeladen. Mit „×“ am Bild entfernen. **Keine Bilder mit Kindern** — die Liste ist für alle sichtbar, die den Link haben. Nur in der Veranstaltung, nicht in Vorlagen. |
+
+#### Aufgabe entfernen oder verschieben
+
+Das „ד an einer Aufgabe öffnet in einer Veranstaltung erst eine Rückfrage, in Vorlagen nicht.
+Typischer Fall: Was am Familiensamstag liegen geblieben ist, soll zum nächsten.
+
+| Knopf | Was er tut |
+| --- | --- |
+| „Verschieben“ | Die Aufgabe geht in die unter „In eine andere Veranstaltung verschieben“ gewählte Veranstaltung, mit Wann, Platzzahl, Erklärung und Fotos. Zur Wahl stehen Veranstaltungen, die nicht archiviert und nicht vorbei sind; die aus derselben Vorlage zuerst. |
+| „Nur löschen“ | Wie bisher: Die Aufgabe ist weg. |
+| „Abbrechen“ | Nichts passiert. |
+
+Verschoben wird erst, wenn du die Veranstaltung speicherst. Die Meldung nennt dann
+„Verschoben: „Zaun streichen“ nach Familiensamstag“. Gehst du ohne Speichern, bleibt alles, wie
+es war. „Rückgängig“ unter der Liste holt die Aufgabe zurück und hebt das Verschieben auf.
+Gibt es am Ziel schon eine Aufgabe mit demselben Namen, kommt keine zweite dazu.
+
+Die Fotos der Aufgabe ziehen mit um, auch solche, die du gerade erst ausgewählt hast. Die Meldung
+nennt sie: „„Zaun streichen“ nach Familiensamstag mit 2 Fotos“. Gibt es am Ziel schon eine
+gleichnamige Aufgabe, hängen die Fotos dort an.
+
+Haben schon Familien zugesagt, steht im Dialog etwa „2 Familien haben schon zugesagt“. Ihre
+Zusagen gehen nicht mit. Sag den Familien Bescheid, damit sie sich beim nächsten Termin neu
+eintragen.
 
 Wie die Eltern Aufgaben übernehmen, hängt vom Haken „Aufgaben werden vor Ort verteilt“ ab:
 
