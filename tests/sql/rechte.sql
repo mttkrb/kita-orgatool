@@ -1,5 +1,6 @@
 -- Rechteprüfung für Migration 22 (Zahlungseingang), 23 und 25 (Check-in), 24 (Abmelden mit
--- Zahlung, Aufräumen), 27 (orga_keys), 28 (Belege), dazu die gesperrte Token-Spalte aus schema.sql.
+-- Zahlung, Aufräumen), 27 (orga_keys), 28 (Belege), 29 (Zahlung erlassen), dazu die gesperrte
+-- Token-Spalte aus schema.sql.
 -- Weist auch nach, was verboten ist. Jede Zeile beginnt mit OK oder FEHLER.
 \set QUIET on
 \pset tuples_only on
@@ -20,6 +21,7 @@ insert into signups (id, event, name, token) values
 insert into signups (id, event, name, token, status) values
   ('aaaaaaaa-0000-0000-0000-000000000005','heute','Familie E','token-e-12345','absage');
 insert into payments values ('aaaaaaaa-0000-0000-0000-000000000004', 6, now());
+insert into fee_waivers (signup_id) values ('aaaaaaaa-0000-0000-0000-000000000002');
 update events set visibility = '{"itemNames":false,"taskNames":false}' where slug = 'morgen';
 update signups set note = 'privat' where id = 'aaaaaaaa-0000-0000-0000-000000000001';
 insert into receipts (event_id, shop, amount, image) values
@@ -39,6 +41,10 @@ select pruef('anon liest receipts nicht', (select count(*) from receipts) = 0);
 do $$ begin insert into receipts (event_id, image) values ('11111111-1111-1111-1111-111111111111', 'data:image/jpeg;base64,QUJD');
   perform pruef('anon schreibt receipts nicht', false);
   exception when others then perform pruef('anon schreibt receipts nicht ('||sqlstate||')', true); end $$;
+select pruef('anon liest keinen Erlass', (select count(*) from fee_waivers) = 0);
+do $$ begin insert into fee_waivers (signup_id) values ('aaaaaaaa-0000-0000-0000-000000000001');
+  perform pruef('anon erlässt nicht', false);
+  exception when others then perform pruef('anon erlässt nicht ('||sqlstate||')', true); end $$;
 do $$ begin insert into payments values ('aaaaaaaa-0000-0000-0000-000000000001', 1, now());
   perform pruef('anon schreibt payments nicht', false);
   exception when others then perform pruef('anon schreibt payments nicht ('||sqlstate||')', true); end $$;
@@ -85,6 +91,14 @@ set request.headers = '{"x-entry-token":"token-a-12345"}';
 select pruef('Token liest eigene Anmeldung', (select count(*) from signups) = 1
   and (select note from signups where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 'privat');
 select pruef('Token liest keine Belege', (select count(*) from receipts) = 0);
+select pruef('Token liest fremden Erlass nicht', (select count(*) from fee_waivers) = 0);
+do $$ begin insert into fee_waivers (signup_id) values ('aaaaaaaa-0000-0000-0000-000000000001');
+  perform pruef('Eltern erlassen sich nicht selbst', false);
+  exception when others then perform pruef('Eltern erlassen sich nicht selbst ('||sqlstate||')', true); end $$;
+set request.headers = '{"x-entry-token":"token-b-12345"}';
+select pruef('Token liest eigenen Erlass', (select count(*) from fee_waivers) = 1);
+delete from fee_waivers where signup_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+select pruef('Eltern nehmen Erlass nicht weg', (select count(*) from fee_waivers) = 1);
 set request.headers = '{"x-entry-token":"falsch-12345"}';
 select pruef('falsches Token liest nichts', (select count(*) from signups) = 0);
 set request.headers = '{}';
@@ -124,6 +138,11 @@ do $$ begin insert into receipts (event_id, shop, image) values ('11111111-1111-
   exception when check_violation then perform pruef('Beleg mit zu langem Text abgelehnt', true); end $$;
 delete from receipts where shop = 'Markt';
 select pruef('Orga löscht Beleg', (select count(*) from receipts) = 1);
+select pruef('Orga liest Erlass', (select count(*) from fee_waivers) = 1);
+insert into fee_waivers (signup_id) values ('aaaaaaaa-0000-0000-0000-000000000001');
+select pruef('Orga erlässt', (select count(*) from fee_waivers) = 2);
+delete from fee_waivers where signup_id = 'aaaaaaaa-0000-0000-0000-000000000001';
+select pruef('Orga nimmt Erlass zurück', (select count(*) from fee_waivers) = 1);
 insert into attendance (signup_id, checked_in_at, source, hours) values ('aaaaaaaa-0000-0000-0000-000000000004', now(), 'orga', 2.5);
 select pruef('Orga hakt von Hand ab', (select count(*) from attendance) = 2);
 update checkin_codes set code = 'neuer-code-123' where event_id = '11111111-1111-1111-1111-111111111111';
@@ -170,6 +189,10 @@ select pruef('Bestellmenge auf max gekappt', (select intern.anmeldung_betrag(s, 
   where s.id='bbbbbbbb-0000-0000-0000-000000000002' and e.slug='vorbei') = 28.00);
 select pruef('Absage kostet nichts', (select intern.anmeldung_betrag(s, e) from signups s, events e
   where s.id='bbbbbbbb-0000-0000-0000-000000000003' and e.slug='vorbei') = 0);
+insert into fee_waivers (signup_id) values ('bbbbbbbb-0000-0000-0000-000000000002');
+select pruef('Erlassen kostet nichts', (select intern.anmeldung_betrag(s, e) from signups s, events e
+  where s.id='bbbbbbbb-0000-0000-0000-000000000002' and e.slug='vorbei') = 0);
+delete from fee_waivers where signup_id = 'bbbbbbbb-0000-0000-0000-000000000002';
 
 insert into receipts (event_id, shop, amount, image) values
   ('44444444-4444-4444-4444-444444444444', 'Getränkemarkt', 12.5, 'data:image/jpeg;base64,QUJD');

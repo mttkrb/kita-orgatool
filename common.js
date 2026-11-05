@@ -85,12 +85,15 @@ const kostetEtwas = ev => {
 };
 
 // Was eine Anmeldung kostet: Personen beider Gruppen plus Bestellungen.
-// Der Betrag wird nie gespeichert, sondern immer hieraus gerechnet. Absagen kosten nichts.
+// Der Betrag wird nie gespeichert, sondern immer hieraus gerechnet. Absagen kosten nichts,
+// ebenso Anmeldungen, denen das Orgateam den Beitrag erlassen hat (e.erlassen, aus der
+// Tabelle fee_waivers). Wie intern.anmeldung_betrag() in migration-29.sql.
 const kosten = (ev, e) => {
   const p = (ev && ev.payment) || {};
   const g = groups(ev);
   const zeilen = [];
   if(!e || e.status === "absage") return { zeilen, summe:0 };
+  if(e.erlassen) return { zeilen, summe:0, erlassen:true };
   const dazu = (label, menge, preis) => {
     if(menge > 0 && preis > 0) zeilen.push({ label, menge, preis, summe:Math.round(menge*preis*100)/100 });
   };

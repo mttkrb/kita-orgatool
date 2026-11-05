@@ -16,7 +16,7 @@ const kurzname = n => {
 
 function fakeDb(start = {}){
   const db = {
-    events: [], signups: [], payments: [], task_claims: [], task_images: [], receipts: [],
+    events: [], signups: [], payments: [], task_claims: [], task_images: [], receipts: [], fee_waivers: [],
     ...JSON.parse(JSON.stringify(start)),
     anfragen: []
   };
@@ -120,6 +120,26 @@ function fakeDb(start = {}){
       if(methode === "DELETE"){
         const weg = treffer();
         db.receipts = db.receipts.filter(r => !weg.includes(r));
+        return antwort(204);
+      }
+    }
+
+    // Zahlung erlassen (migration-29): Orgateam liest und schreibt, Eltern lesen nur den
+    // Erlass der eigenen Anmeldung (Token im Header). Schreiben ohne Orga scheitert.
+    if(tabelle === "fee_waivers"){
+      const sid = eq(q, "signup_id");
+      const inListe = ((q.get("signup_id") || "").match(/^in\.\((.*)\)$/) || [])[1];
+      const ids = inListe ? inListe.split(",") : sid ? [sid] : null;
+      const eigen = w => token && db.signups.some(s => s.id === w.signup_id && s.token === token);
+      const treffer = () => db.fee_waivers.filter(w => (orga || eigen(w)) && (!ids || ids.includes(w.signup_id)));
+      if(methode === "GET") return antwort(200, treffer().map(w => ({ signup_id:w.signup_id })));
+      if(!orga) return antwort(403, { code:"42501", message:"new row violates row-level security policy for table fee_waivers" });
+      if(methode === "POST"){
+        if(!db.fee_waivers.some(w => w.signup_id === body.signup_id)) db.fee_waivers.push({ signup_id:body.signup_id });
+        return antwort(201);
+      }
+      if(methode === "DELETE"){
+        db.fee_waivers = db.fee_waivers.filter(w => !ids || !ids.includes(w.signup_id));
         return antwort(204);
       }
     }

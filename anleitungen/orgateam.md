@@ -744,7 +744,7 @@ Vorlage). Prüf die Werte gegen die erwartete Personenzahl und speichere dann.
 | „Mitbringsel“ | Zahl aller Mitbringsel |
 | „da“, „Stunden zusammen“ | mit Check-in |
 | Menge je Bestellartikel | bei Bestellungen mit Stückpreis, ohne Absagen |
-| „Einnahmen (Soll)“, „bezahlt“, „offen (2 Familien)“ | wenn die Veranstaltung etwas kostet |
+| „Einnahmen (Soll)“, „bezahlt“, „offen (2 Familien)“ | wenn die Veranstaltung etwas kostet; dazu „Zahlung erlassen“, wenn es Erlasse gibt ([siehe unten](#zahlung-erlassen)) |
 
 ### Knöpfe
 
@@ -837,11 +837,30 @@ Niemand ist mehr offen.“ Anmeldungen mit zu viel gezahltem Betrag zeigt der Fi
 
 „bezahlt“ in den Summen enthält auch Zahlungen von Familien, die inzwischen abgesagt haben.
 
+### Zahlung erlassen
+
+Manche nehmen teil, zahlen aber nichts, etwa Erzieherinnen und Erzieher. Sie melden sich ganz
+normal an, und unter dem Betrag ihrer Anmeldung setzt du den Haken **„Zahlung erlassen“**.
+
+| Was passiert | |
+| --- | --- |
+| Betrag | 0 €. Bei der Anmeldung steht „Zahlung erlassen (statt 13,00 €)“. |
+| Personen, Mitbringsel, Aufgaben | zählen ganz normal mit |
+| Summen | „Einnahmen (Soll)“ und „offen“ ohne den erlassenen Betrag; daneben „2 Zahlung erlassen“ |
+| „Nur offene Zahlungen“ | erlassene Anmeldungen erscheinen nicht |
+| Kassensturz und Rückblick | rechnen mit 0 €, auch beim Festhalten nach der Löschfrist |
+| CSV | Spalte „Zahlung erlassen“ mit „ja“ |
+| Anmeldeseite | Die Person sieht über ihren persönlichen Link „Du zahlst nichts. Das Orgateam hat dir den Beitrag erlassen.“ und keinen Bezahlknopf. |
+
+Den Haken setzt nur das Orgateam; die Datenbank lässt es den Eltern nicht. Haken weg nimmt den
+Erlass zurück, dann gilt wieder der volle Betrag. Den Haken gibt es nur bei Anmeldungen, die
+etwas kosten würden, nicht bei Absagen.
+
 ### Export als CSV
 
 „Als CSV exportieren“ lädt `anmeldungen-<kurzname>.csv` herunter. Spalten: Name, Status
 (zugesagt/abgemeldet), die beiden Gruppen, Mitbringsel, Aufgaben, Anmerkung, je eine Spalte pro
-Zusatzfrage, Betrag (EUR), Bezahlt (EUR), Bezahlt am, mit Check-in zusätzlich Da, Gekommen,
+Zusatzfrage, Betrag (EUR), Zahlung erlassen, Bezahlt (EUR), Bezahlt am, mit Check-in zusätzlich Da, Gekommen,
 Gegangen, Stunden, und Angemeldet am. Die Datei ist mit Semikolon getrennt und öffnet sich in
 Excel mit Umlauten und rechenbaren Beträgen. Sie enthält Namen; entsprechend ablegen und nach
 Gebrauch löschen.
