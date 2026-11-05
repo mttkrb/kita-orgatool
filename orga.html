@@ -143,7 +143,7 @@ create policy "eigene loeschen" on signups for delete to anon
   .tab.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:500}
 
   label{display:block;font-size:.88rem;font-weight:500;margin:12px 0 4px}
-  input[type=text],input[type=number],input[type=password],input[type=date],select,textarea{
+  input[type=text],input[type=number],input[type=password],input[type=date],input[type=time],select,textarea{
     width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:5px;
     background:#fff;font:inherit;font-size:16px;color:var(--ink)}
   textarea{min-height:60px;resize:vertical}
@@ -2119,6 +2119,16 @@ function taskRow(t, bilder, imTpl){
     '<div><label>Wie viele</label><input type="number" class="t-needed" min="1" value="'+(t.needed??4)+'"></div></div>'+
     '<label>Erklärung für die Eltern <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>'+
     '<textarea class="t-info" placeholder="Was genau ist zu tun, worauf achten?">'+esc(t.info||"")+'</textarea>'+
+    // Zeitfenster: aus einer Aufgabe werden mehrere, je eine pro Fenster, mit gemeinsamem group
+    (t.group ? '<p class="hint">Zeitfenster von „'+esc(t.label||"")+'“. Wann und Platzzahl lassen sich je Fenster ändern.</p>'
+      : '<details class="t-slots"><summary>In Zeitfenster aufteilen</summary>'+
+        '<div class="row"><div><label>von</label><input type="time" class="s-von" value="09:00"></div>'+
+        '<div><label>bis</label><input type="time" class="s-bis" value="13:00"></div></div>'+
+        '<div class="row"><div><label>alle</label><select class="s-takt">'+
+          [30,45,60,90,120].map(m=>'<option value="'+m+'"'+(m===60?" selected":"")+'>'+m+' Minuten</option>').join("")+
+        '</select></div><div><label>Personen je Fenster</label><input type="number" class="s-je" min="1" value="2"></div></div>'+
+        '<button type="button" class="ghost s-los" style="margin-top:8px">Zeitfenster erzeugen</button>'+
+        '<p class="hint s-msg"></p></details>')+
     // Fotos hängen an der Veranstaltung; Vorlagen speichern keine
     '<div class="t-fotos'+(imTpl ? ' hidden' : '')+'">'+
     '<label>Fotos <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>'+
@@ -2126,6 +2136,9 @@ function taskRow(t, bilder, imTpl){
     '<p class="hint">Werden automatisch verkleinert. Keine Bilder mit Kindern — die Liste ist für alle sichtbar, die den Link haben.</p>'+
     '<div class="shots"></div></div>';
   d.dataset.id = t.id || "";
+  d.dataset.group = t.group || "";
+  const los = d.querySelector(".s-los");
+  if(los) los.onclick = () => zeitfensterErzeugen(d, bilder, imTpl);
   d._neu = [];          // frisch ausgewaehlte Bilder
   d._weg = [];          // zu loeschende, bereits gespeicherte Bilder
   d._alt = (bilder || []).slice();
@@ -2536,8 +2549,51 @@ const readTasks = box => [...box.children].map(d=>{
   return label ? { id:d.dataset.id || slugify(label) || uid(), label,
     when:d.querySelector(".t-when").value.trim(),
     needed:+d.querySelector(".t-needed").value || 1,
-    info:d.querySelector(".t-info").value.trim() } : null;
+    info:d.querySelector(".t-info").value.trim(),
+    ...(d.dataset.group ? { group:d.dataset.group } : {}) } : null;
 }).filter(Boolean);
+
+/* ---------- Zeitfenster: Grillen 9–13 Uhr stündlich wird zu vier Aufgaben ---------- */
+const minuten = s => { const m = /^(\d{1,2}):(\d{2})$/.exec(s || ""); return m ? +m[1]*60 + +m[2] : null; };
+const uhr = m => Math.floor(m/60) + (m % 60 ? ":" + String(m % 60).padStart(2, "0") : "");
+function zeitfensterListe(von, bis, takt){
+  const a = minuten(von), b = minuten(bis);
+  if(a == null || b == null || !(takt > 0) || b <= a) return [];
+  const liste = [];
+  for(let s = a; s < b && liste.length < 48; s += takt) liste.push([s, Math.min(s + takt, b)]);
+  return liste;
+}
+function zeitfensterErzeugen(d, bilder, imTpl){
+  const m = d.querySelector(".s-msg");
+  const label = d.querySelector(".t-label").value.trim();
+  if(!label){ m.textContent = "Erst der Aufgabe einen Namen geben."; return; }
+  const fenster = zeitfensterListe(d.querySelector(".s-von").value, d.querySelector(".s-bis").value,
+    +d.querySelector(".s-takt").value);
+  if(!fenster.length){ m.textContent = "„bis“ muss nach „von“ liegen."; return; }
+  const box = d.parentNode;
+  const basis = d.dataset.id || slugify(label) || uid();
+  // Zusagen hängen an der Kennung der Aufgabe; die Fenster bekommen neue Kennungen
+  const zusagen = box.id === "tasks" && d.dataset.id
+    ? signups.filter(s => s.status !== "absage" && (s.tasks || []).includes(d.dataset.id)).length : 0;
+  if(zusagen && !confirm(zusagen + (zusagen === 1 ? " Familie hat" : " Familien haben") + " für „" + label +
+    "“ schon zugesagt. Nach dem Aufteilen hängt ihre Zusage an keinem Zeitfenster mehr. Trotzdem aufteilen?")) return;
+  const belegt = new Set([...box.children].filter(x => x !== d).map(x => x.dataset.id));
+  const je = Math.max(1, +d.querySelector(".s-je").value || 1);
+  const info = d.querySelector(".t-info").value.trim();
+  let nach = d;
+  fenster.forEach(([a, b]) => {
+    let id = basis + "-" + String(Math.floor(a/60)).padStart(2, "0") + String(a % 60).padStart(2, "0"), i = 2;
+    while(belegt.has(id)) id = id.replace(/-\d+$/, "") + "-" + (i++);
+    belegt.add(id);
+    const neu = taskRow({ id, label, when:uhr(a) + "–" + uhr(b) + " Uhr", needed:je, info, group:basis }, [], imTpl);
+    neu._auf(false);
+    nach.after(neu);
+    nach = neu;
+  });
+  d.remove();
+  refreshTools(box);
+  markDirty();
+}
 
 const readFields = box => [...box.children].map(d=>{
   const label = d.querySelector(".f-label").value.trim();
@@ -2906,7 +2962,7 @@ function renderArchiv(rv){
   const tasks = readTasks($("tasks"));
   $("r-a-aufgaben").innerHTML = tasks.length
     ? '<label>Zusagen je Aufgabe</label><div class="row" style="flex-wrap:wrap">' + tasks.map(t=>
-        '<div style="min-width:140px"><label class="hint" style="margin:0">'+esc(t.label)+'</label>'+
+        '<div style="min-width:140px"><label class="hint" style="margin:0">'+esc(aufgabeName(t))+'</label>'+
         '<input type="number" min="0" data-rtask="'+esc(t.id)+'" value="'+esc(wert(auf[t.id]))+'"></div>').join("") +
       '</div>'
     : "";
@@ -3634,7 +3690,7 @@ async function loadSignups(){
       : "");
 
   const catLabel = id => ((current.categories||[]).find(c=>c.id===id)||{}).label || id;
-  const taskLabel = id => ((current.tasks||[]).find(t=>t.id===id)||{}).label || id;
+  const taskLabel = id => aufgabeName((current.tasks||[]).find(t=>t.id===id)) || id;
 
   let belegt = [];
   try{ belegt = await db.claims(current.id); }catch(e){}
@@ -3642,10 +3698,10 @@ async function loadSignups(){
     ? '<div class="card" style="margin-top:16px"><h3>Aufgabenstand</h3>' +
       (current.tasks||[]).map(t=>{
         const wer = belegt.filter(c=>c.task_id === t.id);
-        if(!wer.length) return '<div class="task"><div><strong>'+esc(t.label)+'</strong></div>'+
+        if(!wer.length) return '<div class="task"><div><strong>'+esc(aufgabeName(t))+'</strong></div>'+
           '<span class="task-free full">niemand</span></div>';
         const fertig = wer.every(c=>c.done);
-        return '<div class="task"><div><strong>'+esc(t.label)+'</strong>'+
+        return '<div class="task"><div><strong>'+esc(aufgabeName(t))+'</strong>'+
           '<span class="task-people">'+wer.map(c=>esc(c.name)+(c.done?" ✓":"")).join(", ")+'</span></div>'+
           '<span class="task-free'+(fertig?"":" full")+'">'+(fertig?"erledigt":"läuft")+'</span></div>';
       }).join("") + '</div>'
@@ -3834,7 +3890,7 @@ $("m-save").onclick = async () => {
 
 $("export").onclick = () => {
   const catLabel = id => ((current.categories||[]).find(c=>c.id===id)||{}).label || id;
-  const taskLabel = id => ((current.tasks||[]).find(t=>t.id===id)||{}).label || id;
+  const taskLabel = id => aufgabeName((current.tasks||[]).find(t=>t.id===id)) || id;
   const extra = [...new Set(signups.flatMap(s=>Object.keys(s.fields||{})))];
   const g = groups(current);
   const head = ["Name","Status",g.adults.label,g.kids.label,"Mitbringsel","Aufgaben",

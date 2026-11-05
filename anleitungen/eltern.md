@@ -178,6 +178,10 @@ zum Beispiel „Aufbau, ab 12 Uhr  4 von 6 frei“.
 - Je nach Einstellung steht darunter, wer schon dabei ist („dabei: Tim B., Anne V.“).
 - Gibt es eine Beschreibung oder Fotos zur Aufgabe, erscheint „Was ist zu tun?“. Antippen
   klappt die Beschreibung auf, „weniger“ klappt sie wieder zu.
+- Manche Aufgaben sind in **Zeitfenster** aufgeteilt, etwa Grillen in Stunden. Dann steht der
+  Name einmal als Überschrift („Grillen — ein oder mehrere Zeitfenster“), darunter je Fenster
+  ein Kästchen mit Uhrzeit und freien Plätzen, zum Beispiel „10–11 Uhr  1 von 2 frei“. Du kannst
+  ein oder mehrere Fenster ankreuzen.
 
 Verteilt das Orgateam die Aufgaben erst vor Ort, fehlt diese Liste im Formular. Dann gilt
 [Abschnitt 7](#7-aufgaben-am-tag).

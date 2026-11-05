@@ -84,6 +84,10 @@ const kostetEtwas = ev => {
     bestellArtikel(ev).some(f=>preisZahl(f.price) > 0);
 };
 
+// Name einer Aufgabe in Listen. Zeitfenster sind eigene Aufgaben mit gemeinsamem group
+// und gleichem Namen; dort gehört die Zeit dazu, sonst steht dreimal "Grillen" da.
+const aufgabeName = t => !t ? "" : t.group && t.when ? t.label + " (" + t.when + ")" : t.label;
+
 // Was eine Anmeldung kostet: Personen beider Gruppen plus Bestellungen.
 // Der Betrag wird nie gespeichert, sondern immer hieraus gerechnet. Absagen kosten nichts.
 const kosten = (ev, e) => {

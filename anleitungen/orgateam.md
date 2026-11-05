@@ -495,6 +495,31 @@ Jede Aufgabe ist eine Zeile:
 | „Erklärung für die Eltern“ (optional) | Was genau zu tun ist |
 | „Fotos“ (optional) | Mehrere Bilder möglich. Werden im Browser verkleinert und erst beim Speichern hochgeladen. Mit „×“ am Bild entfernen. **Keine Bilder mit Kindern** — die Liste ist für alle sichtbar, die den Link haben. Nur in der Veranstaltung, nicht in Vorlagen. |
 
+#### Zeitfenster
+
+Für Dienste in Schichten, etwa Grillen von 9 bis 13 Uhr, klappst du an der Aufgabe „In Zeitfenster
+aufteilen“ auf:
+
+| Feld | Bedeutung |
+| --- | --- |
+| „von“, „bis“ | Beginn und Ende, etwa 09:00 und 13:00 |
+| „alle“ | Länge eines Fensters: 30, 45, 60, 90 oder 120 Minuten |
+| „Personen je Fenster“ | gesuchte Helfer pro Fenster |
+
+„Zeitfenster erzeugen“ macht aus der Aufgabe je Fenster eine eigene Aufgabe mit demselben Namen
+und derselben Erklärung: „Grillen 9–10 Uhr · 2 Plätze“, „Grillen 10–11 Uhr · 2 Plätze“ und so
+weiter. Das letzte Fenster endet am „bis“, auch wenn es dadurch kürzer ist (9:30 bis 11 Uhr in
+45 Minuten ergibt 9:30–10:15 und 10:15–11 Uhr). Danach lässt sich jedes Fenster einzeln ändern:
+mehr Plätze zur Hauptzeit, andere Uhrzeit, eins löschen. Gespeichert wird wie immer erst mit
+„Speichern“; das geht auch in Vorlagen.
+
+Haben für die Aufgabe schon Familien zugesagt, fragt das Tool vorher: Ihre Zusage hängt nach
+dem Aufteilen an keinem Fenster mehr. Am besten teilst du auf, bevor die Anmeldung freigegeben ist.
+
+Die Eltern sehen die Fenster unter einer Überschrift und kreuzen eines oder mehrere an. In der
+Liste der Anmeldungen, im Aufgabenstand, in der CSV und im Rückblick steht die Uhrzeit mit dabei,
+etwa „Grillen (10–11 Uhr)“. Gezählt wird je Fenster.
+
 Wie die Eltern Aufgaben übernehmen, hängt vom Haken „Aufgaben werden vor Ort verteilt“ ab:
 
 - **Haken aus (Standard):** Eltern kreuzen Aufgaben im Anmeldeformular an („vorab“). Die
