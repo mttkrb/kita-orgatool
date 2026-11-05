@@ -132,3 +132,32 @@ test("Schnittstelle: Belege liest und schreibt nur das Orgateam", async () => {
     assert.deepEqual(s.fehler, []);
   }finally{ s.schliessen(); }
 });
+
+test("Foto wird beim Auswählen gelesen; ist es nicht lesbar, Hinweis und neu auswählen", async () => {
+  const { s, w, $ } = await orga();
+  try{
+    await w.eval(`(async () => { await openEditor(events.find(e => e.id === "e-neu")); })()`);
+    await warte(() => sichtbar($("view-edit")), "Editor");
+    // Erst schlägt das Lesen fehl, wie auf Android nach abgelaufenem Zugriff
+    w.eval(`belegBild = async () => { throw new Error("Foto nicht lesbar"); }`);
+    foto(w, $("b-foto"));
+    $("b-foto").dispatchEvent(new w.Event("change"));
+    await warte(() => /noch einmal auswählen/.test($("beleg-msg").textContent), "Hinweis");
+    assert.equal(w.eval("belegFoto"), null);
+    assert.equal(w.eval("demoReceipts.length"), 0);
+
+    // Neu ausgewählt: wird sofort vorbereitet und beim Hinzufügen verwendet
+    let gelesen = 0;
+    w.belegBild = async () => { gelesen++; return BILD; };
+    w.eval(`belegBild = window.belegBild`);
+    foto(w, $("b-foto"));
+    $("b-foto").dispatchEvent(new w.Event("change"));
+    await warte(() => /Foto bereit/.test($("beleg-msg").textContent), "bereit");
+    $("b-betrag").value = "29,80";
+    $("b-dazu").click();
+    await warte(() => w.eval("demoReceipts.length") === 1, "gespeichert");
+    assert.equal(gelesen, 1, "nur einmal gelesen, beim Auswählen");
+    assert.equal(w.eval("demoReceipts[0].amount"), 29.8);
+    assert.deepEqual(s.fehler, []);
+  }finally{ s.schliessen(); }
+});

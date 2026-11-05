@@ -669,7 +669,13 @@ speichern, dann Belege anhängen.“ Belege sieht nur das Orgateam.
 
 Was im Einzelnen gekauft wurde, steht auf dem Bon selbst; abtippen musst du nichts.
 
-„Beleg hinzufügen“ verkleinert das Foto und speichert es sofort, ohne „Speichern“ oben. Danach
+Sobald du ein Foto auswählst, liest das Tool es ein und verkleinert es; darunter steht „Foto wird
+vorbereitet …“, dann „Foto bereit.“ Steht stattdessen „Das Foto ließ sich nicht lesen. Bitte noch
+einmal auswählen …“, hat das Handy den Zugriff auf die Datei nicht erlaubt. Das passiert etwa,
+wenn das Foto nur in der Cloud liegt. Dann das Foto neu auswählen, am besten direkt mit der
+Kamera; ein Cloud-Foto vorher einmal in der Galerie öffnen.
+
+„Beleg hinzufügen“ speichert den Beleg sofort, ohne „Speichern“ oben. Danach
 steht der Beleg in der Liste: kleines Bild, Laden, Datum, Betrag und „für <Posten>“. Ein Tipp
 aufs Bild zeigt es groß und lesbar, „Schließen“, Esc oder ein Tipp daneben schließt es wieder.
 „Löschen“ entfernt den Beleg nach Rückfrage.
