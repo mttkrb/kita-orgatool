@@ -519,6 +519,31 @@ Haben schon Familien zugesagt, steht im Dialog etwa „2 Familien haben schon zu
 Zusagen gehen nicht mit. Sag den Familien Bescheid, damit sie sich beim nächsten Termin neu
 eintragen.
 
+#### Zeitfenster
+
+Für Dienste in Schichten, etwa Grillen von 9 bis 13 Uhr, klappst du an der Aufgabe „In Zeitfenster
+aufteilen“ auf:
+
+| Feld | Bedeutung |
+| --- | --- |
+| „von“, „bis“ | Beginn und Ende, etwa 09:00 und 13:00 |
+| „alle“ | Länge eines Fensters: 30, 45, 60, 90 oder 120 Minuten |
+| „Personen je Fenster“ | gesuchte Helfer pro Fenster |
+
+„Zeitfenster erzeugen“ macht aus der Aufgabe je Fenster eine eigene Aufgabe mit demselben Namen
+und derselben Erklärung: „Grillen 9–10 Uhr · 2 Plätze“, „Grillen 10–11 Uhr · 2 Plätze“ und so
+weiter. Das letzte Fenster endet am „bis“, auch wenn es dadurch kürzer ist (9:30 bis 11 Uhr in
+45 Minuten ergibt 9:30–10:15 und 10:15–11 Uhr). Danach lässt sich jedes Fenster einzeln ändern:
+mehr Plätze zur Hauptzeit, andere Uhrzeit, eins löschen. Gespeichert wird wie immer erst mit
+„Speichern“; das geht auch in Vorlagen.
+
+Haben für die Aufgabe schon Familien zugesagt, fragt das Tool vorher: Ihre Zusage hängt nach
+dem Aufteilen an keinem Fenster mehr. Am besten teilst du auf, bevor die Anmeldung freigegeben ist.
+
+Die Eltern sehen die Fenster unter einer Überschrift und kreuzen eines oder mehrere an. In der
+Liste der Anmeldungen, im Aufgabenstand, in der CSV und im Rückblick steht die Uhrzeit mit dabei,
+etwa „Grillen (10–11 Uhr)“. Gezählt wird je Fenster.
+
 Wie die Eltern Aufgaben übernehmen, hängt vom Haken „Aufgaben werden vor Ort verteilt“ ab:
 
 - **Haken aus (Standard):** Eltern kreuzen Aufgaben im Anmeldeformular an („vorab“). Die
@@ -614,7 +639,7 @@ Offene Punkte mit Vorlauf erscheinen zwei Wochen vor ihrer Fälligkeit im Reiter
 | „Preis (€)“ | Ausgabe für diesen Posten, etwa „12,90“ |
 
 Unter der Liste steht die Summe: „Ausgaben: 44,90 €, davon schon gekauft 32,00 €“. Die Summe
-ist im [Kassensturz](#kassensturz) die geplante Ausgabe.
+steht im [Kassensturz](#kassensturz) nur als Hinweis; gerechnet wird mit den Belegen.
 
 | Knopf | Was er tut |
 | --- | --- |
@@ -644,14 +669,20 @@ speichern, dann Belege anhängen.“ Belege sieht nur das Orgateam.
 
 Was im Einzelnen gekauft wurde, steht auf dem Bon selbst; abtippen musst du nichts.
 
-„Beleg hinzufügen“ verkleinert das Foto und speichert es sofort, ohne „Speichern“ oben. Danach
+Sobald du ein Foto auswählst, liest das Tool es ein und verkleinert es; darunter steht „Foto wird
+vorbereitet …“, dann „Foto bereit.“ Steht stattdessen „Das Foto ließ sich nicht lesen. Bitte noch
+einmal auswählen …“, hat das Handy den Zugriff auf die Datei nicht erlaubt. Das passiert etwa,
+wenn das Foto nur in der Cloud liegt. Dann das Foto neu auswählen, am besten direkt mit der
+Kamera; ein Cloud-Foto vorher einmal in der Galerie öffnen.
+
+„Beleg hinzufügen“ speichert den Beleg sofort, ohne „Speichern“ oben. Danach
 steht der Beleg in der Liste: kleines Bild, Laden, Datum, Betrag und „für <Posten>“. Ein Tipp
 aufs Bild zeigt es groß und lesbar, „Schließen“, Esc oder ein Tipp daneben schließt es wieder.
 „Löschen“ entfernt den Beleg nach Rückfrage.
 
 Unter der Liste steht „2 Belege, zusammen 41,37 €“. Weicht das von den Preisen der
 Einkaufsliste ab, folgt „— Einkaufsliste sagt 44,90 €“. Im [Kassensturz](#kassensturz) sind
-die Belege die tatsächliche Ausgabe, die Einkaufsliste die geplante.
+die Belege die Ausgaben.
 
 Belege bleiben dauerhaft, wie die Fotos der Aufgaben, auch nach der Löschfrist und an
 archivierten Veranstaltungen. Beim nächsten Mal siehst du so an der alten Veranstaltung, wo
@@ -670,7 +701,7 @@ Firmenspende, trägst du es unter „Spenden“ ein. Den Abschnitt sieht nur das
 | „Notiz“ | etwa „Spendendose am Kuchenstand“ (optional). **Keine Namen von Privatpersonen.** |
 
 „+ Spende“ fügt eine Zeile hinzu, darunter steht „2 Spenden, zusammen 170,50 €“. Gespeichert
-wird mit „Speichern“. Spenden zählen im [Kassensturz](#kassensturz) als tatsächliche Einnahme;
+wird mit „Speichern“. Spenden stehen im [Kassensturz](#kassensturz) bei den Einnahmen und zählen zum Kassenstand;
 eingetragen wird nur, was eingegangen ist, Zusagen nicht. Sie stehen im Rückblick und bleiben
 dauerhaft, auch nach der Löschfrist.
 
@@ -735,27 +766,27 @@ nachtragen und korrigieren.
 ### Kassensturz
 
 Sobald es Einnahmen oder Ausgaben gibt, steht ganz oben im Editor der Kasten „Kassensturz“. So
-siehst du beim Öffnen sofort, wie die Kasse steht:
+siehst du beim Öffnen sofort, wie die Kasse steht. Er hat zwei Zeilen:
 
-| | geplant | tatsächlich | Delta |
-| --- | --- | --- | --- |
-| Einnahmen | was die Anmeldungen kosten (Soll) | eingetragene Zahlungen (Haken „bezahlt“ bei den Anmeldungen) | tatsächlich minus geplant; negativ heißt: noch offen |
-| Spenden | – | Summe der eingetragenen [Spenden](#spenden); Zeile nur, wenn es welche gibt | – |
-| Ausgaben | Summe der Preise in der Einkaufsliste | Summe der Belege mit Betrag | tatsächlich minus geplant; positiv heißt: mehr ausgegeben als geplant |
-| Saldo | Einnahmen minus Ausgaben, geplant | Einnahmen plus Spenden minus Ausgaben, tatsächlich | Unterschied der beiden |
+| Zeile | Werte |
+| --- | --- |
+| Einnahmen | „geplant“: was die Anmeldungen kosten. „bezahlt“: eingetragene Zahlungen (Haken „bezahlt“ bei den Anmeldungen). „offen“: geplant minus bezahlt, rot, solange etwas offen ist; „zu viel“, wenn mehr bezahlt wurde. Gibt es [Spenden](#spenden), steht ihre Summe als „Spenden“ dahinter. |
+| Ausgaben | „laut Belegen“: Summe der [Belege](#belege) mit Betrag |
 
-Rot steht, was ungünstig ist: offene Einnahmen, mehr Ausgaben als geplant, ein negativer
-Saldo. Ein „–“ heißt: dazu gibt es noch nichts, etwa noch keinen Beleg. Haben Belege keinen
-Betrag, steht darunter „1 Beleg hat noch keinen Betrag und fehlt in der Summe.“
+Darunter steht der **Kassenstand**: bezahlt plus Spenden minus Ausgaben, rot, wenn er negativ ist. Ein „–“
+heißt: dazu gibt es noch nichts, etwa noch keinen Beleg. Haben Belege keinen Betrag, steht
+darunter „1 Beleg hat noch keinen Betrag und fehlt in der Summe.“ Dann den Beleg löschen und
+mit Betrag neu anhängen. Gibt es Preise in der Einkaufsliste, steht als Hinweis „Die
+Einkaufsliste plant 44,90 €.“; gerechnet wird mit den Belegen.
 
-Der Kasten rechnet sofort mit, wenn du Preise in der Einkaufsliste änderst oder Belege
-anhängst. Zahlungen hakst du in der Ansicht der Anmeldungen ab; beim nächsten Öffnen des
-Editors stehen sie im Kassensturz.
+Der Kasten rechnet sofort mit, wenn du Belege anhängst. Zahlungen hakst du in der Ansicht der
+Anmeldungen ab; beim nächsten Öffnen des Editors stehen sie im Kassensturz.
 
-Beim Speichern werden Einnahmen und Ausgaben im Rückblick festgehalten. Andere festgehaltene
-Werte, etwa wie viel schon bezahlt ist, bleiben dabei stehen. Im Archivmodus rechnet der
-Kassensturz mit den Feldern „Einnahmen“, „davon bezahlt“ und „Ausgaben“ des Rückblicks und mit
-den Belegen, die dauerhaft bleiben.
+Beim Speichern werden Einnahmen und Ausgaben im Rückblick festgehalten, als Ausgaben die
+Summe der Belege (gibt es keine, die Preise der Einkaufsliste). Andere festgehaltene Werte,
+etwa wie viel schon bezahlt ist, bleiben dabei stehen. Im Archivmodus rechnet der Kassensturz
+mit den Feldern „Einnahmen“ und „davon bezahlt“ des Rückblicks und mit den Belegen, die
+dauerhaft bleiben; ohne Belege mit dem Feld „Ausgaben“.
 
 ### Zielwerte aus dem Rückblick
 

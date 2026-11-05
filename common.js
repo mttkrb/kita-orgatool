@@ -84,6 +84,10 @@ const kostetEtwas = ev => {
     bestellArtikel(ev).some(f=>preisZahl(f.price) > 0);
 };
 
+// Name einer Aufgabe in Listen. Zeitfenster sind eigene Aufgaben mit gemeinsamem group
+// und gleichem Namen; dort gehört die Zeit dazu, sonst steht dreimal "Grillen" da.
+const aufgabeName = t => !t ? "" : t.group && t.when ? t.label + " (" + t.when + ")" : t.label;
+
 // Was eine Anmeldung kostet: Personen beider Gruppen plus Bestellungen.
 // Der Betrag wird nie gespeichert, sondern immer hieraus gerechnet. Absagen kosten nichts.
 const kosten = (ev, e) => {
@@ -178,24 +182,27 @@ function textMitFormat(ziel, text){
 }
 
 // Bild im Browser verkleinern, damit die Datenbank klein bleibt (JPEG-Data-URL).
+// Liest über eine Objekt-Adresse statt über FileReader: Handyfotos mit 10 MB werden so
+// nicht erst als riesige Zeichenkette in den Speicher geladen. Kann das Handy die Datei
+// nicht mehr öffnen (Zugriff abgelaufen, Foto nur in der Cloud), heißt der Fehler
+// "Foto nicht lesbar"; dann hilft es, das Foto neu auszuwählen.
 function verkleinern(datei, kante=1000, guete=0.72){
   return new Promise((ok, fehler)=>{
-    const leser = new FileReader();
-    leser.onerror = () => fehler(new Error("Lesefehler"));
-    leser.onload = () => {
-      const bild = new Image();
-      bild.onerror = () => fehler(new Error("Kein Bild"));
-      bild.onload = () => {
-        const f = Math.min(1, kante / Math.max(bild.width, bild.height));
-        const c = document.createElement("canvas");
-        c.width = Math.round(bild.width * f);
-        c.height = Math.round(bild.height * f);
-        c.getContext("2d").drawImage(bild, 0, 0, c.width, c.height);
-        ok(c.toDataURL("image/jpeg", guete));
-      };
-      bild.src = leser.result;
+    let url;
+    try{ url = URL.createObjectURL(datei); }
+    catch(e){ fehler(new Error("Foto nicht lesbar")); return; }
+    const bild = new Image();
+    bild.onerror = () => { URL.revokeObjectURL(url); fehler(new Error("Foto nicht lesbar")); };
+    bild.onload = () => {
+      const f = Math.min(1, kante / Math.max(bild.width, bild.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(bild.width * f);
+      c.height = Math.round(bild.height * f);
+      c.getContext("2d").drawImage(bild, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      ok(c.toDataURL("image/jpeg", guete));
     };
-    leser.readAsDataURL(datei);
+    bild.src = url;
   });
 }
 
