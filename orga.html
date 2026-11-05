@@ -238,9 +238,9 @@ create policy "eigene loeschen" on signups for delete to anon
   .todo.kritisch{border-left:3px solid var(--berry);padding-left:9px;margin-left:-12px}
   .ohne{display:inline-block;background:var(--berry-soft);color:var(--berry);border-radius:9px;
     padding:1px 8px;font-size:.76rem;margin-left:6px;white-space:nowrap}
-  #loesch-dialog{position:fixed;inset:0;background:rgba(42,39,36,.55);z-index:60;
+  #loesch-dialog, #aufgabe-dialog{position:fixed;inset:0;background:rgba(42,39,36,.55);z-index:60;
     display:flex;align-items:center;justify-content:center;padding:16px}
-  #loesch-dialog  .dialog-karte{background:var(--sand);border-radius:8px;max-width:460px;width:100%;
+  #loesch-dialog .dialog-karte, #aufgabe-dialog .dialog-karte{background:var(--sand);border-radius:8px;max-width:460px;width:100%;
     max-height:88vh;overflow:auto;padding:20px 18px}
   .hidden{display:none}
   .pw-feld{position:relative}
@@ -301,6 +301,25 @@ create policy "eigene loeschen" on signups for delete to anon
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
         <button class="primary" id="ld-los" style="background:var(--berry)">Endgültig löschen</button>
         <button class="ghost" id="ld-abbruch">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="aufgabe-dialog" class="hidden" role="dialog" aria-labelledby="ad-titel">
+    <div class="dialog-karte">
+      <h2 id="ad-titel">Aufgabe entfernen</h2>
+      <p class="lead" id="ad-was" style="margin-top:6px"></p>
+      <p class="hint" id="ad-zusagen" style="color:var(--berry)"></p>
+      <div id="ad-ziel-box">
+        <label for="ad-ziel">In eine andere Veranstaltung verschieben</label>
+        <select id="ad-ziel"></select>
+        <p class="hint">Die Aufgabe kommt dort mit Erklärung, Platzzahl und Fotos dazu, wenn du
+          hier speicherst. Zusagen bleiben hier.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+        <button class="primary" id="ad-verschieben">Verschieben</button>
+        <button class="ghost danger" id="ad-loeschen">Nur löschen</button>
+        <button class="ghost" id="ad-abbruch">Abbrechen</button>
       </div>
     </div>
   </div>
@@ -935,6 +954,12 @@ let demoEvents = [{
   payment:{ adults:3, kids:5, link:"sammlerin@example.de",
     note:"Bitte bis zum 20. September überweisen:\nElterninitiative Beispiel e. V., IBAN DE00 0000 0000 0000 0000 00" }
 }];
+demoEvents.push({
+  id:"e-fs", slug:"familiensamstag", title:"Familiensamstag", template_id:null,
+  event_date:"", event_on:isoDatum(new Date(Date.now() + 21*864e5)), event_time:"10–14 Uhr",
+  place:"Kita", intro:"", retention_note:"", ask_people:false, archived:false,
+  categories:[], tasks:[{id:"zaun",label:"Zaun streichen",when:"",needed:4}], fields:[]
+});
 let demoPlanning = { "e-alt": {
   checklist:[{id:"c1",label:"Kaffeemaschine leihen",who:"Nina",due:"2 Wochen vorher",done:true}],
   review:{ guests:82, expected:64, notes:"Kuchen war um 16 Uhr weg, Großeltern kamen zu zweit statt einzeln.",
@@ -987,6 +1012,11 @@ const db = {
   async listEvents(){
     if(!live) return demoEvents.map(e=>({...e}));
     return req("events?select=*&order=created_at.desc", { headers: head() });
+  },
+  // Nur die Aufgaben einer Veranstaltung setzen, etwa beim Verschieben einer Aufgabe
+  async setTasks(id, tasks){
+    if(!live){ const e = demoEvents.find(x=>x.id===id); if(e) e.tasks = tasks; return; }
+    await req("events?id=eq."+id, { method:"PATCH", headers:head(), body: JSON.stringify({ tasks }) });
   },
   async listTemplates(){
     if(!live) return demoTemplates.map(t=>({...t}));
@@ -2054,8 +2084,11 @@ function wireTools(d){
   d.querySelector(".drop").onclick = () => {
     const box = d.parentNode;
     if(!box) return;
+    if(box.id === "tasks" && !d._gefragt){ aufgabeEntfernen(d); return; }
+    d._gefragt = false;
     const stelle = [...box.children].indexOf(d);
-    const name = (d.querySelector("input[type=text]") || {}).value || "Zeile";
+    const name = ((d.querySelector("input[type=text]") || {}).value || "Zeile") +
+      (d._nach && verschoben.includes(d) ? " (nach " + d._nach.title + ")" : "");
     d.remove();
     refreshTools(box);
     if(box.id === "cats" && current) renderReview();
@@ -2792,6 +2825,7 @@ $("e-intern").addEventListener("change", internAnzeigen);
 
 async function openEditor(ev, opts){
   opts = opts || {};
+  verschoben = [];
   current = ev ? {...ev} : {
     title:"", slug:"", event_date:"", event_time:"", place:"", intro:"",
     retention_note:"",
@@ -3018,6 +3052,94 @@ $("e-on").addEventListener("change", () => {
 
 $("add-cat").onclick   = () => { $("cats").appendChild(catRow()); refreshTools($("cats")); };
 $("add-task").onclick  = () => { $("tasks").appendChild(taskRow()); refreshTools($("tasks")); };
+/* ---------- Aufgabe entfernen oder in eine andere Veranstaltung verschieben ---------- */
+// Etwa was am Familiensamstag liegen geblieben ist, zum nächsten. Verschoben wird erst beim
+// Speichern dieser Veranstaltung, damit nichts doppelt steht, wenn jemand ohne Speichern geht.
+let verschoben = [];     // Zeilen mit _nach = { id, title }
+function moeglicheZiele(){
+  return events.filter(e => e.id !== (current && current.id) && !e.archived && !vorbei(e))
+    .sort((a, b) =>
+      ((b.template_id && b.template_id === current.template_id) - (a.template_id && a.template_id === current.template_id)) ||
+      String(a.event_on || "9999").localeCompare(String(b.event_on || "9999")));
+}
+function aufgabeEntfernen(d){
+  const label = d.querySelector(".t-label").value.trim() || "Aufgabe";
+  const id = d.dataset.id;
+  const zusagen = id ? signups.filter(s => s.status !== "absage" && (s.tasks || []).includes(id)).length : 0;
+  const ziele = moeglicheZiele();
+  $("ad-was").textContent = "„" + label + "“ aus dieser Veranstaltung entfernen.";
+  $("ad-zusagen").textContent = zusagen
+    ? zusagen + (zusagen === 1 ? " Familie hat" : " Familien haben") + " schon zugesagt. Die Zusagen " +
+      "gehen nicht mit — sag ihnen Bescheid."
+    : "";
+  $("ad-zusagen").classList.toggle("hidden", !zusagen);
+  $("ad-ziel").innerHTML = ziele.map(e => '<option value="' + esc(e.id) + '">' + esc(e.title) +
+    (e.event_on ? " (" + new Date(e.event_on + "T12:00:00").toLocaleDateString("de-DE") + ")" : "") +
+    '</option>').join("");
+  $("ad-ziel-box").classList.toggle("hidden", !ziele.length);
+  $("ad-verschieben").classList.toggle("hidden", !ziele.length);
+  const zu = () => $("aufgabe-dialog").classList.add("hidden");
+  $("ad-abbruch").onclick = zu;
+  $("ad-loeschen").onclick = () => { zu(); d._nach = null; d._gefragt = true; d.querySelector(".drop").click(); };
+  $("ad-verschieben").onclick = () => {
+    const ziel = ziele.find(e => e.id === $("ad-ziel").value);
+    if(!ziel) return;
+    zu();
+    d._nach = { id:ziel.id, title:ziel.title };
+    if(!verschoben.includes(d)) verschoben.push(d);
+    d._gefragt = true;
+    d.querySelector(".drop").click();
+    msg($("edit-msg"), "„" + label + "“ geht beim Speichern nach " + ziel.title + ".");
+  };
+  $("aufgabe-dialog").classList.remove("hidden");
+  $("ad-abbruch").focus();
+}
+$("aufgabe-dialog").addEventListener("click", ev => {
+  if(ev.target.id === "aufgabe-dialog") $("aufgabe-dialog").classList.add("hidden");
+});
+document.addEventListener("keydown", ev => {
+  if(ev.key === "Escape") $("aufgabe-dialog").classList.add("hidden");
+});
+// Nach dem Speichern: Aufgaben in ihre Zielveranstaltung eintragen. Zeilen, die per
+// Rückgängig zurückgeholt wurden, hängen wieder im Editor und bleiben hier.
+// Fotos ziehen mit um. task_images kennt kein Ändern, also erst am Ziel anlegen, dann
+// hier löschen: Bricht etwas ab, ist kein Foto verloren. Gespeicherte Fotos frisch aus der
+// Datenbank (nur so stimmen die Kennungen), dazu die noch nicht hochgeladenen der Zeile.
+async function fotosUmziehen(d, altId, zielEvent, zielId){
+  const weg = new Set(d._weg || []);
+  const alt = current.id && altId
+    ? (await db.images(current.id)).filter(b => b.task_id === altId && !weg.has(b.id)) : [];
+  for(const b of alt) await db.addImage(zielEvent, zielId, b.data);
+  for(const data of (d._neu || [])) await db.addImage(zielEvent, zielId, data);
+  for(const b of alt) await db.delImage(b.id);
+  for(const id of weg) await db.delImage(id);
+  const anzahl = alt.length + (d._neu || []).length;
+  d._alt = []; d._neu = []; d._weg = [];
+  return anzahl;
+}
+async function verschiebenAnwenden(){
+  const fertig = [];
+  for(const d of verschoben.filter(x => !x.isConnected && x._nach)){
+    const ziel = events.find(e => e.id === d._nach.id);
+    const [t] = readTasks({ children:[d] });
+    if(!ziel || !t) continue;
+    const tasks = (ziel.tasks || []).slice();
+    let zielId = (tasks.find(x => x.label.trim().toLowerCase() === t.label.toLowerCase()) || {}).id;
+    if(!zielId){
+      zielId = t.id;
+      let i = 2;
+      while(tasks.some(x => x.id === zielId)) zielId = t.id + "-" + (i++);
+      tasks.push({ ...t, id:zielId });
+      await db.setTasks(ziel.id, tasks);
+      ziel.tasks = tasks;
+    }
+    const fotos = await fotosUmziehen(d, t.id, ziel.id, zielId);
+    fertig.push("„" + t.label + "“ nach " + ziel.title + (fotos ? " mit " + fotos + (fotos === 1 ? " Foto" : " Fotos") : ""));
+  }
+  verschoben = verschoben.filter(x => x.isConnected);
+  return fertig;
+}
+
 /* ---------- Gemeldete Aufgaben ---------- */
 let uebernommen = [];    // ids, deren Status beim Speichern gesetzt wird
 
@@ -3349,6 +3471,9 @@ $("save").onclick = async () => {
       try{ await db.proposalStatus(vid, "uebernommen", null); }catch(e){}
     }
     uebernommen = [];
+    let gewandert = [], nichtGewandert = "";
+    try{ gewandert = await verschiebenAnwenden(); }
+    catch(e){ nichtGewandert = " Verschieben hat nicht geklappt: " + e.message + ". Nochmal speichern."; }
 
     // Fotos nachziehen
     for(const d of [...$("tasks").children]){
@@ -3375,6 +3500,7 @@ $("save").onclick = async () => {
         : "Link: " + publicLink(current.slug)) +
       (gesperrt && !nurOrga(ev) && !ev.archived ? " Die Anmeldung ist noch gesperrt — setz den Haken bei Anmeldung freigegeben, " +
         "wenn die Eltern loslegen sollen." : "") +
+      (gewandert.length ? " Verschoben: " + gewandert.join(", ") + "." : "") + nichtGewandert +
       " Der Editor bleibt offen, Fertig bringt dich zurück zur Übersicht.");
   }catch(err){ msg($("edit-msg"), err.message, true); dirty = true; }
   finally{ $("save").disabled = false; }
