@@ -313,8 +313,8 @@ create policy "eigene loeschen" on signups for delete to anon
       <div id="ad-ziel-box">
         <label for="ad-ziel">In eine andere Veranstaltung verschieben</label>
         <select id="ad-ziel"></select>
-        <p class="hint">Die Aufgabe kommt dort mit Erklärung und Platzzahl dazu, wenn du hier
-          speicherst. Zusagen und Fotos bleiben hier.</p>
+        <p class="hint">Die Aufgabe kommt dort mit Erklärung, Platzzahl und Fotos dazu, wenn du
+          hier speicherst. Zusagen bleiben hier.</p>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
         <button class="primary" id="ad-verschieben">Verschieben</button>
@@ -3046,6 +3046,21 @@ document.addEventListener("keydown", ev => {
 });
 // Nach dem Speichern: Aufgaben in ihre Zielveranstaltung eintragen. Zeilen, die per
 // Rückgängig zurückgeholt wurden, hängen wieder im Editor und bleiben hier.
+// Fotos ziehen mit um. task_images kennt kein Ändern, also erst am Ziel anlegen, dann
+// hier löschen: Bricht etwas ab, ist kein Foto verloren. Gespeicherte Fotos frisch aus der
+// Datenbank (nur so stimmen die Kennungen), dazu die noch nicht hochgeladenen der Zeile.
+async function fotosUmziehen(d, altId, zielEvent, zielId){
+  const weg = new Set(d._weg || []);
+  const alt = current.id && altId
+    ? (await db.images(current.id)).filter(b => b.task_id === altId && !weg.has(b.id)) : [];
+  for(const b of alt) await db.addImage(zielEvent, zielId, b.data);
+  for(const data of (d._neu || [])) await db.addImage(zielEvent, zielId, data);
+  for(const b of alt) await db.delImage(b.id);
+  for(const id of weg) await db.delImage(id);
+  const anzahl = alt.length + (d._neu || []).length;
+  d._alt = []; d._neu = []; d._weg = [];
+  return anzahl;
+}
 async function verschiebenAnwenden(){
   const fertig = [];
   for(const d of verschoben.filter(x => !x.isConnected && x._nach)){
@@ -3053,14 +3068,17 @@ async function verschiebenAnwenden(){
     const [t] = readTasks({ children:[d] });
     if(!ziel || !t) continue;
     const tasks = (ziel.tasks || []).slice();
-    if(!tasks.some(x => x.label.trim().toLowerCase() === t.label.toLowerCase())){
-      let id = t.id, i = 2;
-      while(tasks.some(x => x.id === id)) id = t.id + "-" + (i++);
-      tasks.push({ ...t, id });
+    let zielId = (tasks.find(x => x.label.trim().toLowerCase() === t.label.toLowerCase()) || {}).id;
+    if(!zielId){
+      zielId = t.id;
+      let i = 2;
+      while(tasks.some(x => x.id === zielId)) zielId = t.id + "-" + (i++);
+      tasks.push({ ...t, id:zielId });
       await db.setTasks(ziel.id, tasks);
       ziel.tasks = tasks;
     }
-    fertig.push("„" + t.label + "“ nach " + ziel.title);
+    const fotos = await fotosUmziehen(d, t.id, ziel.id, zielId);
+    fertig.push("„" + t.label + "“ nach " + ziel.title + (fotos ? " mit " + fotos + (fotos === 1 ? " Foto" : " Fotos") : ""));
   }
   verschoben = verschoben.filter(x => x.isConnected);
   return fertig;

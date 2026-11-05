@@ -502,7 +502,7 @@ Typischer Fall: Was am Familiensamstag liegen geblieben ist, soll zum nächsten.
 
 | Knopf | Was er tut |
 | --- | --- |
-| „Verschieben“ | Die Aufgabe geht in die unter „In eine andere Veranstaltung verschieben“ gewählte Veranstaltung, mit Wann, Platzzahl und Erklärung. Zur Wahl stehen Veranstaltungen, die nicht archiviert und nicht vorbei sind; die aus derselben Vorlage zuerst. |
+| „Verschieben“ | Die Aufgabe geht in die unter „In eine andere Veranstaltung verschieben“ gewählte Veranstaltung, mit Wann, Platzzahl, Erklärung und Fotos. Zur Wahl stehen Veranstaltungen, die nicht archiviert und nicht vorbei sind; die aus derselben Vorlage zuerst. |
 | „Nur löschen“ | Wie bisher: Die Aufgabe ist weg. |
 | „Abbrechen“ | Nichts passiert. |
 
@@ -511,9 +511,13 @@ Verschoben wird erst, wenn du die Veranstaltung speicherst. Die Meldung nennt da
 es war. „Rückgängig“ unter der Liste holt die Aufgabe zurück und hebt das Verschieben auf.
 Gibt es am Ziel schon eine Aufgabe mit demselben Namen, kommt keine zweite dazu.
 
+Die Fotos der Aufgabe ziehen mit um, auch solche, die du gerade erst ausgewählt hast. Die Meldung
+nennt sie: „„Zaun streichen“ nach Familiensamstag mit 2 Fotos“. Gibt es am Ziel schon eine
+gleichnamige Aufgabe, hängen die Fotos dort an.
+
 Haben schon Familien zugesagt, steht im Dialog etwa „2 Familien haben schon zugesagt“. Ihre
-Zusagen gehen nicht mit, auch die Fotos der Aufgabe bleiben hier. Sag den Familien Bescheid,
-damit sie sich beim nächsten Termin neu eintragen.
+Zusagen gehen nicht mit. Sag den Familien Bescheid, damit sie sich beim nächsten Termin neu
+eintragen.
 
 Wie die Eltern Aufgaben übernehmen, hängt vom Haken „Aufgaben werden vor Ort verteilt“ ab:
 

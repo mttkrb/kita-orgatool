@@ -111,3 +111,36 @@ test("In Vorlagen wird ohne Rückfrage entfernt", async () => {
     assert.ok($("aufgabe-dialog").classList.contains("hidden"));
   }finally{ s.schliessen(); }
 });
+
+test("Fotos ziehen mit um: erst am Ziel anlegen, dann hier löschen", async () => {
+  const { s, w, $ } = await editor("e-neu");
+  try{
+    // Demo speichert keine Fotos; die Schnittstelle wird hier mitgeschrieben
+    w.eval(`
+      window.protokoll = [];
+      db.images = async id => id === "e-neu"
+        ? [{ id:"b1", task_id:"aufbau", data:"data:image/jpeg;base64,AA" },
+           { id:"b2", task_id:"aufbau", data:"data:image/jpeg;base64,BB" },
+           { id:"b3", task_id:"anderes", data:"data:image/jpeg;base64,CC" }] : [];
+      db.addImage = async (ev, task, data) => { protokoll.push(["neu", ev, task, data]); };
+      db.delImage = async id => { protokoll.push(["weg", id]); };
+    `);
+    const d = zeile(w, "Aufbau");
+    d._neu.push("data:image/jpeg;base64,DD");   // gerade ausgewählt, noch nicht hochgeladen
+    d._weg.push("b2");                            // zum Löschen vorgemerkt
+    d.querySelector(".drop").click();
+    $("ad-ziel").value = "e-fs";
+    $("ad-verschieben").click();
+    $("save").click();
+    await warte(() => /Verschoben/.test($("edit-msg").textContent), "Meldung");
+    assert.match($("edit-msg").textContent, /nach Familiensamstag mit 2 Fotos/);
+    const p = JSON.parse(w.eval("JSON.stringify(protokoll)"));
+    assert.deepEqual(p, [
+      ["neu", "e-fs", "aufbau", "data:image/jpeg;base64,AA"],
+      ["neu", "e-fs", "aufbau", "data:image/jpeg;base64,DD"],
+      ["weg", "b1"],
+      ["weg", "b2"]
+    ], "erst anlegen, dann löschen; vorgemerkte nicht mitnehmen; fremde Aufgabe unberührt");
+    assert.deepEqual(s.fehler, []);
+  }finally{ s.schliessen(); }
+});
