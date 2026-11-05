@@ -202,6 +202,13 @@ create policy "eigene loeschen" on signups for delete to anon
   th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
   th{font-weight:600;color:var(--ink-soft);font-size:.8rem}
   .totals{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 0;font-size:.9rem}
+  #kasse h3{margin:0 0 8px;font-size:1.05rem}
+  #kasse table{width:100%;border-collapse:collapse;font-size:.9rem}
+  #kasse th, #kasse td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+  #kasse th:first-child, #kasse td:first-child{text-align:left;white-space:normal}
+  #kasse th{font-weight:600;color:var(--ink-soft);font-size:.8rem}
+  #kasse tr.saldo td{border-bottom:0;font-weight:700}
+  #kasse .minus{color:var(--berry)}
   .totals b{font-family:'Fraunces',serif;font-size:1.15rem;display:block}
 
   .msg{border-left:3px solid var(--moss);background:var(--paper);padding:10px 12px;font-size:.9rem;margin:14px 0}
@@ -398,6 +405,8 @@ create policy "eigene loeschen" on signups for delete to anon
     <button class="linkish" id="back-1">← Zurück zur Übersicht</button>
     <h2 style="margin-top:12px" id="edit-title">Neue Veranstaltung</h2>
     <p class="lead" id="edit-sub">Alles hier steuert, was die Gäste auf der Anmeldeseite sehen.</p>
+
+    <div id="kasse" class="card hidden"></div>
 
     <div id="history"></div>
 
@@ -652,7 +661,6 @@ create policy "eigene loeschen" on signups for delete to anon
         <p class="hint" id="r-a-stand"></p>
       </div>
       <div id="review-cats" style="margin-top:12px"></div>
-      <div id="r-geld" class="hidden" style="margin-top:12px"></div>
       <label for="r-notes">Was war gut, was fehlte?</label>
       <textarea id="r-notes" placeholder="Kuchen war um 16 Uhr weg. Nächstes Mal mehr herzhaft, Punsch blieb übrig."></textarea>
     </fieldset>
@@ -2342,25 +2350,66 @@ function einnahmenJetzt(){
   const ev = collectEvent();
   return Math.round(signups.reduce((a,s)=>a + kosten(ev, s).summe, 0)*100)/100;
 }
+// Kassensturz oben im Editor: Einnahmen Soll (was die Anmeldungen kosten) gegen Ist
+// (Zahlungseingang), Ausgaben Plan (Preise der Einkaufsliste) gegen Ist (Belege), je mit
+// Delta. Nach der Löschfrist gelten die festgehaltenen Werte aus dem Rückblick.
+let kasseZahlungen = [];
+async function ladeKasse(){
+  kasseZahlungen = [];
+  if(current && current.id && signups.length){
+    try{ kasseZahlungen = await db.payments(signups.map(s=>s.id)); }catch(e){}
+  }
+  renderGeld();
+}
+const rund = x => Math.round(x*100)/100;
+function kassenWerte(){
+  const geld = ((planning || {}).review || {}).geld || {};
+  const feld = id => { const v = $(id).value.trim(); return v === "" ? null : +v; };
+  const archiv = archivModus();
+  const einSoll = archiv ? feld("r-a-ein") : einnahmenJetzt();
+  const einIst = archiv ? feld("r-a-bez")
+    : signups.length ? rund(kasseZahlungen.filter(z=>signups.some(s=>s.id === z.signup_id))
+        .reduce((a,z)=>a + (+z.amount || 0), 0))
+    : geld.bezahlt ?? null;
+  const liste = rund(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0));
+  const ausPlan = liste || (archiv ? feld("r-a-aus") : null) || null;
+  const mitBetrag = belege.filter(r=>r.amount != null);
+  const ausIst = mitBetrag.length ? rund(mitBetrag.reduce((a,r)=>a + (+r.amount || 0), 0)) : null;
+  return { einSoll, einIst, ausPlan, ausIst, ohneBetrag: belege.length - mitBetrag.length };
+}
 function renderGeld(){
-  const box = $("r-geld");
+  const box = $("kasse");
   if(!box || !current) return;
-  if(archivModus()){ box.classList.add("hidden"); return; }
-  const ein = einnahmenJetzt();
-  const aus = Math.round(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0)*100)/100;
-  if(!ein && !aus){ box.classList.add("hidden"); return; }
+  const k = kassenWerte();
+  if(![k.einSoll, k.einIst, k.ausPlan, k.ausIst].some(v => v)){ box.classList.add("hidden"); return; }
+  const zahl = v => v == null ? "–" : v < 0 ? "−" + euro(-v) : euro(v);
+  const delta = (ist, plan, gutWennMehr) => {
+    if(ist == null || plan == null) return "–";
+    const d = rund(ist - plan);
+    if(!d) return "±0";
+    const schlecht = gutWennMehr ? d < 0 : d > 0;
+    return '<span' + (schlecht ? ' class="minus"' : "") + '>' + (d > 0 ? "+" : "−") + euro(Math.abs(d)) + '</span>';
+  };
+  const saldo = (e, a) => (e == null && a == null) ? null : rund((e || 0) - (a || 0));
+  const sPlan = saldo(k.einSoll, k.ausPlan), sIst = saldo(k.einIst, k.ausIst);
   box.classList.remove("hidden");
-  box.innerHTML = '<label style="margin-top:0">Geld</label><div class="totals" style="margin-top:0">' +
-    '<div><b>' + euro(ein || 0) + '</b>Einnahmen laut Anmeldungen</div>' +
-    '<div><b>' + euro(aus) + '</b>Ausgaben laut Einkaufsliste</div>' +
-    '<div><b' + ((ein||0) - aus < 0 ? ' style="color:var(--berry)"' : "") + '>' + euro((ein||0) - aus) +
-    '</b>Saldo</div></div>' +
-    '<p class="hint">Einnahmen sind, was die Anmeldungen kosten — nicht, was schon bezahlt ist.</p>';
+  box.innerHTML = '<h3>Kassensturz</h3><table>' +
+    '<tr><th></th><th>geplant</th><th>tatsächlich</th><th>Delta</th></tr>' +
+    '<tr><td>Einnahmen</td><td>' + zahl(k.einSoll) + '</td><td>' + zahl(k.einIst) + '</td><td>' +
+      delta(k.einIst, k.einSoll, true) + '</td></tr>' +
+    '<tr><td>Ausgaben</td><td>' + zahl(k.ausPlan) + '</td><td>' + zahl(k.ausIst) + '</td><td>' +
+      delta(k.ausIst, k.ausPlan, false) + '</td></tr>' +
+    '<tr class="saldo"><td>Saldo</td><td' + (sPlan < 0 ? ' class="minus"' : "") + '>' + zahl(sPlan) + '</td><td' +
+      (sIst < 0 ? ' class="minus"' : "") + '>' + zahl(sIst) + '</td><td>' + delta(sIst, sPlan, true) + '</td></tr>' +
+    '</table><p class="hint" style="margin:8px 0 0">Geplant: Einnahmen, was die Anmeldungen kosten; ' +
+    'Ausgaben laut Preisen der Einkaufsliste. Tatsächlich: eingetragene Zahlungen und Belege.' +
+    (k.ohneBetrag ? " " + k.ohneBetrag + (k.ohneBetrag === 1 ? " Beleg hat" : " Belege haben") +
+      " noch keinen Betrag und fehlen in der Summe." : "") + '</p>';
 }
 $("einkauf").addEventListener("input", renderKaufSumme);
 $("einkauf").addEventListener("change", renderKaufSumme);
 $("view-edit").addEventListener("input", ev => {
-  if(ev.target.closest("#fields") || /^e-(p-|g\d)/.test(ev.target.id || "")) renderGeld();
+  if(ev.target.closest("#fields") || /^(e-(p-|g\d)|r-a-(ein|bez|aus)$)/.test(ev.target.id || "")) renderGeld();
 });
 
 /* ---------- Belege: Fotos vom Kassenbon, nur fürs Orgateam, gelöscht mit der Frist ---------- */
@@ -2405,6 +2454,7 @@ function renderBelege(){
     };
     box.appendChild(d);
   });
+  renderGeld();
   const summe = Math.round(belege.reduce((a,r)=>a + (+r.amount || 0), 0)*100)/100;
   const liste = Math.round(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0)*100)/100;
   $("belege-summe").textContent = belege.length
@@ -2830,7 +2880,7 @@ async function openEditor(ev, opts){
   renderKaufSumme();
   renderFeedback();
   msg($("edit-msg"), ""); msg($("beleg-msg"), "");
-  belege = []; renderBelege(); ladeBelege();
+  belege = []; renderBelege(); ladeBelege(); ladeKasse();
   clearDirty();
   show("edit");
   renderHistory(current);
