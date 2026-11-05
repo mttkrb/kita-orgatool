@@ -204,10 +204,12 @@ create policy "eigene loeschen" on signups for delete to anon
   .totals{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 0;font-size:.9rem}
   #kasse h3{margin:0 0 8px;font-size:1.05rem}
   #kasse table{width:100%;border-collapse:collapse;font-size:.9rem}
-  #kasse th, #kasse td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
-  #kasse th:first-child, #kasse td:first-child{text-align:left;white-space:normal}
-  #kasse th{font-weight:600;color:var(--ink-soft);font-size:.8rem}
-  #kasse tr.saldo td{border-bottom:0;font-weight:700}
+  #kasse th, #kasse td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:bottom}
+  #kasse th{font-weight:600;width:28%}
+  #kasse td small{display:block;color:var(--ink-soft);font-size:.76rem}
+  #kasse td b{font-weight:600;white-space:nowrap}
+  #kasse .stand{margin:10px 0 0;font-size:1rem}
+  #kasse .stand span{color:var(--ink-soft);font-size:.8rem}
   #kasse .minus{color:var(--berry)}
   .totals b{font-family:'Fraunces',serif;font-size:1.15rem;display:block}
 
@@ -2408,6 +2410,11 @@ async function ladeKasse(){
   renderGeld();
 }
 const rund = x => Math.round(x*100)/100;
+// Summe der Belege mit Betrag; null, solange es keinen gibt
+function belegSumme(){
+  const mit = belege.filter(r=>r.amount != null);
+  return mit.length ? rund(mit.reduce((a,r)=>a + (+r.amount || 0), 0)) : null;
+}
 function kassenWerte(){
   const geld = ((planning || {}).review || {}).geld || {};
   const feld = id => { const v = $(id).value.trim(); return v === "" ? null : +v; };
@@ -2417,40 +2424,35 @@ function kassenWerte(){
     : signups.length ? rund(kasseZahlungen.filter(z=>signups.some(s=>s.id === z.signup_id))
         .reduce((a,z)=>a + (+z.amount || 0), 0))
     : geld.bezahlt ?? null;
-  const liste = rund(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0));
-  const ausPlan = liste || (archiv ? feld("r-a-aus") : null) || null;
-  const mitBetrag = belege.filter(r=>r.amount != null);
-  const ausIst = mitBetrag.length ? rund(mitBetrag.reduce((a,r)=>a + (+r.amount || 0), 0)) : null;
-  return { einSoll, einIst, ausPlan, ausIst, ohneBetrag: belege.length - mitBetrag.length };
+  // Ausgaben sind die Belege. Geplante Preise in der Einkaufsliste gibt es selten; sie
+  // stehen nur als Hinweis darunter. Im Archiv ohne Belege gilt der festgehaltene Wert.
+  const aus = belegSumme() ?? (archiv ? feld("r-a-aus") : null);
+  const liste = rund(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0)) || null;
+  return { einSoll, einIst, aus, liste, ohneBetrag: belege.filter(r=>r.amount == null).length };
 }
 function renderGeld(){
   const box = $("kasse");
   if(!box || !current) return;
   const k = kassenWerte();
-  if(![k.einSoll, k.einIst, k.ausPlan, k.ausIst].some(v => v)){ box.classList.add("hidden"); return; }
+  if(![k.einSoll, k.einIst, k.aus].some(v => v) && !k.ohneBetrag){ box.classList.add("hidden"); return; }
   const zahl = v => v == null ? "–" : v < 0 ? "−" + euro(-v) : euro(v);
-  const delta = (ist, plan, gutWennMehr) => {
-    if(ist == null || plan == null) return "–";
-    const d = rund(ist - plan);
-    if(!d) return "±0";
-    const schlecht = gutWennMehr ? d < 0 : d > 0;
-    return '<span' + (schlecht ? ' class="minus"' : "") + '>' + (d > 0 ? "+" : "−") + euro(Math.abs(d)) + '</span>';
-  };
-  const saldo = (e, a) => (e == null && a == null) ? null : rund((e || 0) - (a || 0));
-  const sPlan = saldo(k.einSoll, k.ausPlan), sIst = saldo(k.einIst, k.ausIst);
+  const zelle = (was, wert, rot) => '<td><small>' + was + '</small><b' + (rot ? ' class="minus"' : "") + '>' +
+    wert + '</b></td>';
+  const offen = k.einSoll == null ? null : rund(k.einSoll - (k.einIst || 0));
+  const stand = k.einIst == null && k.aus == null ? null : rund((k.einIst || 0) - (k.aus || 0));
   box.classList.remove("hidden");
   box.innerHTML = '<h3>Kassensturz</h3><table>' +
-    '<tr><th></th><th>geplant</th><th>tatsächlich</th><th>Delta</th></tr>' +
-    '<tr><td>Einnahmen</td><td>' + zahl(k.einSoll) + '</td><td>' + zahl(k.einIst) + '</td><td>' +
-      delta(k.einIst, k.einSoll, true) + '</td></tr>' +
-    '<tr><td>Ausgaben</td><td>' + zahl(k.ausPlan) + '</td><td>' + zahl(k.ausIst) + '</td><td>' +
-      delta(k.ausIst, k.ausPlan, false) + '</td></tr>' +
-    '<tr class="saldo"><td>Saldo</td><td' + (sPlan < 0 ? ' class="minus"' : "") + '>' + zahl(sPlan) + '</td><td' +
-      (sIst < 0 ? ' class="minus"' : "") + '>' + zahl(sIst) + '</td><td>' + delta(sIst, sPlan, true) + '</td></tr>' +
-    '</table><p class="hint" style="margin:8px 0 0">Geplant: Einnahmen, was die Anmeldungen kosten; ' +
-    'Ausgaben laut Preisen der Einkaufsliste. Tatsächlich: eingetragene Zahlungen und Belege.' +
+    '<tr><th>Einnahmen</th>' + zelle("geplant", zahl(k.einSoll)) + zelle("bezahlt", zahl(k.einIst)) +
+      (offen != null && offen < 0 ? zelle("zu viel", zahl(-offen)) : zelle("offen", zahl(offen), offen > 0)) + '</tr>' +
+    '<tr><th>Ausgaben</th>' + zelle("laut Belegen", zahl(k.aus)) + '<td></td><td></td></tr>' +
+    '</table>' +
+    '<p class="stand">Kassenstand: <b' + (stand < 0 ? ' class="minus"' : "") + '>' + zahl(stand) + '</b>' +
+    ' <span>bezahlt minus Ausgaben</span></p>' +
+    '<p class="hint" style="margin:6px 0 0">Geplant ist, was die Anmeldungen kosten. Ausgaben sind die ' +
+    'Belege unter der Einkaufsliste.' +
     (k.ohneBetrag ? " " + k.ohneBetrag + (k.ohneBetrag === 1 ? " Beleg hat" : " Belege haben") +
-      " noch keinen Betrag und fehlen in der Summe." : "") + '</p>';
+      " noch keinen Betrag und fehlen in der Summe." : "") +
+    (k.liste ? " Die Einkaufsliste plant " + euro(k.liste) + "." : "") + '</p>';
 }
 $("einkauf").addEventListener("input", renderKaufSumme);
 $("einkauf").addEventListener("change", renderKaufSumme);
@@ -3465,10 +3467,11 @@ function collectPlanning(){
       erwachsene: zahl("r-a-erw"), kinder: zahl("r-a-kinder"), aufgaben, gepflegt: heute() };
     review.expected = (review.zahlen.erwachsene || 0) + (review.zahlen.kinder || 0);
     review.geld = { ...(alt.geld || {}), einnahmen: geld("r-a-ein"), bezahlt: geld("r-a-bez"),
-      ausgaben: geld("r-a-aus") ?? (ausgabenListe || null) };
+      ausgaben: geld("r-a-aus") ?? belegSumme() ?? (ausgabenListe || null) };
   } else {
     review.expected = +$("r-expected").value || 0;
-    review.geld = { ...(alt.geld || {}), einnahmen: einnahmenJetzt(), ausgaben: ausgabenListe };
+    // Festgehalten werden die tatsächlichen Ausgaben laut Belegen, sonst die Einkaufsliste
+    review.geld = { ...(alt.geld || {}), einnahmen: einnahmenJetzt(), ausgaben: belegSumme() ?? ausgabenListe };
   }
   return {
     shopping: readKauf($("einkauf")),

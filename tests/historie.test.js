@@ -63,7 +63,7 @@ test("Nach der Löschfrist: festgehaltene Zahlen bleiben, Bearbeiten ändert nur
     assert.match($("r-a-stand").textContent, /1\.11\.2025/);
     // Kassensturz zeigt die festgehaltenen Werte statt der gelöschten Anmeldungen
     assert.ok(sichtbar($("kasse")));
-    assert.match($("kasse").textContent, /Einnahmen100,00\s€90,00\s€−10,00\s€/);
+    assert.match($("kasse").textContent.replace(/\s/g, " "), /Einnahmengeplant100,00 €bezahlt90,00 €offen10,00 €/);
     setze(w, $("r-a-kinder"), "12");
     const p = w.eval("collectPlanning()");
     assert.equal(p.review.zahlen.kinder, 12);
