@@ -639,7 +639,7 @@ Offene Punkte mit Vorlauf erscheinen zwei Wochen vor ihrer Fälligkeit im Reiter
 | „Preis (€)“ | Ausgabe für diesen Posten, etwa „12,90“ |
 
 Unter der Liste steht die Summe: „Ausgaben: 44,90 €, davon schon gekauft 32,00 €“. Die Summe
-ist im [Kassensturz](#kassensturz) die geplante Ausgabe.
+steht im [Kassensturz](#kassensturz) nur als Hinweis; gerechnet wird mit den Belegen.
 
 | Knopf | Was er tut |
 | --- | --- |
@@ -682,7 +682,7 @@ aufs Bild zeigt es groß und lesbar, „Schließen“, Esc oder ein Tipp daneben
 
 Unter der Liste steht „2 Belege, zusammen 41,37 €“. Weicht das von den Preisen der
 Einkaufsliste ab, folgt „— Einkaufsliste sagt 44,90 €“. Im [Kassensturz](#kassensturz) sind
-die Belege die tatsächliche Ausgabe, die Einkaufsliste die geplante.
+die Belege die Ausgaben.
 
 Belege bleiben dauerhaft, wie die Fotos der Aufgaben, auch nach der Löschfrist und an
 archivierten Veranstaltungen. Beim nächsten Mal siehst du so an der alten Veranstaltung, wo
@@ -750,26 +750,27 @@ nachtragen und korrigieren.
 ### Kassensturz
 
 Sobald es Einnahmen oder Ausgaben gibt, steht ganz oben im Editor der Kasten „Kassensturz“. So
-siehst du beim Öffnen sofort, wie die Kasse steht:
+siehst du beim Öffnen sofort, wie die Kasse steht. Er hat zwei Zeilen:
 
-| | geplant | tatsächlich | Delta |
-| --- | --- | --- | --- |
-| Einnahmen | was die Anmeldungen kosten (Soll) | eingetragene Zahlungen (Haken „bezahlt“ bei den Anmeldungen) | tatsächlich minus geplant; negativ heißt: noch offen |
-| Ausgaben | Summe der Preise in der Einkaufsliste | Summe der Belege mit Betrag | tatsächlich minus geplant; positiv heißt: mehr ausgegeben als geplant |
-| Saldo | Einnahmen minus Ausgaben, geplant | Einnahmen minus Ausgaben, tatsächlich | Unterschied der beiden |
+| Zeile | Werte |
+| --- | --- |
+| Einnahmen | „geplant“: was die Anmeldungen kosten. „bezahlt“: eingetragene Zahlungen (Haken „bezahlt“ bei den Anmeldungen). „offen“: geplant minus bezahlt, rot, solange etwas offen ist; „zu viel“, wenn mehr bezahlt wurde. |
+| Ausgaben | „laut Belegen“: Summe der [Belege](#belege) mit Betrag |
 
-Rot steht, was ungünstig ist: offene Einnahmen, mehr Ausgaben als geplant, ein negativer
-Saldo. Ein „–“ heißt: dazu gibt es noch nichts, etwa noch keinen Beleg. Haben Belege keinen
-Betrag, steht darunter „1 Beleg hat noch keinen Betrag und fehlt in der Summe.“
+Darunter steht der **Kassenstand**: bezahlt minus Ausgaben, rot, wenn er negativ ist. Ein „–“
+heißt: dazu gibt es noch nichts, etwa noch keinen Beleg. Haben Belege keinen Betrag, steht
+darunter „1 Beleg hat noch keinen Betrag und fehlt in der Summe.“ Dann den Beleg löschen und
+mit Betrag neu anhängen. Gibt es Preise in der Einkaufsliste, steht als Hinweis „Die
+Einkaufsliste plant 44,90 €.“; gerechnet wird mit den Belegen.
 
-Der Kasten rechnet sofort mit, wenn du Preise in der Einkaufsliste änderst oder Belege
-anhängst. Zahlungen hakst du in der Ansicht der Anmeldungen ab; beim nächsten Öffnen des
-Editors stehen sie im Kassensturz.
+Der Kasten rechnet sofort mit, wenn du Belege anhängst. Zahlungen hakst du in der Ansicht der
+Anmeldungen ab; beim nächsten Öffnen des Editors stehen sie im Kassensturz.
 
-Beim Speichern werden Einnahmen und Ausgaben im Rückblick festgehalten. Andere festgehaltene
-Werte, etwa wie viel schon bezahlt ist, bleiben dabei stehen. Im Archivmodus rechnet der
-Kassensturz mit den Feldern „Einnahmen“, „davon bezahlt“ und „Ausgaben“ des Rückblicks und mit
-den Belegen, die dauerhaft bleiben.
+Beim Speichern werden Einnahmen und Ausgaben im Rückblick festgehalten, als Ausgaben die
+Summe der Belege (gibt es keine, die Preise der Einkaufsliste). Andere festgehaltene Werte,
+etwa wie viel schon bezahlt ist, bleiben dabei stehen. Im Archivmodus rechnet der Kassensturz
+mit den Feldern „Einnahmen“ und „davon bezahlt“ des Rückblicks und mit den Belegen, die
+dauerhaft bleiben; ohne Belege mit dem Feld „Ausgaben“.
 
 ### Zielwerte aus dem Rückblick
 
