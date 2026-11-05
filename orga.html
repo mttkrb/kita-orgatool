@@ -202,6 +202,13 @@ create policy "eigene loeschen" on signups for delete to anon
   th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
   th{font-weight:600;color:var(--ink-soft);font-size:.8rem}
   .totals{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 0;font-size:.9rem}
+  #kasse h3{margin:0 0 8px;font-size:1.05rem}
+  #kasse table{width:100%;border-collapse:collapse;font-size:.9rem}
+  #kasse th, #kasse td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+  #kasse th:first-child, #kasse td:first-child{text-align:left;white-space:normal}
+  #kasse th{font-weight:600;color:var(--ink-soft);font-size:.8rem}
+  #kasse tr.saldo td{border-bottom:0;font-weight:700}
+  #kasse .minus{color:var(--berry)}
   .totals b{font-family:'Fraunces',serif;font-size:1.15rem;display:block}
 
   .msg{border-left:3px solid var(--moss);background:var(--paper);padding:10px 12px;font-size:.9rem;margin:14px 0}
@@ -238,9 +245,9 @@ create policy "eigene loeschen" on signups for delete to anon
   .todo.kritisch{border-left:3px solid var(--berry);padding-left:9px;margin-left:-12px}
   .ohne{display:inline-block;background:var(--berry-soft);color:var(--berry);border-radius:9px;
     padding:1px 8px;font-size:.76rem;margin-left:6px;white-space:nowrap}
-  #loesch-dialog{position:fixed;inset:0;background:rgba(42,39,36,.55);z-index:60;
+  #loesch-dialog, #aufgabe-dialog{position:fixed;inset:0;background:rgba(42,39,36,.55);z-index:60;
     display:flex;align-items:center;justify-content:center;padding:16px}
-  #loesch-dialog  .dialog-karte{background:var(--sand);border-radius:8px;max-width:460px;width:100%;
+  #loesch-dialog .dialog-karte, #aufgabe-dialog .dialog-karte{background:var(--sand);border-radius:8px;max-width:460px;width:100%;
     max-height:88vh;overflow:auto;padding:20px 18px}
   .hidden{display:none}
   .pw-feld{position:relative}
@@ -301,6 +308,25 @@ create policy "eigene loeschen" on signups for delete to anon
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
         <button class="primary" id="ld-los" style="background:var(--berry)">Endgültig löschen</button>
         <button class="ghost" id="ld-abbruch">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="aufgabe-dialog" class="hidden" role="dialog" aria-labelledby="ad-titel">
+    <div class="dialog-karte">
+      <h2 id="ad-titel">Aufgabe entfernen</h2>
+      <p class="lead" id="ad-was" style="margin-top:6px"></p>
+      <p class="hint" id="ad-zusagen" style="color:var(--berry)"></p>
+      <div id="ad-ziel-box">
+        <label for="ad-ziel">In eine andere Veranstaltung verschieben</label>
+        <select id="ad-ziel"></select>
+        <p class="hint">Die Aufgabe kommt dort mit Erklärung, Platzzahl und Fotos dazu, wenn du
+          hier speicherst. Zusagen bleiben hier.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+        <button class="primary" id="ad-verschieben">Verschieben</button>
+        <button class="ghost danger" id="ad-loeschen">Nur löschen</button>
+        <button class="ghost" id="ad-abbruch">Abbrechen</button>
       </div>
     </div>
   </div>
@@ -398,6 +424,8 @@ create policy "eigene loeschen" on signups for delete to anon
     <button class="linkish" id="back-1">← Zurück zur Übersicht</button>
     <h2 style="margin-top:12px" id="edit-title">Neue Veranstaltung</h2>
     <p class="lead" id="edit-sub">Alles hier steuert, was die Gäste auf der Anmeldeseite sehen.</p>
+
+    <div id="kasse" class="card hidden"></div>
 
     <div id="history"></div>
 
@@ -652,7 +680,6 @@ create policy "eigene loeschen" on signups for delete to anon
         <p class="hint" id="r-a-stand"></p>
       </div>
       <div id="review-cats" style="margin-top:12px"></div>
-      <div id="r-geld" class="hidden" style="margin-top:12px"></div>
       <label for="r-notes">Was war gut, was fehlte?</label>
       <textarea id="r-notes" placeholder="Kuchen war um 16 Uhr weg. Nächstes Mal mehr herzhaft, Punsch blieb übrig."></textarea>
     </fieldset>
@@ -935,6 +962,12 @@ let demoEvents = [{
   payment:{ adults:3, kids:5, link:"sammlerin@example.de",
     note:"Bitte bis zum 20. September überweisen:\nElterninitiative Beispiel e. V., IBAN DE00 0000 0000 0000 0000 00" }
 }];
+demoEvents.push({
+  id:"e-fs", slug:"familiensamstag", title:"Familiensamstag", template_id:null,
+  event_date:"", event_on:isoDatum(new Date(Date.now() + 21*864e5)), event_time:"10–14 Uhr",
+  place:"Kita", intro:"", retention_note:"", ask_people:false, archived:false,
+  categories:[], tasks:[{id:"zaun",label:"Zaun streichen",when:"",needed:4}], fields:[]
+});
 let demoPlanning = { "e-alt": {
   checklist:[{id:"c1",label:"Kaffeemaschine leihen",who:"Nina",due:"2 Wochen vorher",done:true}],
   review:{ guests:82, expected:64, notes:"Kuchen war um 16 Uhr weg, Großeltern kamen zu zweit statt einzeln.",
@@ -988,6 +1021,11 @@ const db = {
   async listEvents(){
     if(!live) return demoEvents.map(e=>({...e}));
     return req("events?select=*&order=created_at.desc", { headers: head() });
+  },
+  // Nur die Aufgaben einer Veranstaltung setzen, etwa beim Verschieben einer Aufgabe
+  async setTasks(id, tasks){
+    if(!live){ const e = demoEvents.find(x=>x.id===id); if(e) e.tasks = tasks; return; }
+    await req("events?id=eq."+id, { method:"PATCH", headers:head(), body: JSON.stringify({ tasks }) });
   },
   async listTemplates(){
     if(!live) return demoTemplates.map(t=>({...t}));
@@ -2072,8 +2110,11 @@ function wireTools(d){
   d.querySelector(".drop").onclick = () => {
     const box = d.parentNode;
     if(!box) return;
+    if(box.id === "tasks" && !d._gefragt){ aufgabeEntfernen(d); return; }
+    d._gefragt = false;
     const stelle = [...box.children].indexOf(d);
-    const name = (d.querySelector("input[type=text]") || {}).value || "Zeile";
+    const name = ((d.querySelector("input[type=text]") || {}).value || "Zeile") +
+      (d._nach && verschoben.includes(d) ? " (nach " + d._nach.title + ")" : "");
     d.remove();
     refreshTools(box);
     if(box.id === "cats" && current) renderReview();
@@ -2360,25 +2401,66 @@ function einnahmenJetzt(){
   const ev = collectEvent();
   return Math.round(signups.reduce((a,s)=>a + kosten(ev, s).summe, 0)*100)/100;
 }
+// Kassensturz oben im Editor: Einnahmen Soll (was die Anmeldungen kosten) gegen Ist
+// (Zahlungseingang), Ausgaben Plan (Preise der Einkaufsliste) gegen Ist (Belege), je mit
+// Delta. Nach der Löschfrist gelten die festgehaltenen Werte aus dem Rückblick.
+let kasseZahlungen = [];
+async function ladeKasse(){
+  kasseZahlungen = [];
+  if(current && current.id && signups.length){
+    try{ kasseZahlungen = await db.payments(signups.map(s=>s.id)); }catch(e){}
+  }
+  renderGeld();
+}
+const rund = x => Math.round(x*100)/100;
+function kassenWerte(){
+  const geld = ((planning || {}).review || {}).geld || {};
+  const feld = id => { const v = $(id).value.trim(); return v === "" ? null : +v; };
+  const archiv = archivModus();
+  const einSoll = archiv ? feld("r-a-ein") : einnahmenJetzt();
+  const einIst = archiv ? feld("r-a-bez")
+    : signups.length ? rund(kasseZahlungen.filter(z=>signups.some(s=>s.id === z.signup_id))
+        .reduce((a,z)=>a + (+z.amount || 0), 0))
+    : geld.bezahlt ?? null;
+  const liste = rund(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0));
+  const ausPlan = liste || (archiv ? feld("r-a-aus") : null) || null;
+  const mitBetrag = belege.filter(r=>r.amount != null);
+  const ausIst = mitBetrag.length ? rund(mitBetrag.reduce((a,r)=>a + (+r.amount || 0), 0)) : null;
+  return { einSoll, einIst, ausPlan, ausIst, ohneBetrag: belege.length - mitBetrag.length };
+}
 function renderGeld(){
-  const box = $("r-geld");
+  const box = $("kasse");
   if(!box || !current) return;
-  if(archivModus()){ box.classList.add("hidden"); return; }
-  const ein = einnahmenJetzt();
-  const aus = Math.round(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0)*100)/100;
-  if(!ein && !aus){ box.classList.add("hidden"); return; }
+  const k = kassenWerte();
+  if(![k.einSoll, k.einIst, k.ausPlan, k.ausIst].some(v => v)){ box.classList.add("hidden"); return; }
+  const zahl = v => v == null ? "–" : v < 0 ? "−" + euro(-v) : euro(v);
+  const delta = (ist, plan, gutWennMehr) => {
+    if(ist == null || plan == null) return "–";
+    const d = rund(ist - plan);
+    if(!d) return "±0";
+    const schlecht = gutWennMehr ? d < 0 : d > 0;
+    return '<span' + (schlecht ? ' class="minus"' : "") + '>' + (d > 0 ? "+" : "−") + euro(Math.abs(d)) + '</span>';
+  };
+  const saldo = (e, a) => (e == null && a == null) ? null : rund((e || 0) - (a || 0));
+  const sPlan = saldo(k.einSoll, k.ausPlan), sIst = saldo(k.einIst, k.ausIst);
   box.classList.remove("hidden");
-  box.innerHTML = '<label style="margin-top:0">Geld</label><div class="totals" style="margin-top:0">' +
-    '<div><b>' + euro(ein || 0) + '</b>Einnahmen laut Anmeldungen</div>' +
-    '<div><b>' + euro(aus) + '</b>Ausgaben laut Einkaufsliste</div>' +
-    '<div><b' + ((ein||0) - aus < 0 ? ' style="color:var(--berry)"' : "") + '>' + euro((ein||0) - aus) +
-    '</b>Saldo</div></div>' +
-    '<p class="hint">Einnahmen sind, was die Anmeldungen kosten — nicht, was schon bezahlt ist.</p>';
+  box.innerHTML = '<h3>Kassensturz</h3><table>' +
+    '<tr><th></th><th>geplant</th><th>tatsächlich</th><th>Delta</th></tr>' +
+    '<tr><td>Einnahmen</td><td>' + zahl(k.einSoll) + '</td><td>' + zahl(k.einIst) + '</td><td>' +
+      delta(k.einIst, k.einSoll, true) + '</td></tr>' +
+    '<tr><td>Ausgaben</td><td>' + zahl(k.ausPlan) + '</td><td>' + zahl(k.ausIst) + '</td><td>' +
+      delta(k.ausIst, k.ausPlan, false) + '</td></tr>' +
+    '<tr class="saldo"><td>Saldo</td><td' + (sPlan < 0 ? ' class="minus"' : "") + '>' + zahl(sPlan) + '</td><td' +
+      (sIst < 0 ? ' class="minus"' : "") + '>' + zahl(sIst) + '</td><td>' + delta(sIst, sPlan, true) + '</td></tr>' +
+    '</table><p class="hint" style="margin:8px 0 0">Geplant: Einnahmen, was die Anmeldungen kosten; ' +
+    'Ausgaben laut Preisen der Einkaufsliste. Tatsächlich: eingetragene Zahlungen und Belege.' +
+    (k.ohneBetrag ? " " + k.ohneBetrag + (k.ohneBetrag === 1 ? " Beleg hat" : " Belege haben") +
+      " noch keinen Betrag und fehlen in der Summe." : "") + '</p>';
 }
 $("einkauf").addEventListener("input", renderKaufSumme);
 $("einkauf").addEventListener("change", renderKaufSumme);
 $("view-edit").addEventListener("input", ev => {
-  if(ev.target.closest("#fields") || /^e-(p-|g\d)/.test(ev.target.id || "")) renderGeld();
+  if(ev.target.closest("#fields") || /^(e-(p-|g\d)|r-a-(ein|bez|aus)$)/.test(ev.target.id || "")) renderGeld();
 });
 
 /* ---------- Belege: Fotos vom Kassenbon, nur fürs Orgateam, gelöscht mit der Frist ---------- */
@@ -2423,6 +2505,7 @@ function renderBelege(){
     };
     box.appendChild(d);
   });
+  renderGeld();
   const summe = Math.round(belege.reduce((a,r)=>a + (+r.amount || 0), 0)*100)/100;
   const liste = Math.round(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0)*100)/100;
   $("belege-summe").textContent = belege.length
@@ -2754,6 +2837,7 @@ $("e-intern").addEventListener("change", internAnzeigen);
 
 async function openEditor(ev, opts){
   opts = opts || {};
+  verschoben = [];
   current = ev ? {...ev} : {
     title:"", slug:"", event_date:"", event_time:"", place:"", intro:"",
     retention_note:"",
@@ -2849,7 +2933,7 @@ async function openEditor(ev, opts){
   renderKaufSumme();
   renderFeedback();
   msg($("edit-msg"), ""); msg($("beleg-msg"), "");
-  belege = []; renderBelege(); ladeBelege();
+  belege = []; renderBelege(); ladeBelege(); ladeKasse();
   clearDirty();
   show("edit");
   renderHistory(current);
@@ -2981,6 +3065,94 @@ $("e-on").addEventListener("change", () => {
 
 $("add-cat").onclick   = () => { $("cats").appendChild(catRow()); refreshTools($("cats")); };
 $("add-task").onclick  = () => { $("tasks").appendChild(taskRow()); refreshTools($("tasks")); };
+/* ---------- Aufgabe entfernen oder in eine andere Veranstaltung verschieben ---------- */
+// Etwa was am Familiensamstag liegen geblieben ist, zum nächsten. Verschoben wird erst beim
+// Speichern dieser Veranstaltung, damit nichts doppelt steht, wenn jemand ohne Speichern geht.
+let verschoben = [];     // Zeilen mit _nach = { id, title }
+function moeglicheZiele(){
+  return events.filter(e => e.id !== (current && current.id) && !e.archived && !vorbei(e))
+    .sort((a, b) =>
+      ((b.template_id && b.template_id === current.template_id) - (a.template_id && a.template_id === current.template_id)) ||
+      String(a.event_on || "9999").localeCompare(String(b.event_on || "9999")));
+}
+function aufgabeEntfernen(d){
+  const label = d.querySelector(".t-label").value.trim() || "Aufgabe";
+  const id = d.dataset.id;
+  const zusagen = id ? signups.filter(s => s.status !== "absage" && (s.tasks || []).includes(id)).length : 0;
+  const ziele = moeglicheZiele();
+  $("ad-was").textContent = "„" + label + "“ aus dieser Veranstaltung entfernen.";
+  $("ad-zusagen").textContent = zusagen
+    ? zusagen + (zusagen === 1 ? " Familie hat" : " Familien haben") + " schon zugesagt. Die Zusagen " +
+      "gehen nicht mit — sag ihnen Bescheid."
+    : "";
+  $("ad-zusagen").classList.toggle("hidden", !zusagen);
+  $("ad-ziel").innerHTML = ziele.map(e => '<option value="' + esc(e.id) + '">' + esc(e.title) +
+    (e.event_on ? " (" + new Date(e.event_on + "T12:00:00").toLocaleDateString("de-DE") + ")" : "") +
+    '</option>').join("");
+  $("ad-ziel-box").classList.toggle("hidden", !ziele.length);
+  $("ad-verschieben").classList.toggle("hidden", !ziele.length);
+  const zu = () => $("aufgabe-dialog").classList.add("hidden");
+  $("ad-abbruch").onclick = zu;
+  $("ad-loeschen").onclick = () => { zu(); d._nach = null; d._gefragt = true; d.querySelector(".drop").click(); };
+  $("ad-verschieben").onclick = () => {
+    const ziel = ziele.find(e => e.id === $("ad-ziel").value);
+    if(!ziel) return;
+    zu();
+    d._nach = { id:ziel.id, title:ziel.title };
+    if(!verschoben.includes(d)) verschoben.push(d);
+    d._gefragt = true;
+    d.querySelector(".drop").click();
+    msg($("edit-msg"), "„" + label + "“ geht beim Speichern nach " + ziel.title + ".");
+  };
+  $("aufgabe-dialog").classList.remove("hidden");
+  $("ad-abbruch").focus();
+}
+$("aufgabe-dialog").addEventListener("click", ev => {
+  if(ev.target.id === "aufgabe-dialog") $("aufgabe-dialog").classList.add("hidden");
+});
+document.addEventListener("keydown", ev => {
+  if(ev.key === "Escape") $("aufgabe-dialog").classList.add("hidden");
+});
+// Nach dem Speichern: Aufgaben in ihre Zielveranstaltung eintragen. Zeilen, die per
+// Rückgängig zurückgeholt wurden, hängen wieder im Editor und bleiben hier.
+// Fotos ziehen mit um. task_images kennt kein Ändern, also erst am Ziel anlegen, dann
+// hier löschen: Bricht etwas ab, ist kein Foto verloren. Gespeicherte Fotos frisch aus der
+// Datenbank (nur so stimmen die Kennungen), dazu die noch nicht hochgeladenen der Zeile.
+async function fotosUmziehen(d, altId, zielEvent, zielId){
+  const weg = new Set(d._weg || []);
+  const alt = current.id && altId
+    ? (await db.images(current.id)).filter(b => b.task_id === altId && !weg.has(b.id)) : [];
+  for(const b of alt) await db.addImage(zielEvent, zielId, b.data);
+  for(const data of (d._neu || [])) await db.addImage(zielEvent, zielId, data);
+  for(const b of alt) await db.delImage(b.id);
+  for(const id of weg) await db.delImage(id);
+  const anzahl = alt.length + (d._neu || []).length;
+  d._alt = []; d._neu = []; d._weg = [];
+  return anzahl;
+}
+async function verschiebenAnwenden(){
+  const fertig = [];
+  for(const d of verschoben.filter(x => !x.isConnected && x._nach)){
+    const ziel = events.find(e => e.id === d._nach.id);
+    const [t] = readTasks({ children:[d] });
+    if(!ziel || !t) continue;
+    const tasks = (ziel.tasks || []).slice();
+    let zielId = (tasks.find(x => x.label.trim().toLowerCase() === t.label.toLowerCase()) || {}).id;
+    if(!zielId){
+      zielId = t.id;
+      let i = 2;
+      while(tasks.some(x => x.id === zielId)) zielId = t.id + "-" + (i++);
+      tasks.push({ ...t, id:zielId });
+      await db.setTasks(ziel.id, tasks);
+      ziel.tasks = tasks;
+    }
+    const fotos = await fotosUmziehen(d, t.id, ziel.id, zielId);
+    fertig.push("„" + t.label + "“ nach " + ziel.title + (fotos ? " mit " + fotos + (fotos === 1 ? " Foto" : " Fotos") : ""));
+  }
+  verschoben = verschoben.filter(x => x.isConnected);
+  return fertig;
+}
+
 /* ---------- Gemeldete Aufgaben ---------- */
 let uebernommen = [];    // ids, deren Status beim Speichern gesetzt wird
 
@@ -3312,6 +3484,9 @@ $("save").onclick = async () => {
       try{ await db.proposalStatus(vid, "uebernommen", null); }catch(e){}
     }
     uebernommen = [];
+    let gewandert = [], nichtGewandert = "";
+    try{ gewandert = await verschiebenAnwenden(); }
+    catch(e){ nichtGewandert = " Verschieben hat nicht geklappt: " + e.message + ". Nochmal speichern."; }
 
     // Fotos nachziehen
     for(const d of [...$("tasks").children]){
@@ -3338,6 +3513,7 @@ $("save").onclick = async () => {
         : "Link: " + publicLink(current.slug)) +
       (gesperrt && !nurOrga(ev) && !ev.archived ? " Die Anmeldung ist noch gesperrt — setz den Haken bei Anmeldung freigegeben, " +
         "wenn die Eltern loslegen sollen." : "") +
+      (gewandert.length ? " Verschoben: " + gewandert.join(", ") + "." : "") + nichtGewandert +
       " Der Editor bleibt offen, Fertig bringt dich zurück zur Übersicht.");
   }catch(err){ msg($("edit-msg"), err.message, true); dirty = true; }
   finally{ $("save").disabled = false; }
