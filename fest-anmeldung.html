@@ -63,6 +63,9 @@
   .absenden{position:sticky;bottom:0;background:var(--paper);padding:12px 0 4px;
     margin-top:4px;border-top:1px solid var(--line)}
   .check .frei{color:var(--moss)}
+  .slot-kopf{margin:14px 0 2px}
+  .slot-kopf .details{margin-left:6px}
+  .check.slot{margin-left:16px}
   .check.off .frei{color:var(--ink-soft)}
   .check .dabei{display:block;color:var(--ink-soft);font-size:.83rem}
   .details{border:none;background:none;color:var(--moss);font-size:.83rem;padding:2px 0;
@@ -849,7 +852,7 @@ function renderTasks(){
         '<button type="button" class="weg" data-weg="'+esc(c.id)+'">entfernen</button></div>').join("");
       const frei = Math.max(0, t.needed - meine.length);
       return '<div class="task block'+(alleFertig?" fertig":"")+'">'+
-        '<strong class="t-name">'+esc(t.label)+'</strong>'+
+        '<strong class="t-name">'+esc(aufgabeName(t))+'</strong>'+
         (alleFertig ? ' <span class="task-free">erledigt</span>'
                     : (frei ? ' <span class="task-free">'+frei+' von '+t.needed+' noch frei</span>' : ""))+
         extra +
@@ -870,7 +873,31 @@ function renderTasks(){
 function renderTaskChecks(pre){
   pre = pre || [];
   const V = vis(EV);
-  $("task-checks").innerHTML = (EV.tasks||[]).map(t=>{
+  // Zeitfenster derselben Aufgabe stehen unter einer gemeinsamen Überschrift
+  $("task-checks").innerHTML = (EV.tasks||[]).map((t, i, alle)=>{
+    if(t.group){
+      const erstes = !i || alle[i-1].group !== t.group;
+      const free = t.needed - taskCount(t.id) + (pre.includes(t.id)?1:0);
+      const off = free<=0 && !pre.includes(t.id);
+      const wer = entries.filter(e=>(e.tasks||[]).includes(t.id)).map(e=>shortName(e.name));
+      const shots = BILDER.filter(b=>alle.some(x=>x.group === t.group && x.id === b.task_id));
+      const hatDetails = !!(t.info || shots.length);
+      return (erstes
+          ? '<p class="slot-kopf"><strong>'+esc(t.label)+'</strong> <span style="color:var(--ink-soft)">'+
+            '— ein oder mehrere Zeitfenster</span>'+
+            (hatDetails ? '<button type="button" class="details" data-info="g-'+esc(t.group)+'">Was ist zu tun?</button>' : "")+
+            '</p>'+
+            (hatDetails ? '<div class="aufgabe-info hidden" id="info-g-'+esc(t.group)+'">'+(t.info ? esc(t.info) : "")+
+              (shots.length ? '<div>'+shots.map(b=>'<img src="'+bildUrl(b.data)+'" alt="" loading="lazy">').join("")+'</div>' : "")+
+              '</div>' : "")
+          : "")+
+        '<div><label class="check slot'+(off?" off":"")+'">'+
+        '<input type="checkbox" value="'+esc(t.id)+'" '+(pre.includes(t.id)?"checked":"")+' '+(off?"disabled":"")+'>'+
+        '<span>'+esc(t.when || t.label)+
+        ' <span class="frei">'+(off ? "belegt" : free + " von " + t.needed + " frei")+'</span>'+
+        (V.taskNames && wer.length ? '<span class="dabei">dabei: '+esc(wer.join(", "))+'</span>' : "")+
+        '</span></label></div>';
+    }
     const free = t.needed - taskCount(t.id) + (pre.includes(t.id)?1:0);
     const off = free<=0 && !pre.includes(t.id);
     const wer = entries.filter(e=>(e.tasks||[]).includes(t.id)).map(e=>shortName(e.name));
