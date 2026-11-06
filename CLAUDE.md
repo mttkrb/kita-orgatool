@@ -75,7 +75,7 @@ Laden das DOM nicht an, außer über `DOMContentLoaded`. Seitentitel, die erst n
 Laden feststehen, über `titel(text)` setzen, nicht über `document.title`.
 Namen aus `common.js` (`live`, `$`, `esc`, `bildUrl`, `SIGNUP_COLS`, `anonHead`,
 `isoDatum`, `heute`, `fmtDate`, `vis`, `groups`, `verkleinern`, `EINSTELLUNG`,
-`kitaName`, `eigeneAdresse`, `farbe`, `titel`, `euro`, `preisZahl`, `bestellArtikel`, `bestellMax`, `bestellMenge`,
+`kitaName`, `eigeneAdresse`, `farbe`, `titel`, `euro`, `preisZahl`, `aufgabeName`, `bestellArtikel`, `bestellMax`, `bestellMenge`,
 `kostetEtwas`, `kosten`, `paypalName`, `paypalMail`, `paypalLink`, `zahlLink`, `zahlweg`, `textMitFormat`, `nurOrga`) in den Seiten nicht auf oberster Ebene
 neu deklarieren — das ergibt einen SyntaxError und die ganze Seite bleibt stehen.
 
@@ -84,7 +84,7 @@ erst beim Deployment eingetragen und nie committet.
 
 ## Datenmodell
 
-Dreizehn Tabellen. Veränderliche Strukturen liegen als JSON in Spalten, weil sich die
+Vierzehn Tabellen. Veränderliche Strukturen liegen als JSON in Spalten, weil sich die
 Felder je Veranstaltung unterscheiden.
 
 | Tabelle | Inhalt | Wer liest |
@@ -101,12 +101,18 @@ Felder je Veranstaltung unterscheiden.
 | `attendance` | Check-in: gekommen, gegangen, Stunden je Anmeldung, Kaskade mit `signups` | nur Orga |
 | `checkin_codes` | Code vom Aushang je Veranstaltung | nur Orga |
 | `receipts` | Belege zur Einkaufsliste: Foto vom Bon, Laden, Datum, Betrag, Posten (ab `migration-28.sql`) | nur Orga |
+| `fee_waivers` | Zahlung erlassen je Anmeldung, Kaskade mit `signups` (ab `migration-29.sql`) | nur Orga |
 | `orga_keys` | Orga-Passwort | niemand über die API |
 
 JSON-Strukturen: `categories`, `tasks`, `fields`, `checklist`, `shopping`, `review`,
 `people`, `visibility`, `payment` — Felder siehe Kommentare in `sql/` und der Code in `orga.html`.
 `planning.review.entscheidungen` hält `[{ id, thema, ergebnis, warum, datum }]`; die Historie
 („Aus den letzten Malen“) zeigt sie beim nächsten Mal aus derselben Vorlage.
+
+Zeitfenster: Eine Aufgabe in Schichten ist eine Reihe eigener Einträge in `tasks` mit gleichem
+`label`, eigener `id` und `when` und gemeinsamem `group` (Kennung der ursprünglichen Aufgabe).
+Zählen, Zusagen, Aufräumen und Rückblick laufen dadurch je Fenster ohne Sonderfall. In Listen
+heißen sie über `aufgabeName(t)` aus `common.js` „Grillen (10–11 Uhr)“.
 
 Kosten (ab `migration-22.sql`): `events.payment` und `templates.payment` halten
 `{ adults, kids, note, link }` — Preis je Person der beiden Gruppen, Zahlungshinweis und
@@ -131,6 +137,12 @@ selbst und zahlt vorher zurück. Absagen über das Formular bleiben möglich. Hi
 für Policies liegen im Schema `intern`, das die Schnittstelle nicht erreicht.
 `intern.anmeldung_betrag()` rechnet wie `kosten()` in `common.js` — wer eines ändert,
 ändert beide.
+
+Zahlung erlassen (ab `migration-29.sql`): Das Orgateam erlässt einer Anmeldung den Beitrag
+(Tabelle `fee_waivers`, nur Orga liest und schreibt). `orga.html` setzt dann
+`erlassen: true` an der Anmeldung, und `kosten()` gibt 0 zurück, wie
+`intern.anmeldung_betrag()`. Das Feld wird nie an `signups` geschickt. Die Anmeldeseite der
+Eltern kennt den Erlass nicht.
 
 ## Sicherheitsmodell
 

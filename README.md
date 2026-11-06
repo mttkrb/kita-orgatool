@@ -35,7 +35,7 @@ gemeinsamen Skript- und Stildateien, kein Build, kein Framework. Wer HTML lesen 
 - Rückblick mit Zahlen und Bewertung, die als Vorschlag ins nächste Mal einfließen
 - Preise je Person und Bestellartikel festlegen, erwartete Einnahmen und Bestellmengen sehen,
   Zahlungseingang je Anmeldung abhaken, offene Beträge und Differenzen nach Änderungen sehen,
-  Ausgaben in der Einkaufsliste erfassen, Kassenbons als Belege anhängen, Saldo im Rückblick
+  Ausgaben in der Einkaufsliste erfassen, Kassenbons als Belege anhängen, Kassensturz: Einnahmen geplant, bezahlt und offen, Ausgaben laut Belegen
 
 ## Die Seiten
 

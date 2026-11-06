@@ -6,7 +6,7 @@
 --
 --  Vergleicht Tabellen, Spalten, Policies, Funktionen und Rechte mit dem
 --  Projekt, aus dem die Vorlage stammt (nur Namen und Prüfsummen).
---  Erzeugt am 2026-10-19 11:24 mit einrichtung/vorlage-erzeugen.sh. Nicht von Hand ändern.
+--  Erzeugt am 2026-11-06 15:04 mit einrichtung/vorlage-erzeugen.sh. Nicht von Hand ändern.
 -- =====================================================================
 
 with soll(zeile) as (values
@@ -21,6 +21,8 @@ with soll(zeile) as (values
   ('constraint|events|events_pkey|795f8aa19bf8004d0e6d2e4a0dc930e3'),
   ('constraint|events|events_slug_key|d94b85ea8a98ec24f91c9ebedac31e6a'),
   ('constraint|events|events_template_id_fkey|4b642e39fe7ff8609d5a2d7f2c4633bb'),
+  ('constraint|fee_waivers|fee_waivers_pkey|bb2d9f516ed16aa3cde9bf4ac58421b2'),
+  ('constraint|fee_waivers|fee_waivers_signup_id_fkey|8c31f1baa0dbe7e688211e79bf5c5b0d'),
   ('constraint|feedback|feedback_event_id_fkey|9d87ad85a21f29ae5578906cd0536a94'),
   ('constraint|feedback|feedback_grenzen_chk|c44417ae416b80a963f8069ebfba15ec'),
   ('constraint|feedback|feedback_pkey|795f8aa19bf8004d0e6d2e4a0dc930e3'),
@@ -34,6 +36,9 @@ with soll(zeile) as (values
   ('constraint|proposals|proposals_grenzen_chk|4cb80ce44c747f38b65ffa3f834ca589'),
   ('constraint|proposals|proposals_image_chk|331c0e05415b7914d4b53369c0e3579e'),
   ('constraint|proposals|proposals_pkey|795f8aa19bf8004d0e6d2e4a0dc930e3'),
+  ('constraint|receipts|receipts_event_id_fkey|9d87ad85a21f29ae5578906cd0536a94'),
+  ('constraint|receipts|receipts_grenzen_chk|90cbce754efd2f50a32c51076b970cf7'),
+  ('constraint|receipts|receipts_pkey|795f8aa19bf8004d0e6d2e4a0dc930e3'),
   ('constraint|signups|signups_grenzen_chk|6a42ac02db276d802f369dc04771522e'),
   ('constraint|signups|signups_pkey|795f8aa19bf8004d0e6d2e4a0dc930e3'),
   ('constraint|task_claims|task_claims_event_id_fkey|9d87ad85a21f29ae5578906cd0536a94'),
@@ -52,21 +57,20 @@ with soll(zeile) as (values
   ('funktionsrecht|intern.hat_zahlung(uuid)|anon|EXECUTE'),
   ('funktionsrecht|is_orga()|PUBLIC|EXECUTE'),
   ('funktionsrecht|is_orga()|anon|EXECUTE'),
-  ('funktionsrecht|rls_auto_enable()|PUBLIC|EXECUTE'),
   ('funktion|anmeldungen_oeffentlich(text[])|17b13444ddb394a6726f7d107fa7d749'),
   ('funktion|checkin(uuid,text,text,boolean)|4a35deef2de50e27c80d8b6e1a7653da'),
   ('funktion|checkin_pruefen(uuid,text)|98716b4915514b6f36e416718da013b7'),
   ('funktion|checkin_status(uuid,text)|54b2536325e3c637b4842f1bc294c678'),
   ('funktion|daten_aufraeumen()|2a94e6b41fb8d7c1061814f5b163e3f7'),
-  ('funktion|intern.anmeldung_betrag(signups,events)|7e3bfa522e81dca8b48e5de8f039c1c3'),
+  ('funktion|intern.anmeldung_betrag(signups,events)|c98a583a2be12fe38a7176b534f1326e'),
   ('funktion|intern.hat_zahlung(uuid)|f84d29bfc8d31d5389ff3c7b487b1b8c'),
   ('funktion|intern.kurzname(text)|82cbd41994394d7db0241add4a07946f'),
   ('funktion|is_orga()|167ecb2e5952832adff7c58732c823f2'),
-  ('funktion|rls_auto_enable()|6998ea6b4c2480f5d2e34b5dcf3f8d36'),
   ('index|attendance|attendance_pkey|a85b45591315d36ba226af82f169f23a'),
   ('index|checkin_codes|checkin_codes_pkey|09cc31d5f240530f5277d913155feddc'),
   ('index|events|events_pkey|246140ed37b0df04b471c7497b018d6f'),
   ('index|events|events_slug_key|bb55e2a18ce7791402c382d3dfeceb50'),
+  ('index|fee_waivers|fee_waivers_pkey|08e2d39dec922a0ebc5bc4ab2b705da6'),
   ('index|feedback|feedback_event_idx|2665680be22810f8efc3e05f57a0c2b1'),
   ('index|feedback|feedback_pkey|d57fff3920fa0b3c6b6807bed50f1c6c'),
   ('index|orga_keys|orga_keys_pkey|7cef06b154e1308cd169cf67edecf4fd'),
@@ -74,6 +78,8 @@ with soll(zeile) as (values
   ('index|planning|planning_pkey|1f53ac1a1046ca99f6ac356ec23ba54e'),
   ('index|proposals|proposals_event_idx|bbd233bef7783a7f6440f424642182fc'),
   ('index|proposals|proposals_pkey|a56ebeee24096136d42032e2bdb767b1'),
+  ('index|receipts|receipts_event_idx|6416ace8d99d6ff17248e6905a4c666f'),
+  ('index|receipts|receipts_pkey|2465bd1d5b9abcc133ebde1e2a2e1d8a'),
   ('index|signups|signups_pkey|7cdc6cb4a46fece1780ee6bf28bf6808'),
   ('index|task_claims|task_claims_event_idx|ddcb702c21a8ef6381e7230a38f15dde'),
   ('index|task_claims|task_claims_pkey|fc1133fc1d759984f0523ce17ed4195d'),
@@ -86,6 +92,7 @@ with soll(zeile) as (values
   ('policy|events|events anlegen|PERMISSIVE|INSERT|anon|-|c8a0f3bb715a4f0bedea7100099941b2'),
   ('policy|events|events lesen|PERMISSIVE|SELECT|anon|b326b5062b2f0e69046810717534cb09|-'),
   ('policy|events|events loeschen|PERMISSIVE|DELETE|anon|c8a0f3bb715a4f0bedea7100099941b2|-'),
+  ('policy|fee_waivers|erlass orga|PERMISSIVE|ALL|anon|c8a0f3bb715a4f0bedea7100099941b2|c8a0f3bb715a4f0bedea7100099941b2'),
   ('policy|feedback|feedback geben|PERMISSIVE|INSERT|anon|-|b326b5062b2f0e69046810717534cb09'),
   ('policy|feedback|feedback lesen|PERMISSIVE|SELECT|anon|c8a0f3bb715a4f0bedea7100099941b2|-'),
   ('policy|feedback|feedback loeschen|PERMISSIVE|DELETE|anon|c8a0f3bb715a4f0bedea7100099941b2|-'),
@@ -95,6 +102,7 @@ with soll(zeile) as (values
   ('policy|proposals|vorschlaege lesen|PERMISSIVE|SELECT|anon|432b985ab15c40361ddbc6de9973919a|-'),
   ('policy|proposals|vorschlaege loeschen|PERMISSIVE|DELETE|anon|c8a0f3bb715a4f0bedea7100099941b2|-'),
   ('policy|proposals|vorschlag einreichen|PERMISSIVE|INSERT|anon|-|b326b5062b2f0e69046810717534cb09'),
+  ('policy|receipts|belege nur orga|PERMISSIVE|ALL|anon|c8a0f3bb715a4f0bedea7100099941b2|c8a0f3bb715a4f0bedea7100099941b2'),
   ('policy|signups|anmelden|PERMISSIVE|SELECT|anon|3d4bb3deed7a6003b3cfcfb44e1ad09d|-'),
   ('policy|signups|anmeldung neu|PERMISSIVE|INSERT|anon|-|b326b5062b2f0e69046810717534cb09'),
   ('policy|signups|eigene aendern|PERMISSIVE|UPDATE|anon|091e7a5790dcbacc9673464ef3e68833|-'),
@@ -139,6 +147,13 @@ with soll(zeile) as (values
   ('recht|events|service_role|REFERENCES'),
   ('recht|events|service_role|TRIGGER'),
   ('recht|events|service_role|TRUNCATE'),
+  ('recht|fee_waivers|anon|DELETE'),
+  ('recht|fee_waivers|anon|INSERT'),
+  ('recht|fee_waivers|anon|SELECT'),
+  ('recht|fee_waivers|service_role|MAINTAIN'),
+  ('recht|fee_waivers|service_role|REFERENCES'),
+  ('recht|fee_waivers|service_role|TRIGGER'),
+  ('recht|fee_waivers|service_role|TRUNCATE'),
   ('recht|feedback|anon|DELETE'),
   ('recht|feedback|anon|INSERT'),
   ('recht|feedback|anon|MAINTAIN'),
@@ -155,18 +170,6 @@ with soll(zeile) as (values
   ('recht|feedback|service_role|REFERENCES'),
   ('recht|feedback|service_role|TRIGGER'),
   ('recht|feedback|service_role|TRUNCATE'),
-  ('recht|orga_keys|anon|DELETE'),
-  ('recht|orga_keys|anon|INSERT'),
-  ('recht|orga_keys|anon|MAINTAIN'),
-  ('recht|orga_keys|anon|REFERENCES'),
-  ('recht|orga_keys|anon|SELECT'),
-  ('recht|orga_keys|anon|TRIGGER'),
-  ('recht|orga_keys|anon|TRUNCATE'),
-  ('recht|orga_keys|anon|UPDATE'),
-  ('recht|orga_keys|authenticated|MAINTAIN'),
-  ('recht|orga_keys|authenticated|REFERENCES'),
-  ('recht|orga_keys|authenticated|TRIGGER'),
-  ('recht|orga_keys|authenticated|TRUNCATE'),
   ('recht|orga_keys|service_role|MAINTAIN'),
   ('recht|orga_keys|service_role|REFERENCES'),
   ('recht|orga_keys|service_role|TRIGGER'),
@@ -211,6 +214,14 @@ with soll(zeile) as (values
   ('recht|proposals|service_role|REFERENCES'),
   ('recht|proposals|service_role|TRIGGER'),
   ('recht|proposals|service_role|TRUNCATE'),
+  ('recht|receipts|anon|DELETE'),
+  ('recht|receipts|anon|INSERT'),
+  ('recht|receipts|anon|SELECT'),
+  ('recht|receipts|anon|UPDATE'),
+  ('recht|receipts|service_role|MAINTAIN'),
+  ('recht|receipts|service_role|REFERENCES'),
+  ('recht|receipts|service_role|TRIGGER'),
+  ('recht|receipts|service_role|TRUNCATE'),
   ('recht|signups|anon|DELETE'),
   ('recht|signups|anon|INSERT'),
   ('recht|signups|anon|MAINTAIN'),
@@ -329,6 +340,8 @@ with soll(zeile) as (values
   ('spalte|events.template_id|uuid|notnull=false|-'),
   ('spalte|events.title|text|notnull=true|-'),
   ('spalte|events.visibility|jsonb|notnull=true|f3db357cf4f4a03883484fa3281a056c'),
+  ('spalte|fee_waivers.created_at|timestamp with time zone|notnull=true|75230039beb12ce952f24927f2bfa2f2'),
+  ('spalte|fee_waivers.signup_id|uuid|notnull=true|-'),
   ('spalte|feedback.better|text|notnull=false|-'),
   ('spalte|feedback.created_at|timestamp with time zone|notnull=true|75230039beb12ce952f24927f2bfa2f2'),
   ('spalte|feedback.event_id|uuid|notnull=true|-'),
@@ -356,6 +369,14 @@ with soll(zeile) as (values
   ('spalte|proposals.note|text|notnull=false|-'),
   ('spalte|proposals.status|text|notnull=true|388211735e59825b90f128cbd8028c1f'),
   ('spalte|proposals.title|text|notnull=true|-'),
+  ('spalte|receipts.amount|numeric(8,2)|notnull=false|-'),
+  ('spalte|receipts.bought_on|date|notnull=false|-'),
+  ('spalte|receipts.created_at|timestamp with time zone|notnull=true|75230039beb12ce952f24927f2bfa2f2'),
+  ('spalte|receipts.event_id|uuid|notnull=true|-'),
+  ('spalte|receipts.id|uuid|notnull=true|f3b72bb359a50b640590970a2ab8e514'),
+  ('spalte|receipts.image|text|notnull=true|-'),
+  ('spalte|receipts.item_id|text|notnull=false|-'),
+  ('spalte|receipts.shop|text|notnull=false|-'),
   ('spalte|signups.adults|integer|notnull=true|c4ca4238a0b923820dcc509a6f75849b'),
   ('spalte|signups.created_at|timestamp with time zone|notnull=true|75230039beb12ce952f24927f2bfa2f2'),
   ('spalte|signups.event|text|notnull=true|-'),
@@ -395,16 +416,18 @@ with soll(zeile) as (values
   ('tabelle|attendance|r|rls=true'),
   ('tabelle|checkin_codes|r|rls=true'),
   ('tabelle|events|r|rls=true'),
+  ('tabelle|fee_waivers|r|rls=true'),
   ('tabelle|feedback|r|rls=true'),
   ('tabelle|orga_keys|r|rls=true'),
   ('tabelle|payments|r|rls=true'),
   ('tabelle|planning|r|rls=true'),
   ('tabelle|proposals|r|rls=true'),
+  ('tabelle|receipts|r|rls=true'),
   ('tabelle|signups|r|rls=true'),
   ('tabelle|task_claims|r|rls=true'),
   ('tabelle|task_images|r|rls=true'),
   ('tabelle|templates|r|rls=true'))
-, ist(zeile) as (
+, ist_alles(zeile) as (
   with tab as (
     select c.oid, c.relname, c.relkind, c.relowner, c.relacl, c.relrowsecurity
     from pg_class c
@@ -497,6 +520,8 @@ with soll(zeile) as (values
     where coalesce(ro.rolname, 'PUBLIC') in (select name from rollen)
   ) z
   order by zeile
+), ist as (
+  select zeile from ist_alles where zeile !~ 'rls_auto_enable'
 ), fehlt as (
   select zeile from soll except select zeile from ist
 ), zuviel as (

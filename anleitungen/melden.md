@@ -76,7 +76,8 @@ Mögliche Meldungen beim Abschicken:
   Verkleinern ist das bei normalen Fotos immer erfüllt.
 - **Keine Bilder mit Kindern.** Übernimmt das Orgateam die Aufgabe, sehen das Foto am
   Tag alle Eltern in der Aufgabenliste.
-- Lässt sich eine Datei nicht lesen, erscheint „Bild konnte nicht gelesen werden.“
+- Lässt sich eine Datei nicht lesen, erscheint „Bild konnte nicht gelesen werden.“ Dann das
+  Foto noch einmal auswählen; liegt es nur in der Cloud, vorher einmal in der Galerie öffnen.
   Dann ein anderes Bild oder ein Bildschirmfoto davon nehmen.
 
 ## 5. Nach dem Abschicken

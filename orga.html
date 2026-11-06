@@ -143,7 +143,7 @@ create policy "eigene loeschen" on signups for delete to anon
   .tab.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:500}
 
   label{display:block;font-size:.88rem;font-weight:500;margin:12px 0 4px}
-  input[type=text],input[type=number],input[type=password],input[type=date],select,textarea{
+  input[type=text],input[type=number],input[type=password],input[type=date],input[type=time],select,textarea{
     width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:5px;
     background:#fff;font:inherit;font-size:16px;color:var(--ink)}
   textarea{min-height:60px;resize:vertical}
@@ -202,6 +202,15 @@ create policy "eigene loeschen" on signups for delete to anon
   th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
   th{font-weight:600;color:var(--ink-soft);font-size:.8rem}
   .totals{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 0;font-size:.9rem}
+  #kasse h3{margin:0 0 8px;font-size:1.05rem}
+  #kasse table{width:100%;border-collapse:collapse;font-size:.9rem}
+  #kasse th, #kasse td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:bottom}
+  #kasse th{font-weight:600;width:28%}
+  #kasse td small{display:block;color:var(--ink-soft);font-size:.76rem}
+  #kasse td b{font-weight:600;white-space:nowrap}
+  #kasse .stand{margin:10px 0 0;font-size:1rem}
+  #kasse .stand span{color:var(--ink-soft);font-size:.8rem}
+  #kasse .minus{color:var(--berry)}
   .totals b{font-family:'Fraunces',serif;font-size:1.15rem;display:block}
 
   .msg{border-left:3px solid var(--moss);background:var(--paper);padding:10px 12px;font-size:.9rem;margin:14px 0}
@@ -240,9 +249,9 @@ create policy "eigene loeschen" on signups for delete to anon
   .todo.kritisch{border-left:3px solid var(--berry);padding-left:9px;margin-left:-12px}
   .ohne{display:inline-block;background:var(--berry-soft);color:var(--berry);border-radius:9px;
     padding:1px 8px;font-size:.76rem;margin-left:6px;white-space:nowrap}
-  #loesch-dialog{position:fixed;inset:0;background:rgba(42,39,36,.55);z-index:60;
+  #loesch-dialog, #aufgabe-dialog{position:fixed;inset:0;background:rgba(42,39,36,.55);z-index:60;
     display:flex;align-items:center;justify-content:center;padding:16px}
-  #loesch-dialog  .dialog-karte{background:var(--sand);border-radius:8px;max-width:460px;width:100%;
+  #loesch-dialog .dialog-karte, #aufgabe-dialog .dialog-karte{background:var(--sand);border-radius:8px;max-width:460px;width:100%;
     max-height:88vh;overflow:auto;padding:20px 18px}
   .hidden{display:none}
   .pw-feld{position:relative}
@@ -303,6 +312,25 @@ create policy "eigene loeschen" on signups for delete to anon
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
         <button class="primary" id="ld-los" style="background:var(--berry)">Endgültig löschen</button>
         <button class="ghost" id="ld-abbruch">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="aufgabe-dialog" class="hidden" role="dialog" aria-labelledby="ad-titel">
+    <div class="dialog-karte">
+      <h2 id="ad-titel">Aufgabe entfernen</h2>
+      <p class="lead" id="ad-was" style="margin-top:6px"></p>
+      <p class="hint" id="ad-zusagen" style="color:var(--berry)"></p>
+      <div id="ad-ziel-box">
+        <label for="ad-ziel">In eine andere Veranstaltung verschieben</label>
+        <select id="ad-ziel"></select>
+        <p class="hint">Die Aufgabe kommt dort mit Erklärung, Platzzahl und Fotos dazu, wenn du
+          hier speicherst. Zusagen bleiben hier.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+        <button class="primary" id="ad-verschieben">Verschieben</button>
+        <button class="ghost danger" id="ad-loeschen">Nur löschen</button>
+        <button class="ghost" id="ad-abbruch">Abbrechen</button>
       </div>
     </div>
   </div>
@@ -400,6 +428,8 @@ create policy "eigene loeschen" on signups for delete to anon
     <button class="linkish" id="back-1">← Zurück zur Übersicht</button>
     <h2 style="margin-top:12px" id="edit-title">Neue Veranstaltung</h2>
     <p class="lead" id="edit-sub">Alles hier steuert, was die Gäste auf der Anmeldeseite sehen.</p>
+
+    <div id="kasse" class="card hidden"></div>
 
     <div id="history"></div>
 
@@ -612,13 +642,25 @@ create policy "eigene loeschen" on signups for delete to anon
           <div><label for="b-betrag">Betrag (€)</label>
             <input type="text" id="b-betrag" inputmode="decimal" placeholder="12,90"></div>
         </div>
-        <label for="b-posten">Zu welchem Posten? <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
-        <select id="b-posten"></select>
+        <div id="b-posten-box" class="hidden">
+          <label for="b-posten">Zu welchem Posten? <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+          <select id="b-posten"></select>
+        </div>
         <label for="b-foto">Foto</label>
         <input type="file" id="b-foto" accept="image/*">
         <div style="margin-top:8px"><button type="button" class="ghost" id="b-dazu">Beleg hinzufügen</button></div>
         <p class="hint" id="beleg-msg"></p>
       </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Spenden</legend>
+      <p class="hint" style="margin:0 0 10px">Nur fürs Orgateam. Geld, das für diese Veranstaltung
+        gespendet wurde und eingegangen ist, etwa aus der Spendendose. Ohne Namen von Privatpersonen.
+        Zählt im Kassensturz als Einnahme und bleibt im Rückblick.</p>
+      <div id="spenden"></div>
+      <p class="hint" id="spenden-summe" style="margin:0 0 8px"></p>
+      <button type="button" class="ghost" id="add-spende">+ Spende</button>
     </fieldset>
 
     <fieldset class="oeffentlich">
@@ -663,7 +705,6 @@ create policy "eigene loeschen" on signups for delete to anon
         <p class="hint" id="r-a-stand"></p>
       </div>
       <div id="review-cats" style="margin-top:12px"></div>
-      <div id="r-geld" class="hidden" style="margin-top:12px"></div>
       <label for="r-notes">Was war gut, was fehlte?</label>
       <textarea id="r-notes" placeholder="Kuchen war um 16 Uhr weg. Nächstes Mal mehr herzhaft, Punsch blieb übrig."></textarea>
     </fieldset>
@@ -801,6 +842,8 @@ create policy "eigene loeschen" on signups for delete to anon
       <div id="m-orders"></div>
       <label for="m-note">Anmerkung</label>
       <textarea id="m-note"></textarea>
+      <label class="check hidden" id="m-erlass-box" style="margin-top:10px"><input type="checkbox" id="m-erlass">
+        <span>Zahlung erlassen, etwa für Erzieherinnen und Erzieher</span></label>
       <div id="m-msg" class="msg hidden"></div>
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
         <button class="primary" id="m-save">Eintragen</button>
@@ -946,6 +989,12 @@ let demoEvents = [{
   payment:{ adults:3, kids:5, link:"sammlerin@example.de",
     note:"Bitte bis zum 20. September überweisen:\nElterninitiative Beispiel e. V., IBAN DE00 0000 0000 0000 0000 00" }
 }];
+demoEvents.push({
+  id:"e-fs", slug:"familiensamstag", title:"Familiensamstag", template_id:null,
+  event_date:"", event_on:isoDatum(new Date(Date.now() + 21*864e5)), event_time:"10–14 Uhr",
+  place:"Kita", intro:"", retention_note:"", ask_people:false, archived:false,
+  categories:[], tasks:[{id:"zaun",label:"Zaun streichen",when:"",needed:4}], fields:[]
+});
 let demoPlanning = { "e-alt": {
   checklist:[{id:"c1",label:"Kaffeemaschine leihen",who:"Nina",due:"2 Wochen vorher",done:true}],
   review:{ guests:82, expected:64, notes:"Kuchen war um 16 Uhr weg, Großeltern kamen zu zweit statt einzeln.",
@@ -967,6 +1016,7 @@ let demoReceipts = [];
 let demoAttendance = [{ signup_id:"s2", checked_in_at:new Date(Date.now()-3*36e5).toISOString(),
   checked_out_at:new Date(Date.now()-36e5*0.5).toISOString(), hours:null, source:"qr" }];
 let demoPayments = [{ signup_id:"s2", amount:18.5, paid_at:new Date().toISOString() }];
+let demoWaivers = [];
 demoPlanning["e-neu"] = { checklist:[], review:{}, shopping:[
   {id:"k1",menge:"40",einheit:"Stück",artikel:"Bratwürste",wer:"Nina",preis:32,done:true},
   {id:"k2",menge:"2",einheit:"Pk",artikel:"Grillkohle",wer:"",preis:12.9,done:false}
@@ -1000,6 +1050,11 @@ const db = {
   async listEvents(){
     if(!live) return demoEvents.map(e=>({...e}));
     return req("events?select=*&order=created_at.desc", { headers: head() });
+  },
+  // Nur die Aufgaben einer Veranstaltung setzen, etwa beim Verschieben einer Aufgabe
+  async setTasks(id, tasks){
+    if(!live){ const e = demoEvents.find(x=>x.id===id); if(e) e.tasks = tasks; return; }
+    await req("events?id=eq."+id, { method:"PATCH", headers:head(), body: JSON.stringify({ tasks }) });
   },
   async listTemplates(){
     if(!live) return demoTemplates.map(t=>({...t}));
@@ -1104,6 +1159,22 @@ const db = {
     return req("payments", { method:"POST",
       headers: head({ Prefer:"resolution=merge-duplicates" }),
       body: JSON.stringify({ signup_id:signupId, amount, paid_at:new Date().toISOString() }) });
+  },
+  // Zahlung erlassen (fee_waivers), nur das Orgateam setzt es
+  async waivers(ids){
+    if(!live) return demoWaivers.filter(id=>ids.includes(id)).map(signup_id=>({ signup_id }));
+    if(!ids.length) return [];
+    return req("fee_waivers?select=signup_id&signup_id=in.(" + ids.join(",") + ")", { headers: head() });
+  },
+  async setWaived(signupId, an){
+    if(!live){
+      demoWaivers = demoWaivers.filter(x=>x !== signupId);
+      if(an) demoWaivers.push(signupId);
+      return;
+    }
+    if(!an) return req("fee_waivers?signup_id=eq." + signupId, { method:"DELETE", headers: head() });
+    return req("fee_waivers", { method:"POST", headers: head({ Prefer:"resolution=ignore-duplicates" }),
+      body: JSON.stringify({ signup_id:signupId }) });
   },
   async getPlanning(eventId){
     if(!eventId) return {checklist:[], review:{}, shopping:[]};
@@ -1210,13 +1281,17 @@ const db = {
         const i = demoSignups.findIndex(s=>s.id===id);
         if(i>-1) demoSignups[i] = {...demoSignups[i], ...data};
       } else {
-        demoSignups.push({...data, id:"m"+Date.now(), event:slug, created_at:new Date().toISOString()});
+        id = "m"+Date.now();
+        demoSignups.push({...data, id, event:slug, created_at:new Date().toISOString()});
       }
-      return;
+      return id;
     }
     const body = JSON.stringify(id ? data : {...data, event:slug});
-    if(id) await req("signups?id=eq."+id, { method:"PATCH", headers:head(), body });
-    else   await req("signups", { method:"POST", headers:head(), body });
+    if(id){ await req("signups?id=eq."+id, { method:"PATCH", headers:head(), body }); return id; }
+    // Nur die Kennung zurück: die Spalte token liest auch das Orgateam nicht
+    const neu = await req("signups?select=id", { method:"POST",
+      headers:head({ Prefer:"return=representation" }), body });
+    return Array.isArray(neu) && neu[0] ? neu[0].id : null;
   },
   async deleteSignup(id){
     if(!live){ demoSignups = demoSignups.filter(s=>s.id!==id); return; }
@@ -1340,7 +1415,8 @@ const NEEDED = {
   payments: ["amount","paid_at"],
   attendance: ["checked_in_at","hours"],
   checkin_codes: ["code"],
-  receipts: ["amount", "item_id"]
+  receipts: ["amount", "item_id"],
+  fee_waivers: ["signup_id"]
 };
 
 async function checkSchema(){
@@ -2067,8 +2143,11 @@ function wireTools(d){
   d.querySelector(".drop").onclick = () => {
     const box = d.parentNode;
     if(!box) return;
+    if(box.id === "tasks" && !d._gefragt){ aufgabeEntfernen(d); return; }
+    d._gefragt = false;
     const stelle = [...box.children].indexOf(d);
-    const name = (d.querySelector("input[type=text]") || {}).value || "Zeile";
+    const name = ((d.querySelector("input[type=text]") || {}).value || "Zeile") +
+      (d._nach && verschoben.includes(d) ? " (nach " + d._nach.title + ")" : "");
     d.remove();
     refreshTools(box);
     if(box.id === "cats" && current) renderReview();
@@ -2132,6 +2211,16 @@ function taskRow(t, bilder, imTpl){
     '<div><label>Wie viele</label><input type="number" class="t-needed" min="1" value="'+(t.needed??4)+'"></div></div>'+
     '<label>Erklärung für die Eltern <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>'+
     '<textarea class="t-info" placeholder="Was genau ist zu tun, worauf achten?">'+esc(t.info||"")+'</textarea>'+
+    // Zeitfenster: aus einer Aufgabe werden mehrere, je eine pro Fenster, mit gemeinsamem group
+    (t.group ? '<p class="hint">Zeitfenster von „'+esc(t.label||"")+'“. Wann und Platzzahl lassen sich je Fenster ändern.</p>'
+      : '<details class="t-slots"><summary>In Zeitfenster aufteilen</summary>'+
+        '<div class="row"><div><label>von</label><input type="time" class="s-von" value="09:00"></div>'+
+        '<div><label>bis</label><input type="time" class="s-bis" value="13:00"></div></div>'+
+        '<div class="row"><div><label>alle</label><select class="s-takt">'+
+          [30,45,60,90,120].map(m=>'<option value="'+m+'"'+(m===60?" selected":"")+'>'+m+' Minuten</option>').join("")+
+        '</select></div><div><label>Personen je Fenster</label><input type="number" class="s-je" min="1" value="2"></div></div>'+
+        '<button type="button" class="ghost s-los" style="margin-top:8px">Zeitfenster erzeugen</button>'+
+        '<p class="hint s-msg"></p></details>')+
     // Fotos hängen an der Veranstaltung; Vorlagen speichern keine
     '<div class="t-fotos'+(imTpl ? ' hidden' : '')+'">'+
     '<label>Fotos <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>'+
@@ -2139,6 +2228,9 @@ function taskRow(t, bilder, imTpl){
     '<p class="hint">Werden automatisch verkleinert. Keine Bilder mit Kindern — die Liste ist für alle sichtbar, die den Link haben.</p>'+
     '<div class="shots"></div></div>';
   d.dataset.id = t.id || "";
+  d.dataset.group = t.group || "";
+  const los = d.querySelector(".s-los");
+  if(los) los.onclick = () => zeitfensterErzeugen(d, bilder, imTpl);
   d._neu = [];          // frisch ausgewaehlte Bilder
   d._weg = [];          // zu loeschende, bereits gespeicherte Bilder
   d._alt = (bilder || []).slice();
@@ -2328,6 +2420,49 @@ function kaufRow(p){
   return d;
 }
 
+function spendeRow(p){
+  p = p || {};
+  const d = document.createElement("div");
+  d.className = "item";
+  d.innerHTML = TOOLS +
+    '<div class="row"><div style="flex:0 0 120px;min-width:100px"><label>Betrag (€)</label>'+
+    '<input type="text" inputmode="decimal" class="sp-betrag" value="'+
+      esc(preisZahl(p.betrag) ? String(preisZahl(p.betrag).toFixed(2)).replace(".", ",") : "")+'" placeholder="50,00"></div>'+
+    '<div style="flex:0 0 150px;min-width:130px"><label>Eingegangen am</label>'+
+    '<input type="date" class="sp-datum" value="'+esc(p.datum||"")+'"></div></div>'+
+    '<label>Notiz <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>'+
+    '<input type="text" class="sp-notiz" maxlength="200" value="'+esc(p.notiz||"")+'" placeholder="Spendendose am Kuchenstand">';
+  d.dataset.id = p.id || "";
+  wireTools(d);
+  faltbar(d, x=>{
+    const betrag = preisZahl(x.querySelector(".sp-betrag").value);
+    if(!betrag) return "";
+    const datum = x.querySelector(".sp-datum").value;
+    const notiz = x.querySelector(".sp-notiz").value.trim();
+    return "<b>" + euro(betrag) + "</b>" + ((datum || notiz) ? " <span>" + [
+      datum && new Date(datum + "T12:00:00").toLocaleDateString("de-DE"), notiz && esc(notiz)
+    ].filter(Boolean).join(" · ") + "</span>" : "");
+  });
+  d._auf(!preisZahl(p.betrag));
+  return d;
+}
+// Spenden stehen im Rückblick unter geld.spenden, damit sie die Löschfrist überdauern
+const readSpenden = box => [...box.children].map(d=>{
+  const betrag = preisZahl(d.querySelector(".sp-betrag").value);
+  return betrag ? { id:d.dataset.id || uid(), betrag,
+    datum:d.querySelector(".sp-datum").value || null,
+    notiz:d.querySelector(".sp-notiz").value.trim() } : null;
+}).filter(Boolean);
+const spendenSumme = () => rund(readSpenden($("spenden")).reduce((a,s)=>a + s.betrag, 0));
+function renderSpendenSumme(){
+  const n = readSpenden($("spenden")).length;
+  $("spenden-summe").textContent = n ? n + (n === 1 ? " Spende" : " Spenden") + ", zusammen " + euro(spendenSumme()) : "";
+  renderGeld();
+}
+$("add-spende").onclick = () => { $("spenden").appendChild(spendeRow()); refreshTools($("spenden")); };
+$("spenden").addEventListener("input", renderSpendenSumme);
+$("spenden").addEventListener("change", renderSpendenSumme);
+
 /* ---------- Entscheidungen: was festgelegt wurde, fürs nächste Mal ---------- */
 function entscheidungRow(e){
   e = e || {};
@@ -2396,25 +2531,71 @@ function einnahmenJetzt(){
   const ev = collectEvent();
   return Math.round(signups.reduce((a,s)=>a + kosten(ev, s).summe, 0)*100)/100;
 }
+// Kassensturz oben im Editor: Einnahmen Soll (was die Anmeldungen kosten) gegen Ist
+// (Zahlungseingang), Ausgaben Plan (Preise der Einkaufsliste) gegen Ist (Belege), je mit
+// Delta. Nach der Löschfrist gelten die festgehaltenen Werte aus dem Rückblick.
+let kasseZahlungen = [];
+async function ladeKasse(){
+  kasseZahlungen = [];
+  if(current && current.id && signups.length){
+    try{ kasseZahlungen = await db.payments(signups.map(s=>s.id)); }catch(e){}
+  }
+  renderGeld();
+}
+const rund = x => Math.round(x*100)/100;
+// Summe der Belege mit Betrag; null, solange es keinen gibt
+function belegSumme(){
+  const mit = belege.filter(r=>r.amount != null);
+  return mit.length ? rund(mit.reduce((a,r)=>a + (+r.amount || 0), 0)) : null;
+}
+function kassenWerte(){
+  const geld = ((planning || {}).review || {}).geld || {};
+  const feld = id => { const v = $(id).value.trim(); return v === "" ? null : +v; };
+  const archiv = archivModus();
+  const einSoll = archiv ? feld("r-a-ein") : einnahmenJetzt();
+  const einIst = archiv ? feld("r-a-bez")
+    : signups.length ? rund(kasseZahlungen.filter(z=>signups.some(s=>s.id === z.signup_id))
+        .reduce((a,z)=>a + (+z.amount || 0), 0))
+    : geld.bezahlt ?? null;
+  // Ausgaben sind die Belege. Geplante Preise in der Einkaufsliste gibt es selten; sie
+  // stehen nur als Hinweis darunter. Im Archiv ohne Belege gilt der festgehaltene Wert.
+  const aus = belegSumme() ?? (archiv ? feld("r-a-aus") : null);
+  const liste = rund(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0)) || null;
+  const spenden = spendenSumme() || null;
+  return { einSoll, einIst, spenden, aus, liste, ohneBetrag: belege.filter(r=>r.amount == null).length };
+}
 function renderGeld(){
-  const box = $("r-geld");
+  const box = $("kasse");
   if(!box || !current) return;
-  if(archivModus()){ box.classList.add("hidden"); return; }
-  const ein = einnahmenJetzt();
-  const aus = Math.round(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0)*100)/100;
-  if(!ein && !aus){ box.classList.add("hidden"); return; }
+  const k = kassenWerte();
+  if(![k.einSoll, k.einIst, k.spenden, k.aus].some(v => v) && !k.ohneBetrag){ box.classList.add("hidden"); return; }
+  const zahl = v => v == null ? "–" : v < 0 ? "−" + euro(-v) : euro(v);
+  const zelle = (was, wert, rot) => '<td><small>' + was + '</small><b' + (rot ? ' class="minus"' : "") + '>' +
+    wert + '</b></td>';
+  const offen = k.einSoll == null ? null : rund(k.einSoll - (k.einIst || 0));
+  // Spenden kommen zum Bezahlten dazu; geplant sind allein die Anmeldungen
+  const stand = k.einIst == null && k.spenden == null && k.aus == null ? null
+    : rund((k.einIst || 0) + (k.spenden || 0) - (k.aus || 0));
   box.classList.remove("hidden");
-  box.innerHTML = '<label style="margin-top:0">Geld</label><div class="totals" style="margin-top:0">' +
-    '<div><b>' + euro(ein || 0) + '</b>Einnahmen laut Anmeldungen</div>' +
-    '<div><b>' + euro(aus) + '</b>Ausgaben laut Einkaufsliste</div>' +
-    '<div><b' + ((ein||0) - aus < 0 ? ' style="color:var(--berry)"' : "") + '>' + euro((ein||0) - aus) +
-    '</b>Saldo</div></div>' +
-    '<p class="hint">Einnahmen sind, was die Anmeldungen kosten — nicht, was schon bezahlt ist.</p>';
+  box.innerHTML = '<h3>Kassensturz</h3><table>' +
+    '<tr><th>Einnahmen</th>' + zelle("geplant", zahl(k.einSoll)) + zelle("bezahlt", zahl(k.einIst)) +
+      (offen != null && offen < 0 ? zelle("zu viel", zahl(-offen)) : zelle("offen", zahl(offen), offen > 0)) +
+      (k.spenden ? zelle("Spenden", zahl(k.spenden)) : "") + '</tr>' +
+    '<tr><th>Ausgaben</th>' + zelle("laut Belegen", zahl(k.aus)) + '<td></td><td></td>' +
+      (k.spenden ? '<td></td>' : "") + '</tr>' +
+    '</table>' +
+    '<p class="stand">Kassenstand: <b' + (stand < 0 ? ' class="minus"' : "") + '>' + zahl(stand) + '</b>' +
+    ' <span>bezahlt' + (k.spenden ? " plus Spenden" : "") + ' minus Ausgaben</span></p>' +
+    '<p class="hint" style="margin:6px 0 0">Geplant ist, was die Anmeldungen kosten. Ausgaben sind die ' +
+    'Belege unter der Einkaufsliste.' +
+    (k.ohneBetrag ? " " + k.ohneBetrag + (k.ohneBetrag === 1 ? " Beleg hat" : " Belege haben") +
+      " noch keinen Betrag und fehlen in der Summe." : "") +
+    (k.liste ? " Die Einkaufsliste plant " + euro(k.liste) + "." : "") + '</p>';
 }
 $("einkauf").addEventListener("input", renderKaufSumme);
 $("einkauf").addEventListener("change", renderKaufSumme);
 $("view-edit").addEventListener("input", ev => {
-  if(ev.target.closest("#fields") || /^e-(p-|g\d)/.test(ev.target.id || "")) renderGeld();
+  if(ev.target.closest("#fields") || /^(e-(p-|g\d)|r-a-(ein|bez|aus)$)/.test(ev.target.id || "")) renderGeld();
 });
 
 /* ---------- Belege: Fotos vom Kassenbon, nur fürs Orgateam, gelöscht mit der Frist ---------- */
@@ -2423,9 +2604,12 @@ async function ladeBelege(){
   belege = current && current.id ? await db.receipts(current.id).catch(()=>[]) : [];
   renderBelege();
 }
+// Auswahl nur, wenn die Einkaufsliste Posten hat; sonst stünde dort allein "—"
 function belegPosten(){
   const sel = $("b-posten"), alt = sel.value;
-  sel.innerHTML = '<option value="">—</option>' + readKauf($("einkauf")).map(p=>
+  const liste = readKauf($("einkauf"));
+  $("b-posten-box").classList.toggle("hidden", !liste.length);
+  sel.innerHTML = '<option value="">—</option>' + liste.map(p=>
     '<option value="'+esc(p.id)+'">'+esc([p.menge, p.einheit, p.artikel].filter(Boolean).join(" "))+'</option>').join("");
   sel.value = [...sel.options].some(o=>o.value === alt) ? alt : "";
 }
@@ -2459,6 +2643,7 @@ function renderBelege(){
     };
     box.appendChild(d);
   });
+  renderGeld();
   const summe = Math.round(belege.reduce((a,r)=>a + (+r.amount || 0), 0)*100)/100;
   const liste = Math.round(readKauf($("einkauf")).reduce((a,p)=>a + (p.preis||0), 0)*100)/100;
   $("belege-summe").textContent = belege.length
@@ -2468,6 +2653,7 @@ function renderBelege(){
     : "";
 }
 $("einkauf").addEventListener("change", renderBelege);
+$("einkauf").addEventListener("input", belegPosten);
 $("add-kauf").addEventListener("click", () => setTimeout(belegPosten));
 
 // Kassenbons sind lang und schmal; die längere Kante darf deshalb mehr Pixel haben als bei
@@ -2479,11 +2665,26 @@ async function belegBild(datei){
   }
   throw new Error("Bild zu groß");
 }
+// Das Foto wird gleich beim Auswählen gelesen und verkleinert. Android entzieht den Zugriff
+// auf die Datei, wenn der Browser zwischendurch im Hintergrund war; später ginge es dann
+// nicht mehr ("Foto nicht lesbar").
+let belegFoto = null;    // Promise mit dem verkleinerten Bild
+const FOTO_NEU = "Das Foto ließ sich nicht lesen. Bitte noch einmal auswählen, am besten direkt " +
+  "aus der Kamera; liegt es nur in der Cloud, erst in der Galerie öffnen.";
+$("b-foto").addEventListener("change", () => {
+  const datei = $("b-foto").files && $("b-foto").files[0];
+  belegFoto = datei ? belegBild(datei) : null;
+  if(!belegFoto) return;
+  msg($("beleg-msg"), "Foto wird vorbereitet …");
+  const dieses = belegFoto;
+  dieses.then(() => { if(belegFoto === dieses) msg($("beleg-msg"), "Foto bereit."); },
+    () => { if(belegFoto !== dieses) return; belegFoto = null; $("b-foto").value = ""; msg($("beleg-msg"), FOTO_NEU, true); });
+});
 $("b-dazu").addEventListener("click", async () => {
   const m = $("beleg-msg");
   if(!current || !current.id){ msg(m, "Erst speichern, dann Belege anhängen.", true); return; }
   const datei = $("b-foto").files && $("b-foto").files[0];
-  if(!datei){ msg(m, "Bitte ein Foto vom Beleg auswählen.", true); return; }
+  if(!datei && !belegFoto){ msg(m, "Bitte ein Foto vom Beleg auswählen.", true); return; }
   const betrag = $("b-betrag").value.trim();
   if(betrag && !preisZahl(betrag)){ msg(m, "Betrag bitte als Zahl, zum Beispiel 12,90.", true); return; }
   $("b-dazu").disabled = true;
@@ -2493,12 +2694,14 @@ $("b-dazu").addEventListener("click", async () => {
       bought_on:$("b-datum").value || null,
       amount:betrag ? preisZahl(betrag) : null,
       item_id:$("b-posten").value || null,
-      image:await belegBild(datei) });
+      image:await (belegFoto || belegBild(datei)) });
   }catch(e){
-    msg(m, "Beleg wurde nicht gespeichert: " + e.message, true);
+    if(e.message === "Foto nicht lesbar"){ belegFoto = null; $("b-foto").value = ""; msg(m, FOTO_NEU, true); }
+    else msg(m, "Beleg wurde nicht gespeichert: " + e.message, true);
     $("b-dazu").disabled = false;
     return;
   }
+  belegFoto = null;
   $("b-dazu").disabled = false;
   ["b-laden", "b-datum", "b-betrag", "b-foto"].forEach(id=>$(id).value = "");
   $("b-posten").value = "";
@@ -2590,8 +2793,51 @@ const readTasks = box => [...box.children].map(d=>{
   return label ? { id:d.dataset.id || slugify(label) || uid(), label,
     when:d.querySelector(".t-when").value.trim(),
     needed:+d.querySelector(".t-needed").value || 1,
-    info:d.querySelector(".t-info").value.trim() } : null;
+    info:d.querySelector(".t-info").value.trim(),
+    ...(d.dataset.group ? { group:d.dataset.group } : {}) } : null;
 }).filter(Boolean);
+
+/* ---------- Zeitfenster: Grillen 9–13 Uhr stündlich wird zu vier Aufgaben ---------- */
+const minuten = s => { const m = /^(\d{1,2}):(\d{2})$/.exec(s || ""); return m ? +m[1]*60 + +m[2] : null; };
+const uhr = m => Math.floor(m/60) + (m % 60 ? ":" + String(m % 60).padStart(2, "0") : "");
+function zeitfensterListe(von, bis, takt){
+  const a = minuten(von), b = minuten(bis);
+  if(a == null || b == null || !(takt > 0) || b <= a) return [];
+  const liste = [];
+  for(let s = a; s < b && liste.length < 48; s += takt) liste.push([s, Math.min(s + takt, b)]);
+  return liste;
+}
+function zeitfensterErzeugen(d, bilder, imTpl){
+  const m = d.querySelector(".s-msg");
+  const label = d.querySelector(".t-label").value.trim();
+  if(!label){ m.textContent = "Erst der Aufgabe einen Namen geben."; return; }
+  const fenster = zeitfensterListe(d.querySelector(".s-von").value, d.querySelector(".s-bis").value,
+    +d.querySelector(".s-takt").value);
+  if(!fenster.length){ m.textContent = "„bis“ muss nach „von“ liegen."; return; }
+  const box = d.parentNode;
+  const basis = d.dataset.id || slugify(label) || uid();
+  // Zusagen hängen an der Kennung der Aufgabe; die Fenster bekommen neue Kennungen
+  const zusagen = box.id === "tasks" && d.dataset.id
+    ? signups.filter(s => s.status !== "absage" && (s.tasks || []).includes(d.dataset.id)).length : 0;
+  if(zusagen && !confirm(zusagen + (zusagen === 1 ? " Familie hat" : " Familien haben") + " für „" + label +
+    "“ schon zugesagt. Nach dem Aufteilen hängt ihre Zusage an keinem Zeitfenster mehr. Trotzdem aufteilen?")) return;
+  const belegt = new Set([...box.children].filter(x => x !== d).map(x => x.dataset.id));
+  const je = Math.max(1, +d.querySelector(".s-je").value || 1);
+  const info = d.querySelector(".t-info").value.trim();
+  let nach = d;
+  fenster.forEach(([a, b]) => {
+    let id = basis + "-" + String(Math.floor(a/60)).padStart(2, "0") + String(a % 60).padStart(2, "0"), i = 2;
+    while(belegt.has(id)) id = id.replace(/-\d+$/, "") + "-" + (i++);
+    belegt.add(id);
+    const neu = taskRow({ id, label, when:uhr(a) + "–" + uhr(b) + " Uhr", needed:je, info, group:basis }, [], imTpl);
+    neu._auf(false);
+    nach.after(neu);
+    nach = neu;
+  });
+  d.remove();
+  refreshTools(box);
+  markDirty();
+}
 
 const readFields = box => [...box.children].map(d=>{
   const label = d.querySelector(".f-label").value.trim();
@@ -2791,6 +3037,7 @@ $("e-intern").addEventListener("change", internAnzeigen);
 
 async function openEditor(ev, opts){
   opts = opts || {};
+  verschoben = [];
   current = ev ? {...ev} : {
     title:"", slug:"", event_date:"", event_time:"", place:"", intro:"",
     retention_note:"",
@@ -2871,6 +3118,10 @@ async function openEditor(ev, opts){
                             : await db.getPlanning(current.id);
   $("einkauf").innerHTML = "";
   (planning.shopping||[]).forEach(p=>$("einkauf").appendChild(kaufRow(p)));
+  $("spenden").innerHTML = "";
+  (((planning.review||{}).geld||{}).spenden||[]).forEach(p=>$("spenden").appendChild(spendeRow(p)));
+  refreshTools($("spenden"));
+  $("spenden-summe").textContent = "";
   $("entscheidungen").innerHTML = "";
   ((planning.review||{}).entscheidungen||[]).forEach(e=>$("entscheidungen").appendChild(entscheidungRow(e)));
   refreshTools($("entscheidungen"));
@@ -2883,12 +3134,15 @@ async function openEditor(ev, opts){
   // Nur gespeicherte Veranstaltungen haben Anmeldungen. Eine neue mit gleichem Kurznamen
   // wie eine alte bekäme sonst deren Anmeldungen angezeigt.
   signups = current.id && current.slug ? await db.listSignups(current.slug).catch(()=>[]) : [];
+  await erlasseMarkieren(signups);
   archivGefuellt = false;
   renderReview();
   renderKaufSumme();
+  renderSpendenSumme();
   renderFeedback();
   msg($("edit-msg"), ""); msg($("beleg-msg"), "");
-  belege = []; renderBelege(); ladeBelege();
+  belege = []; renderBelege(); ladeBelege(); ladeKasse();
+  belegFoto = null; $("b-foto").value = "";
   clearDirty();
   show("edit");
   renderHistory(current);
@@ -2964,7 +3218,7 @@ function renderArchiv(rv){
   const tasks = readTasks($("tasks"));
   $("r-a-aufgaben").innerHTML = tasks.length
     ? '<label>Zusagen je Aufgabe</label><div class="row" style="flex-wrap:wrap">' + tasks.map(t=>
-        '<div style="min-width:140px"><label class="hint" style="margin:0">'+esc(t.label)+'</label>'+
+        '<div style="min-width:140px"><label class="hint" style="margin:0">'+esc(aufgabeName(t))+'</label>'+
         '<input type="number" min="0" data-rtask="'+esc(t.id)+'" value="'+esc(wert(auf[t.id]))+'"></div>').join("") +
       '</div>'
     : "";
@@ -3020,6 +3274,94 @@ $("e-on").addEventListener("change", () => {
 
 $("add-cat").onclick   = () => { $("cats").appendChild(catRow()); refreshTools($("cats")); };
 $("add-task").onclick  = () => { $("tasks").appendChild(taskRow()); refreshTools($("tasks")); };
+/* ---------- Aufgabe entfernen oder in eine andere Veranstaltung verschieben ---------- */
+// Etwa was am Familiensamstag liegen geblieben ist, zum nächsten. Verschoben wird erst beim
+// Speichern dieser Veranstaltung, damit nichts doppelt steht, wenn jemand ohne Speichern geht.
+let verschoben = [];     // Zeilen mit _nach = { id, title }
+function moeglicheZiele(){
+  return events.filter(e => e.id !== (current && current.id) && !e.archived && !vorbei(e))
+    .sort((a, b) =>
+      ((b.template_id && b.template_id === current.template_id) - (a.template_id && a.template_id === current.template_id)) ||
+      String(a.event_on || "9999").localeCompare(String(b.event_on || "9999")));
+}
+function aufgabeEntfernen(d){
+  const label = d.querySelector(".t-label").value.trim() || "Aufgabe";
+  const id = d.dataset.id;
+  const zusagen = id ? signups.filter(s => s.status !== "absage" && (s.tasks || []).includes(id)).length : 0;
+  const ziele = moeglicheZiele();
+  $("ad-was").textContent = "„" + label + "“ aus dieser Veranstaltung entfernen.";
+  $("ad-zusagen").textContent = zusagen
+    ? zusagen + (zusagen === 1 ? " Familie hat" : " Familien haben") + " schon zugesagt. Die Zusagen " +
+      "gehen nicht mit — sag ihnen Bescheid."
+    : "";
+  $("ad-zusagen").classList.toggle("hidden", !zusagen);
+  $("ad-ziel").innerHTML = ziele.map(e => '<option value="' + esc(e.id) + '">' + esc(e.title) +
+    (e.event_on ? " (" + new Date(e.event_on + "T12:00:00").toLocaleDateString("de-DE") + ")" : "") +
+    '</option>').join("");
+  $("ad-ziel-box").classList.toggle("hidden", !ziele.length);
+  $("ad-verschieben").classList.toggle("hidden", !ziele.length);
+  const zu = () => $("aufgabe-dialog").classList.add("hidden");
+  $("ad-abbruch").onclick = zu;
+  $("ad-loeschen").onclick = () => { zu(); d._nach = null; d._gefragt = true; d.querySelector(".drop").click(); };
+  $("ad-verschieben").onclick = () => {
+    const ziel = ziele.find(e => e.id === $("ad-ziel").value);
+    if(!ziel) return;
+    zu();
+    d._nach = { id:ziel.id, title:ziel.title };
+    if(!verschoben.includes(d)) verschoben.push(d);
+    d._gefragt = true;
+    d.querySelector(".drop").click();
+    msg($("edit-msg"), "„" + label + "“ geht beim Speichern nach " + ziel.title + ".");
+  };
+  $("aufgabe-dialog").classList.remove("hidden");
+  $("ad-abbruch").focus();
+}
+$("aufgabe-dialog").addEventListener("click", ev => {
+  if(ev.target.id === "aufgabe-dialog") $("aufgabe-dialog").classList.add("hidden");
+});
+document.addEventListener("keydown", ev => {
+  if(ev.key === "Escape") $("aufgabe-dialog").classList.add("hidden");
+});
+// Nach dem Speichern: Aufgaben in ihre Zielveranstaltung eintragen. Zeilen, die per
+// Rückgängig zurückgeholt wurden, hängen wieder im Editor und bleiben hier.
+// Fotos ziehen mit um. task_images kennt kein Ändern, also erst am Ziel anlegen, dann
+// hier löschen: Bricht etwas ab, ist kein Foto verloren. Gespeicherte Fotos frisch aus der
+// Datenbank (nur so stimmen die Kennungen), dazu die noch nicht hochgeladenen der Zeile.
+async function fotosUmziehen(d, altId, zielEvent, zielId){
+  const weg = new Set(d._weg || []);
+  const alt = current.id && altId
+    ? (await db.images(current.id)).filter(b => b.task_id === altId && !weg.has(b.id)) : [];
+  for(const b of alt) await db.addImage(zielEvent, zielId, b.data);
+  for(const data of (d._neu || [])) await db.addImage(zielEvent, zielId, data);
+  for(const b of alt) await db.delImage(b.id);
+  for(const id of weg) await db.delImage(id);
+  const anzahl = alt.length + (d._neu || []).length;
+  d._alt = []; d._neu = []; d._weg = [];
+  return anzahl;
+}
+async function verschiebenAnwenden(){
+  const fertig = [];
+  for(const d of verschoben.filter(x => !x.isConnected && x._nach)){
+    const ziel = events.find(e => e.id === d._nach.id);
+    const [t] = readTasks({ children:[d] });
+    if(!ziel || !t) continue;
+    const tasks = (ziel.tasks || []).slice();
+    let zielId = (tasks.find(x => x.label.trim().toLowerCase() === t.label.toLowerCase()) || {}).id;
+    if(!zielId){
+      zielId = t.id;
+      let i = 2;
+      while(tasks.some(x => x.id === zielId)) zielId = t.id + "-" + (i++);
+      tasks.push({ ...t, id:zielId });
+      await db.setTasks(ziel.id, tasks);
+      ziel.tasks = tasks;
+    }
+    const fotos = await fotosUmziehen(d, t.id, ziel.id, zielId);
+    fertig.push("„" + t.label + "“ nach " + ziel.title + (fotos ? " mit " + fotos + (fotos === 1 ? " Foto" : " Fotos") : ""));
+  }
+  verschoben = verschoben.filter(x => x.isConnected);
+  return fertig;
+}
+
 /* ---------- Gemeldete Aufgaben ---------- */
 let uebernommen = [];    // ids, deren Status beim Speichern gesetzt wird
 
@@ -3295,11 +3637,13 @@ function collectPlanning(){
       erwachsene: zahl("r-a-erw"), kinder: zahl("r-a-kinder"), aufgaben, gepflegt: heute() };
     review.expected = (review.zahlen.erwachsene || 0) + (review.zahlen.kinder || 0);
     review.geld = { ...(alt.geld || {}), einnahmen: geld("r-a-ein"), bezahlt: geld("r-a-bez"),
-      ausgaben: geld("r-a-aus") ?? (ausgabenListe || null) };
+      ausgaben: geld("r-a-aus") ?? belegSumme() ?? (ausgabenListe || null) };
   } else {
     review.expected = +$("r-expected").value || 0;
-    review.geld = { ...(alt.geld || {}), einnahmen: einnahmenJetzt(), ausgaben: ausgabenListe };
+    // Festgehalten werden die tatsächlichen Ausgaben laut Belegen, sonst die Einkaufsliste
+    review.geld = { ...(alt.geld || {}), einnahmen: einnahmenJetzt(), ausgaben: belegSumme() ?? ausgabenListe };
   }
+  review.geld.spenden = readSpenden($("spenden"));
   review.entscheidungen = readEntscheidungen($("entscheidungen"));
   return {
     shopping: readKauf($("einkauf")),
@@ -3352,6 +3696,9 @@ $("save").onclick = async () => {
       try{ await db.proposalStatus(vid, "uebernommen", null); }catch(e){}
     }
     uebernommen = [];
+    let gewandert = [], nichtGewandert = "";
+    try{ gewandert = await verschiebenAnwenden(); }
+    catch(e){ nichtGewandert = " Verschieben hat nicht geklappt: " + e.message + ". Nochmal speichern."; }
 
     // Fotos nachziehen
     for(const d of [...$("tasks").children]){
@@ -3378,6 +3725,7 @@ $("save").onclick = async () => {
         : "Link: " + publicLink(current.slug)) +
       (gesperrt && !nurOrga(ev) && !ev.archived ? " Die Anmeldung ist noch gesperrt — setz den Haken bei Anmeldung freigegeben, " +
         "wenn die Eltern loslegen sollen." : "") +
+      (gewandert.length ? " Verschoben: " + gewandert.join(", ") + "." : "") + nichtGewandert +
       " Der Editor bleibt offen, Fertig bringt dich zurück zur Übersicht.");
   }catch(err){ msg($("edit-msg"), err.message, true); dirty = true; }
   finally{ $("save").disabled = false; }
@@ -3645,9 +3993,18 @@ $("su-table").addEventListener("change", async ev => {
 let nurOffen = false;
 $("nur-offen").onclick = () => { nurOffen = !nurOffen; loadSignups(); };
 
+// Erlassene Anmeldungen bekommen erlassen = true; kosten() rechnet sie dann mit 0.
+// Ohne Tabelle (Migration 29 fehlt) bleibt alles, wie es war.
+async function erlasseMarkieren(liste){
+  let ids = new Set();
+  try{ ids = new Set((await db.waivers(liste.map(s=>s.id))).map(x=>x.signup_id)); }catch(e){}
+  liste.forEach(s=>{ s.erlassen = ids.has(s.id); });
+}
+
 async function loadSignups(){
   try{ signups = await db.listSignups(current.slug); }
   catch(err){ $("su-table").innerHTML = '<div class="msg bad">'+esc(err.message)+'</div>'; return; }
+  await erlasseMarkieren(signups);
   zahlungen = {};
   if(kostetEtwas(current)){
     try{ (await db.payments(signups.map(s=>s.id))).forEach(x=>{ zahlungen[x.signup_id] = x; }); }catch(e){}
@@ -3689,11 +4046,13 @@ async function loadSignups(){
         "<div><b>"+euro(signups.reduce((a,s)=>a+gezahlt(s),0))+"</b>bezahlt</div>"+
         "<div><b"+(offeneFamilien?' style="color:var(--berry)"':"")+">"+
           euro(signups.reduce((a,s)=>a+offen(s),0))+"</b>offen"+
-          (offeneFamilien ? " ("+offeneFamilien+(offeneFamilien===1?" Familie":" Familien")+")" : "")+"</div>"
+          (offeneFamilien ? " ("+offeneFamilien+(offeneFamilien===1?" Familie":" Familien")+")" : "")+"</div>"+
+        (signups.some(s=>s.erlassen && s.status !== "absage")
+          ? "<div><b>"+signups.filter(s=>s.erlassen && s.status !== "absage").length+"</b>Zahlung erlassen</div>" : "")
       : "");
 
   const catLabel = id => ((current.categories||[]).find(c=>c.id===id)||{}).label || id;
-  const taskLabel = id => ((current.tasks||[]).find(t=>t.id===id)||{}).label || id;
+  const taskLabel = id => aufgabeName((current.tasks||[]).find(t=>t.id===id)) || id;
 
   let belegt = [];
   try{ belegt = await db.claims(current.id); }catch(e){}
@@ -3701,10 +4060,10 @@ async function loadSignups(){
     ? '<div class="card" style="margin-top:16px"><h3>Aufgabenstand</h3>' +
       (current.tasks||[]).map(t=>{
         const wer = belegt.filter(c=>c.task_id === t.id);
-        if(!wer.length) return '<div class="task"><div><strong>'+esc(t.label)+'</strong></div>'+
+        if(!wer.length) return '<div class="task"><div><strong>'+esc(aufgabeName(t))+'</strong></div>'+
           '<span class="task-free full">niemand</span></div>';
         const fertig = wer.every(c=>c.done);
-        return '<div class="task"><div><strong>'+esc(t.label)+'</strong>'+
+        return '<div class="task"><div><strong>'+esc(aufgabeName(t))+'</strong>'+
           '<span class="task-people">'+wer.map(c=>esc(c.name)+(c.done?" ✓":"")).join(", ")+'</span></div>'+
           '<span class="task-free'+(fertig?"":" full")+'">'+(fertig?"erledigt":"läuft")+'</span></div>';
       }).join("") + '</div>'
@@ -3768,6 +4127,20 @@ $("reload").onclick = loadSignups;
 // Haken für die Person, die das Geld sammelt. Gespeichert wird der Betrag, der beim
 // Abhaken fällig war; ändert die Familie danach ihre Anmeldung, steht die Differenz da.
 function zahlZelle(s, betrag, z){
+  return zahlHaken(s, betrag, z) + erlassHaken(s);
+}
+// Zahlung erlassen, etwa für Erzieherinnen und Erzieher: Sie bleiben in der Liste und
+// bei den Personen, zahlen aber nichts. Nur wer überhaupt etwas zahlen müsste.
+function erlassHaken(s){
+  if(s.status === "absage") return "";
+  const voll = kosten(current, { ...s, erlassen:false }).summe;
+  if(!voll && !s.erlassen) return "";
+  return '<label class="check" style="margin-top:4px"><input type="checkbox" data-erlass="'+esc(s.id)+'"'+
+    (s.erlassen ? " checked" : "")+'><span>'+(s.erlassen
+      ? '<strong>Zahlung erlassen</strong> <span style="color:var(--ink-soft)">(statt '+euro(voll)+')</span>'
+      : 'Zahlung erlassen')+'</span></label>';
+}
+function zahlHaken(s, betrag, z){
   const datum = z ? new Date(z.paid_at).toLocaleDateString("de-DE") : "";
   const diff = z ? Math.round((betrag - (+z.amount||0))*100)/100 : 0;
   if(s.status === "absage")
@@ -3785,6 +4158,14 @@ function zahlZelle(s, betrag, z){
     '</span></label>';
 }
 $("su-table").addEventListener("change", async ev => {
+  const e = ev.target.closest("[data-erlass]");
+  if(e){
+    e.disabled = true;
+    try{ await db.setWaived(e.dataset.erlass, e.checked); }
+    catch(err){ alert("Konnte nicht gespeichert werden: " + String(err.message).slice(0,200)); }
+    await loadSignups();
+    return;
+  }
   const h = ev.target.closest("[data-paid]");
   if(!h) return;
   const s = signups.find(x=>x.id === h.dataset.paid);
@@ -3826,6 +4207,8 @@ function openManual(entry){
   $("m-adults").innerHTML = opts(g.adults.max, entry ? (entry.adults||0) : 1);
   $("m-kids").innerHTML   = opts(g.kids.max,   entry ? (entry.kids||0)   : 0);
   $("m-note").value = entry ? (entry.note||"") : "";
+  $("m-erlass").checked = !!(entry && entry.erlassen);
+  $("m-erlass-box").classList.toggle("hidden", !kostetEtwas(current));
   $("m-lbl1").textContent = g.adults.label;
   $("m-lbl2").textContent = g.kids.label;
   $("m-grp1").classList.toggle("hidden", !g.adults.on);
@@ -3883,7 +4266,9 @@ $("m-save").onclick = async () => {
   });
   $("m-save").disabled = true;
   try{
-    await db.saveSignup(editingSignup ? editingSignup.id : null, data, current.slug);
+    const id = await db.saveSignup(editingSignup ? editingSignup.id : null, data, current.slug);
+    const erlass = kostetEtwas(current) && $("m-erlass").checked;
+    if(id && erlass !== !!(editingSignup && editingSignup.erlassen)) await db.setWaived(id, erlass);
     $("manual-form").classList.add("hidden");
     editingSignup = null;
     await loadSignups();
@@ -3893,18 +4278,18 @@ $("m-save").onclick = async () => {
 
 $("export").onclick = () => {
   const catLabel = id => ((current.categories||[]).find(c=>c.id===id)||{}).label || id;
-  const taskLabel = id => ((current.tasks||[]).find(t=>t.id===id)||{}).label || id;
+  const taskLabel = id => aufgabeName((current.tasks||[]).find(t=>t.id===id)) || id;
   const extra = [...new Set(signups.flatMap(s=>Object.keys(s.fields||{})))];
   const g = groups(current);
   const head = ["Name","Status",g.adults.label,g.kids.label,"Mitbringsel","Aufgaben",
-    "Anmerkung",...extra,"Betrag (EUR)","Bezahlt (EUR)","Bezahlt am",
+    "Anmerkung",...extra,"Betrag (EUR)","Zahlung erlassen","Bezahlt (EUR)","Bezahlt am",
     ...(current.checkin ? ["Da","Gekommen","Gegangen","Stunden"] : []),"Angemeldet am"];
   const rows = signups.map(s=>[
     s.name, s.status === "absage" ? "abgemeldet" : "zugesagt", s.adults, s.kids,
     (s.items||[]).map(i=>((+i.qty||1)>1 ? (+i.qty)+"x " : "")+i.what+" ("+catLabel(i.cat)+")").join(" | "),
     (s.tasks||[]).map(taskLabel).join(" | "),
     s.note || "", ...extra.map(k=>(s.fields||{})[k] ?? ""),
-    betragCsv(kosten(current, s).summe),
+    betragCsv(kosten(current, s).summe), s.erlassen ? "ja" : "",
     zahlungen[s.id] ? betragCsv(zahlungen[s.id].amount) : "",
     zahlungen[s.id] ? new Date(zahlungen[s.id].paid_at).toLocaleDateString("de-DE") : "",
     ...(current.checkin ? [anwesend[s.id] ? "ja" : "nein", zeitText((anwesend[s.id]||{}).checked_in_at),

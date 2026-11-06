@@ -73,6 +73,14 @@ test("Absagen kosten nichts", async () => {
   assert.equal(s.g("kosten")(EV, { adults:2, kids:1, status:"absage" }).summe, 0);
 });
 
+test("Erlassene Anmeldungen kosten nichts", async () => {
+  const s = await common();
+  const k = s.g("kosten")(EV, { adults:2, kids:1, erlassen:true });
+  assert.equal(k.summe, 0);
+  assert.equal(k.erlassen, true);
+  assert.equal(k.zeilen.length, 0);
+});
+
 test("ausgeschaltete Gruppen kosten nichts", async () => {
   const s = await common();
   const ev = { ...EV, fields:[], people:{ adults:{ on:true }, kids:{ on:false } } };

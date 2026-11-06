@@ -22,7 +22,7 @@ der Veranstaltung.
 6. [Der Editor einer Veranstaltung](#6-der-editor-einer-veranstaltung)
 7. [Gemeldete Aufgaben](#7-gemeldete-aufgaben)
 8. [Planung: Checkliste und Einkaufsliste](#8-planung-checkliste-und-einkaufsliste)
-9. [Auswertung: Rückblick, Geld und Rückmeldungen](#9-auswertung-rückblick-geld-und-rückmeldungen)
+9. [Auswertung: Rückblick, Kassensturz und Rückmeldungen](#9-auswertung-rückblick-kassensturz-und-rückmeldungen)
 10. [Anmeldungen](#10-anmeldungen)
 11. [Check-in am Eingang](#11-check-in-am-eingang)
 12. [Reiter „Vorlagen“](#12-reiter-vorlagen)
@@ -332,7 +332,7 @@ zeigen eine Kurzfassung. Rechts oben an jeder Zeile:
 | --- | --- |
 | ✎ | Zeile aufklappen oder zuklappen |
 | ↑ / ↓ | Zeile nach oben oder unten schieben. Die Reihenfolge gilt auch auf der Anmeldeseite. |
-| × | Zeile entfernen. Darunter erscheint 30 Sekunden lang „… entfernt“ mit „Rückgängig“. |
+| × | Zeile entfernen. Darunter erscheint 30 Sekunden lang „… entfernt“ mit „Rückgängig“. Bei Aufgaben einer Veranstaltung fragt das Tool vorher, ob du sie löschen oder verschieben willst (siehe [Aufgabe entfernen oder verschieben](#aufgabe-entfernen-oder-verschieben)). |
 
 Neue, leere Zeilen sind gleich aufgeklappt. Erst „Speichern“ macht alles dauerhaft. Leere
 Zeilen ohne Namen werden beim Speichern weggelassen.
@@ -495,6 +495,55 @@ Jede Aufgabe ist eine Zeile:
 | „Erklärung für die Eltern“ (optional) | Was genau zu tun ist |
 | „Fotos“ (optional) | Mehrere Bilder möglich. Werden im Browser verkleinert und erst beim Speichern hochgeladen. Mit „×“ am Bild entfernen. **Keine Bilder mit Kindern** — die Liste ist für alle sichtbar, die den Link haben. Nur in der Veranstaltung, nicht in Vorlagen. |
 
+#### Aufgabe entfernen oder verschieben
+
+Das „ד an einer Aufgabe öffnet in einer Veranstaltung erst eine Rückfrage, in Vorlagen nicht.
+Typischer Fall: Was am Familiensamstag liegen geblieben ist, soll zum nächsten.
+
+| Knopf | Was er tut |
+| --- | --- |
+| „Verschieben“ | Die Aufgabe geht in die unter „In eine andere Veranstaltung verschieben“ gewählte Veranstaltung, mit Wann, Platzzahl, Erklärung und Fotos. Zur Wahl stehen Veranstaltungen, die nicht archiviert und nicht vorbei sind; die aus derselben Vorlage zuerst. |
+| „Nur löschen“ | Wie bisher: Die Aufgabe ist weg. |
+| „Abbrechen“ | Nichts passiert. |
+
+Verschoben wird erst, wenn du die Veranstaltung speicherst. Die Meldung nennt dann
+„Verschoben: „Zaun streichen“ nach Familiensamstag“. Gehst du ohne Speichern, bleibt alles, wie
+es war. „Rückgängig“ unter der Liste holt die Aufgabe zurück und hebt das Verschieben auf.
+Gibt es am Ziel schon eine Aufgabe mit demselben Namen, kommt keine zweite dazu.
+
+Die Fotos der Aufgabe ziehen mit um, auch solche, die du gerade erst ausgewählt hast. Die Meldung
+nennt sie: „„Zaun streichen“ nach Familiensamstag mit 2 Fotos“. Gibt es am Ziel schon eine
+gleichnamige Aufgabe, hängen die Fotos dort an.
+
+Haben schon Familien zugesagt, steht im Dialog etwa „2 Familien haben schon zugesagt“. Ihre
+Zusagen gehen nicht mit. Sag den Familien Bescheid, damit sie sich beim nächsten Termin neu
+eintragen.
+
+#### Zeitfenster
+
+Für Dienste in Schichten, etwa Grillen von 9 bis 13 Uhr, klappst du an der Aufgabe „In Zeitfenster
+aufteilen“ auf:
+
+| Feld | Bedeutung |
+| --- | --- |
+| „von“, „bis“ | Beginn und Ende, etwa 09:00 und 13:00 |
+| „alle“ | Länge eines Fensters: 30, 45, 60, 90 oder 120 Minuten |
+| „Personen je Fenster“ | gesuchte Helfer pro Fenster |
+
+„Zeitfenster erzeugen“ macht aus der Aufgabe je Fenster eine eigene Aufgabe mit demselben Namen
+und derselben Erklärung: „Grillen 9–10 Uhr · 2 Plätze“, „Grillen 10–11 Uhr · 2 Plätze“ und so
+weiter. Das letzte Fenster endet am „bis“, auch wenn es dadurch kürzer ist (9:30 bis 11 Uhr in
+45 Minuten ergibt 9:30–10:15 und 10:15–11 Uhr). Danach lässt sich jedes Fenster einzeln ändern:
+mehr Plätze zur Hauptzeit, andere Uhrzeit, eins löschen. Gespeichert wird wie immer erst mit
+„Speichern“; das geht auch in Vorlagen.
+
+Haben für die Aufgabe schon Familien zugesagt, fragt das Tool vorher: Ihre Zusage hängt nach
+dem Aufteilen an keinem Fenster mehr. Am besten teilst du auf, bevor die Anmeldung freigegeben ist.
+
+Die Eltern sehen die Fenster unter einer Überschrift und kreuzen eines oder mehrere an. In der
+Liste der Anmeldungen, im Aufgabenstand, in der CSV und im Rückblick steht die Uhrzeit mit dabei,
+etwa „Grillen (10–11 Uhr)“. Gezählt wird je Fenster.
+
 Wie die Eltern Aufgaben übernehmen, hängt vom Haken „Aufgaben werden vor Ort verteilt“ ab:
 
 - **Haken aus (Standard):** Eltern kreuzen Aufgaben im Anmeldeformular an („vorab“). Die
@@ -611,7 +660,7 @@ Malen“, je Jahr mit dem Warum.
 | „Preis (€)“ | Ausgabe für diesen Posten, etwa „12,90“ |
 
 Unter der Liste steht die Summe: „Ausgaben: 44,90 €, davon schon gekauft 32,00 €“. Die Summe
-geht in den Rückblick ein (Saldo).
+steht im [Kassensturz](#kassensturz) nur als Hinweis; gerechnet wird mit den Belegen.
 
 | Knopf | Was er tut |
 | --- | --- |
@@ -636,28 +685,50 @@ speichern, dann Belege anhängen.“ Belege sieht nur das Orgateam.
 | „Laden“ | etwa „Aldi“ (optional) |
 | „Gekauft am“ | Datum des Einkaufs (optional) |
 | „Betrag (€)“ | Summe auf dem Bon, etwa „12,90“ (optional) |
-| „Zu welchem Posten?“ | ein Posten der Einkaufsliste (optional) |
+| „Zu welchem Posten?“ | ein Posten der Einkaufsliste (optional). Das Feld erscheint erst, wenn die Einkaufsliste dieser Veranstaltung Posten hat. |
 | „Foto“ | Bild vom Bon, Pflicht. Das Handy bietet Kamera oder Galerie an. |
 
 Was im Einzelnen gekauft wurde, steht auf dem Bon selbst; abtippen musst du nichts.
 
-„Beleg hinzufügen“ verkleinert das Foto und speichert es sofort, ohne „Speichern“ oben. Danach
+Sobald du ein Foto auswählst, liest das Tool es ein und verkleinert es; darunter steht „Foto wird
+vorbereitet …“, dann „Foto bereit.“ Steht stattdessen „Das Foto ließ sich nicht lesen. Bitte noch
+einmal auswählen …“, hat das Handy den Zugriff auf die Datei nicht erlaubt. Das passiert etwa,
+wenn das Foto nur in der Cloud liegt. Dann das Foto neu auswählen, am besten direkt mit der
+Kamera; ein Cloud-Foto vorher einmal in der Galerie öffnen.
+
+„Beleg hinzufügen“ speichert den Beleg sofort, ohne „Speichern“ oben. Danach
 steht der Beleg in der Liste: kleines Bild, Laden, Datum, Betrag und „für <Posten>“. Ein Tipp
 aufs Bild zeigt es groß und lesbar, „Schließen“, Esc oder ein Tipp daneben schließt es wieder.
 „Löschen“ entfernt den Beleg nach Rückfrage.
 
 Unter der Liste steht „2 Belege, zusammen 41,37 €“. Weicht das von den Preisen der
-Einkaufsliste ab, folgt „— Einkaufsliste sagt 44,90 €“. Für den Saldo im Rückblick zählt
-weiterhin die Einkaufsliste.
+Einkaufsliste ab, folgt „— Einkaufsliste sagt 44,90 €“. Im [Kassensturz](#kassensturz) sind
+die Belege die Ausgaben.
 
 Belege bleiben dauerhaft, wie die Fotos der Aufgaben, auch nach der Löschfrist und an
 archivierten Veranstaltungen. Beim nächsten Mal siehst du so an der alten Veranstaltung, wo
 es was zu welchem Preis gab. Weg sind sie nur, wenn du sie löschst oder die ganze
 Veranstaltung löschst.
 
+### Spenden
+
+Bekommt ihr für eine Veranstaltung Geld geschenkt, etwa aus der Spendendose oder als
+Firmenspende, trägst du es unter „Spenden“ ein. Den Abschnitt sieht nur das Orgateam.
+
+| Feld | Bedeutung |
+| --- | --- |
+| „Betrag (€)“ | etwa „120,50“, Pflicht |
+| „Eingegangen am“ | Datum (optional) |
+| „Notiz“ | etwa „Spendendose am Kuchenstand“ (optional). **Keine Namen von Privatpersonen.** |
+
+„+ Spende“ fügt eine Zeile hinzu, darunter steht „2 Spenden, zusammen 170,50 €“. Gespeichert
+wird mit „Speichern“. Spenden stehen im [Kassensturz](#kassensturz) bei den Einnahmen und zählen zum Kassenstand;
+eingetragen wird nur, was eingegangen ist, Zusagen nicht. Sie stehen im Rückblick und bleiben
+dauerhaft, auch nach der Löschfrist.
+
 ---
 
-## 9. Auswertung: Rückblick, Geld und Rückmeldungen
+## 9. Auswertung: Rückblick, Kassensturz und Rückmeldungen
 
 Der letzte Abschnitt im Editor heißt „Rückblick — für das nächste Mal“. Du füllst ihn nach der
 Veranstaltung aus.
@@ -713,19 +784,30 @@ Felder, die du nicht anfasst, bleiben, wie sie sind. Leere Felder bedeuten „un
 Namen gibt es im Archivmodus keine, nur Summen. So kann das ganze Orgateam alte Zahlen
 nachtragen und korrigieren.
 
-### Geld
+### Kassensturz
 
-Sobald es Einnahmen oder Ausgaben gibt, zeigt der Rückblick den Block „Geld“:
+Sobald es Einnahmen oder Ausgaben gibt, steht ganz oben im Editor der Kasten „Kassensturz“. So
+siehst du beim Öffnen sofort, wie die Kasse steht. Er hat zwei Zeilen:
 
-| Wert | Woher |
+| Zeile | Werte |
 | --- | --- |
-| „Einnahmen laut Anmeldungen“ | Summe der Beträge aller Anmeldungen (Soll), nicht was schon bezahlt ist |
-| „Ausgaben laut Einkaufsliste“ | Summe der Preise in der Einkaufsliste |
-| „Saldo“ | Einnahmen minus Ausgaben, rot wenn negativ |
+| Einnahmen | „geplant“: was die Anmeldungen kosten. „bezahlt“: eingetragene Zahlungen (Haken „bezahlt“ bei den Anmeldungen). „offen“: geplant minus bezahlt, rot, solange etwas offen ist; „zu viel“, wenn mehr bezahlt wurde. Gibt es [Spenden](#spenden), steht ihre Summe als „Spenden“ dahinter. |
+| Ausgaben | „laut Belegen“: Summe der [Belege](#belege) mit Betrag |
 
-Beim Speichern werden Einnahmen und Ausgaben im Rückblick festgehalten. Andere festgehaltene
-Werte, etwa wie viel schon bezahlt ist, bleiben dabei stehen. Im Archivmodus ersetzen die Felder
-„Einnahmen“, „davon bezahlt“ und „Ausgaben“ diesen Block.
+Darunter steht der **Kassenstand**: bezahlt plus Spenden minus Ausgaben, rot, wenn er negativ ist. Ein „–“
+heißt: dazu gibt es noch nichts, etwa noch keinen Beleg. Haben Belege keinen Betrag, steht
+darunter „1 Beleg hat noch keinen Betrag und fehlt in der Summe.“ Dann den Beleg löschen und
+mit Betrag neu anhängen. Gibt es Preise in der Einkaufsliste, steht als Hinweis „Die
+Einkaufsliste plant 44,90 €.“; gerechnet wird mit den Belegen.
+
+Der Kasten rechnet sofort mit, wenn du Belege anhängst. Zahlungen hakst du in der Ansicht der
+Anmeldungen ab; beim nächsten Öffnen des Editors stehen sie im Kassensturz.
+
+Beim Speichern werden Einnahmen und Ausgaben im Rückblick festgehalten, als Ausgaben die
+Summe der Belege (gibt es keine, die Preise der Einkaufsliste). Andere festgehaltene Werte,
+etwa wie viel schon bezahlt ist, bleiben dabei stehen. Im Archivmodus rechnet der Kassensturz
+mit den Feldern „Einnahmen“ und „davon bezahlt“ des Rückblicks und mit den Belegen, die
+dauerhaft bleiben; ohne Belege mit dem Feld „Ausgaben“.
 
 ### Zielwerte aus dem Rückblick
 
@@ -766,7 +848,7 @@ Vorlage). Prüf die Werte gegen die erwartete Personenzahl und speichere dann.
 | „Mitbringsel“ | Zahl aller Mitbringsel |
 | „da“, „Stunden zusammen“ | mit Check-in |
 | Menge je Bestellartikel | bei Bestellungen mit Stückpreis, ohne Absagen |
-| „Einnahmen (Soll)“, „bezahlt“, „offen (2 Familien)“ | wenn die Veranstaltung etwas kostet |
+| „Einnahmen (Soll)“, „bezahlt“, „offen (2 Familien)“ | wenn die Veranstaltung etwas kostet; dazu „Zahlung erlassen“, wenn es Erlasse gibt ([siehe unten](#zahlung-erlassen)) |
 
 ### Knöpfe
 
@@ -859,11 +941,36 @@ Niemand ist mehr offen.“ Anmeldungen mit zu viel gezahltem Betrag zeigt der Fi
 
 „bezahlt“ in den Summen enthält auch Zahlungen von Familien, die inzwischen abgesagt haben.
 
+### Zahlung erlassen
+
+Manche nehmen teil, zahlen aber nichts, etwa Erzieherinnen und Erzieher. Das geht nur im
+Orga-Bereich, an zwei Stellen:
+
+- **Beim Eintragen:** In „+ Anmeldung eintragen“ (und „bearbeiten“) steht unter der Anmerkung
+  der Haken „Zahlung erlassen, etwa für Erzieherinnen und Erzieher“. So meldest du sie gleich
+  richtig an.
+- **In der Liste:** Bei jeder Anmeldung, die etwas kostet, steht unter „offen“ bzw. „bezahlt“
+  der Haken **„Zahlung erlassen“**. Das gilt auch für Anmeldungen, die über den Link kamen.
+
+| Was passiert | |
+| --- | --- |
+| Betrag | 0 €. Bei der Anmeldung steht „Zahlung erlassen (statt 13,00 €)“. |
+| Personen, Mitbringsel, Aufgaben | zählen ganz normal mit |
+| Summen | „Einnahmen (Soll)“ und „offen“ ohne den erlassenen Betrag; daneben „2 Zahlung erlassen“ |
+| „Nur offene Zahlungen“ | erlassene Anmeldungen erscheinen nicht |
+| Kassensturz und Rückblick | rechnen mit 0 €, auch beim Festhalten nach der Löschfrist |
+| CSV | Spalte „Zahlung erlassen“ mit „ja“ |
+| Anmeldeseite | unverändert: Wer sich selbst über den Link angemeldet hat, sieht dort weiter den vollen Betrag. Sag der Person Bescheid, dass sie nichts zahlen muss. |
+
+Den Haken setzt und sieht nur das Orgateam; die Datenbank lässt Eltern weder lesen noch schreiben. Haken weg nimmt den
+Erlass zurück, dann gilt wieder der volle Betrag. Den Haken gibt es nur bei Anmeldungen, die
+etwas kosten würden, nicht bei Absagen.
+
 ### Export als CSV
 
 „Als CSV exportieren“ lädt `anmeldungen-<kurzname>.csv` herunter. Spalten: Name, Status
 (zugesagt/abgemeldet), die beiden Gruppen, Mitbringsel, Aufgaben, Anmerkung, je eine Spalte pro
-Zusatzfrage, Betrag (EUR), Bezahlt (EUR), Bezahlt am, mit Check-in zusätzlich Da, Gekommen,
+Zusatzfrage, Betrag (EUR), Zahlung erlassen, Bezahlt (EUR), Bezahlt am, mit Check-in zusätzlich Da, Gekommen,
 Gegangen, Stunden, und Angemeldet am. Die Datei ist mit Semikolon getrennt und öffnet sich in
 Excel mit Umlauten und rechenbaren Beträgen. Sie enthält Namen; entsprechend ablegen und nach
 Gebrauch löschen.

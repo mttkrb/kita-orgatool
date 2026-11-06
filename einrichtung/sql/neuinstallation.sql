@@ -12,7 +12,7 @@
 --  Läuft in einer Transaktion: Bei einem Fehler wird nichts angelegt.
 --  Enthält keine Daten.
 --
---  Erzeugt am 2026-10-19 11:24 mit einrichtung/vorlage-erzeugen.sh
+--  Erzeugt am 2026-11-06 15:04 mit einrichtung/vorlage-erzeugen.sh
 --  aus einem Projekt mit Postgres 17. Nicht von Hand ändern.
 -- =====================================================================
 
@@ -130,7 +130,9 @@ CREATE FUNCTION intern.anmeldung_betrag(s public.signups, e public.events) RETUR
     LANGUAGE sql STABLE
     SET search_path TO 'public'
     AS $_$
-  select case when s.status = 'absage' then 0::numeric else round(
+  select case when s.status = 'absage'
+                or exists (select 1 from fee_waivers w where w.signup_id = s.id)
+         then 0::numeric else round(
       case when case when e.people ? 'adults' then coalesce((e.people->'adults'->>'on')::boolean, false)
                      else e.ask_people end
            then s.adults * greatest(0, coalesce(nullif(e.payment->>'adults', '')::numeric, 0)) else 0 end
@@ -415,39 +417,6 @@ $$;
 
 
 --
--- Name: rls_auto_enable(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.rls_auto_enable() RETURNS event_trigger
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'pg_catalog'
-    AS $$
-DECLARE
-  cmd record;
-BEGIN
-  FOR cmd IN
-    SELECT *
-    FROM pg_event_trigger_ddl_commands()
-    WHERE command_tag IN ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')
-      AND object_type IN ('table','partitioned table')
-  LOOP
-     IF cmd.schema_name IS NOT NULL AND cmd.schema_name IN ('public') AND cmd.schema_name NOT IN ('pg_catalog','information_schema') AND cmd.schema_name NOT LIKE 'pg_toast%' AND cmd.schema_name NOT LIKE 'pg_temp%' THEN
-      BEGIN
-        EXECUTE format('alter table if exists %s enable row level security', cmd.object_identity);
-        RAISE LOG 'rls_auto_enable: enabled RLS on %', cmd.object_identity;
-      EXCEPTION
-        WHEN OTHERS THEN
-          RAISE LOG 'rls_auto_enable: failed to enable RLS on %', cmd.object_identity;
-      END;
-     ELSE
-        RAISE LOG 'rls_auto_enable: skip % (either system schema or not in enforced list: %.)', cmd.object_identity, cmd.schema_name;
-     END IF;
-  END LOOP;
-END;
-$$;
-
-
---
 -- Name: attendance; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -470,6 +439,16 @@ CREATE TABLE public.checkin_codes (
     event_id uuid NOT NULL,
     code text DEFAULT translate(encode(extensions.gen_random_bytes(9), 'base64'::text), '+/'::text, '-_'::text) NOT NULL,
     CONSTRAINT checkin_codes_code_check CHECK (((length(code) >= 8) AND (length(code) <= 40)))
+);
+
+
+--
+-- Name: fee_waivers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.fee_waivers (
+    signup_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -538,6 +517,23 @@ CREATE TABLE public.proposals (
     status text DEFAULT 'neu'::text NOT NULL,
     note text,
     created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: receipts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.receipts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    event_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    shop text,
+    bought_on date,
+    amount numeric(8,2),
+    item_id text,
+    image text NOT NULL,
+    CONSTRAINT receipts_grenzen_chk CHECK (((length(COALESCE(shop, ''::text)) <= 120) AND (length(COALESCE(item_id, ''::text)) <= 100) AND ((amount IS NULL) OR ((amount >= (0)::numeric) AND (amount < (100000)::numeric))) AND (length(image) <= 1500000) AND (image ~ '^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$'::text)))
 );
 
 
@@ -622,6 +618,14 @@ ALTER TABLE ONLY public.events
 
 
 --
+-- Name: fee_waivers fee_waivers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fee_waivers
+    ADD CONSTRAINT fee_waivers_pkey PRIMARY KEY (signup_id);
+
+
+--
 -- Name: feedback feedback_grenzen_chk; Type: CHECK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -683,6 +687,14 @@ ALTER TABLE public.proposals
 
 ALTER TABLE ONLY public.proposals
     ADD CONSTRAINT proposals_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: receipts receipts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipts
+    ADD CONSTRAINT receipts_pkey PRIMARY KEY (id);
 
 
 --
@@ -756,6 +768,13 @@ CREATE INDEX proposals_event_idx ON public.proposals USING btree (event_id, stat
 
 
 --
+-- Name: receipts_event_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX receipts_event_idx ON public.receipts USING btree (event_id);
+
+
+--
 -- Name: task_claims_event_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -794,6 +813,14 @@ ALTER TABLE ONLY public.events
 
 
 --
+-- Name: fee_waivers fee_waivers_signup_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.fee_waivers
+    ADD CONSTRAINT fee_waivers_signup_id_fkey FOREIGN KEY (signup_id) REFERENCES public.signups(id) ON DELETE CASCADE;
+
+
+--
 -- Name: feedback feedback_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -823,6 +850,14 @@ ALTER TABLE ONLY public.planning
 
 ALTER TABLE ONLY public.proposals
     ADD CONSTRAINT proposals_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE;
+
+
+--
+-- Name: receipts receipts_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.receipts
+    ADD CONSTRAINT receipts_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE;
 
 
 --
@@ -897,6 +932,13 @@ CREATE POLICY "aufgaben lesen" ON public.task_claims FOR SELECT TO anon USING (t
 
 
 --
+-- Name: receipts belege nur orga; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "belege nur orga" ON public.receipts TO anon USING (public.is_orga()) WITH CHECK (public.is_orga());
+
+
+--
 -- Name: task_images bilder anlegen; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -945,6 +987,13 @@ CREATE POLICY "eigene loeschen" ON public.signups FOR DELETE TO anon USING ((pub
 
 
 --
+-- Name: fee_waivers erlass orga; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "erlass orga" ON public.fee_waivers TO anon USING (public.is_orga()) WITH CHECK (public.is_orga());
+
+
+--
 -- Name: events; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -977,6 +1026,12 @@ CREATE POLICY "events lesen" ON public.events FOR SELECT TO anon USING (true);
 
 CREATE POLICY "events loeschen" ON public.events FOR DELETE TO anon USING (public.is_orga());
 
+
+--
+-- Name: fee_waivers; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.fee_waivers ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: feedback; Type: ROW SECURITY; Schema: public; Owner: -
@@ -1035,6 +1090,12 @@ CREATE POLICY planung ON public.planning TO anon USING (public.is_orga()) WITH C
 --
 
 ALTER TABLE public.proposals ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: receipts; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.receipts ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: signups; Type: ROW SECURITY; Schema: public; Owner: -
@@ -1373,6 +1434,14 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.checkin_codes TO anon;
 
 
 --
+-- Name: TABLE fee_waivers; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.fee_waivers TO service_role;
+GRANT SELECT,INSERT,DELETE ON TABLE public.fee_waivers TO anon;
+
+
+--
 -- Name: TABLE feedback; Type: ACL; Schema: public; Owner: -
 --
 
@@ -1385,8 +1454,6 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.feedback TO service_r
 -- Name: TABLE orga_keys; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.orga_keys TO anon;
-GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.orga_keys TO authenticated;
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.orga_keys TO service_role;
 
 
@@ -1414,6 +1481,14 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.planning TO service_r
 GRANT ALL ON TABLE public.proposals TO anon;
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.proposals TO authenticated;
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.proposals TO service_role;
+
+
+--
+-- Name: TABLE receipts; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.receipts TO service_role;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.receipts TO anon;
 
 
 --
