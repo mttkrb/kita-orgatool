@@ -84,7 +84,7 @@ erst beim Deployment eingetragen und nie committet.
 
 ## Datenmodell
 
-Dreizehn Tabellen. Veränderliche Strukturen liegen als JSON in Spalten, weil sich die
+Vierzehn Tabellen. Veränderliche Strukturen liegen als JSON in Spalten, weil sich die
 Felder je Veranstaltung unterscheiden.
 
 | Tabelle | Inhalt | Wer liest |
@@ -101,6 +101,7 @@ Felder je Veranstaltung unterscheiden.
 | `attendance` | Check-in: gekommen, gegangen, Stunden je Anmeldung, Kaskade mit `signups` | nur Orga |
 | `checkin_codes` | Code vom Aushang je Veranstaltung | nur Orga |
 | `receipts` | Belege zur Einkaufsliste: Foto vom Bon, Laden, Datum, Betrag, Posten (ab `migration-28.sql`) | nur Orga |
+| `fee_waivers` | Zahlung erlassen je Anmeldung, Kaskade mit `signups` (ab `migration-29.sql`) | nur Orga |
 | `orga_keys` | Orga-Passwort | niemand über die API |
 
 JSON-Strukturen: `categories`, `tasks`, `fields`, `checklist`, `shopping`, `review`,
@@ -134,6 +135,12 @@ selbst und zahlt vorher zurück. Absagen über das Formular bleiben möglich. Hi
 für Policies liegen im Schema `intern`, das die Schnittstelle nicht erreicht.
 `intern.anmeldung_betrag()` rechnet wie `kosten()` in `common.js` — wer eines ändert,
 ändert beide.
+
+Zahlung erlassen (ab `migration-29.sql`): Das Orgateam erlässt einer Anmeldung den Beitrag
+(Tabelle `fee_waivers`, nur Orga liest und schreibt). `orga.html` setzt dann
+`erlassen: true` an der Anmeldung, und `kosten()` gibt 0 zurück, wie
+`intern.anmeldung_betrag()`. Das Feld wird nie an `signups` geschickt. Die Anmeldeseite der
+Eltern kennt den Erlass nicht.
 
 ## Sicherheitsmodell
 

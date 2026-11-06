@@ -810,7 +810,7 @@ Vorlage). Prüf die Werte gegen die erwartete Personenzahl und speichere dann.
 | „Mitbringsel“ | Zahl aller Mitbringsel |
 | „da“, „Stunden zusammen“ | mit Check-in |
 | Menge je Bestellartikel | bei Bestellungen mit Stückpreis, ohne Absagen |
-| „Einnahmen (Soll)“, „bezahlt“, „offen (2 Familien)“ | wenn die Veranstaltung etwas kostet |
+| „Einnahmen (Soll)“, „bezahlt“, „offen (2 Familien)“ | wenn die Veranstaltung etwas kostet; dazu „Zahlung erlassen“, wenn es Erlasse gibt ([siehe unten](#zahlung-erlassen)) |
 
 ### Knöpfe
 
@@ -903,11 +903,36 @@ Niemand ist mehr offen.“ Anmeldungen mit zu viel gezahltem Betrag zeigt der Fi
 
 „bezahlt“ in den Summen enthält auch Zahlungen von Familien, die inzwischen abgesagt haben.
 
+### Zahlung erlassen
+
+Manche nehmen teil, zahlen aber nichts, etwa Erzieherinnen und Erzieher. Das geht nur im
+Orga-Bereich, an zwei Stellen:
+
+- **Beim Eintragen:** In „+ Anmeldung eintragen“ (und „bearbeiten“) steht unter der Anmerkung
+  der Haken „Zahlung erlassen, etwa für Erzieherinnen und Erzieher“. So meldest du sie gleich
+  richtig an.
+- **In der Liste:** Bei jeder Anmeldung, die etwas kostet, steht unter „offen“ bzw. „bezahlt“
+  der Haken **„Zahlung erlassen“**. Das gilt auch für Anmeldungen, die über den Link kamen.
+
+| Was passiert | |
+| --- | --- |
+| Betrag | 0 €. Bei der Anmeldung steht „Zahlung erlassen (statt 13,00 €)“. |
+| Personen, Mitbringsel, Aufgaben | zählen ganz normal mit |
+| Summen | „Einnahmen (Soll)“ und „offen“ ohne den erlassenen Betrag; daneben „2 Zahlung erlassen“ |
+| „Nur offene Zahlungen“ | erlassene Anmeldungen erscheinen nicht |
+| Kassensturz und Rückblick | rechnen mit 0 €, auch beim Festhalten nach der Löschfrist |
+| CSV | Spalte „Zahlung erlassen“ mit „ja“ |
+| Anmeldeseite | unverändert: Wer sich selbst über den Link angemeldet hat, sieht dort weiter den vollen Betrag. Sag der Person Bescheid, dass sie nichts zahlen muss. |
+
+Den Haken setzt und sieht nur das Orgateam; die Datenbank lässt Eltern weder lesen noch schreiben. Haken weg nimmt den
+Erlass zurück, dann gilt wieder der volle Betrag. Den Haken gibt es nur bei Anmeldungen, die
+etwas kosten würden, nicht bei Absagen.
+
 ### Export als CSV
 
 „Als CSV exportieren“ lädt `anmeldungen-<kurzname>.csv` herunter. Spalten: Name, Status
 (zugesagt/abgemeldet), die beiden Gruppen, Mitbringsel, Aufgaben, Anmerkung, je eine Spalte pro
-Zusatzfrage, Betrag (EUR), Bezahlt (EUR), Bezahlt am, mit Check-in zusätzlich Da, Gekommen,
+Zusatzfrage, Betrag (EUR), Zahlung erlassen, Bezahlt (EUR), Bezahlt am, mit Check-in zusätzlich Da, Gekommen,
 Gegangen, Stunden, und Angemeldet am. Die Datei ist mit Semikolon getrennt und öffnet sich in
 Excel mit Umlauten und rechenbaren Beträgen. Sie enthält Namen; entsprechend ablegen und nach
 Gebrauch löschen.
