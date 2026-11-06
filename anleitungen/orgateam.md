@@ -689,6 +689,22 @@ archivierten Veranstaltungen. Beim nächsten Mal siehst du so an der alten Veran
 es was zu welchem Preis gab. Weg sind sie nur, wenn du sie löschst oder die ganze
 Veranstaltung löschst.
 
+### Spenden
+
+Bekommt ihr für eine Veranstaltung Geld geschenkt, etwa aus der Spendendose oder als
+Firmenspende, trägst du es unter „Spenden“ ein. Den Abschnitt sieht nur das Orgateam.
+
+| Feld | Bedeutung |
+| --- | --- |
+| „Betrag (€)“ | etwa „120,50“, Pflicht |
+| „Eingegangen am“ | Datum (optional) |
+| „Notiz“ | etwa „Spendendose am Kuchenstand“ (optional). **Keine Namen von Privatpersonen.** |
+
+„+ Spende“ fügt eine Zeile hinzu, darunter steht „2 Spenden, zusammen 170,50 €“. Gespeichert
+wird mit „Speichern“. Spenden stehen im [Kassensturz](#kassensturz) bei den Einnahmen und zählen zum Kassenstand;
+eingetragen wird nur, was eingegangen ist, Zusagen nicht. Sie stehen im Rückblick und bleiben
+dauerhaft, auch nach der Löschfrist.
+
 ---
 
 ## 9. Auswertung: Rückblick, Kassensturz und Rückmeldungen
@@ -754,10 +770,10 @@ siehst du beim Öffnen sofort, wie die Kasse steht. Er hat zwei Zeilen:
 
 | Zeile | Werte |
 | --- | --- |
-| Einnahmen | „geplant“: was die Anmeldungen kosten. „bezahlt“: eingetragene Zahlungen (Haken „bezahlt“ bei den Anmeldungen). „offen“: geplant minus bezahlt, rot, solange etwas offen ist; „zu viel“, wenn mehr bezahlt wurde. |
+| Einnahmen | „geplant“: was die Anmeldungen kosten. „bezahlt“: eingetragene Zahlungen (Haken „bezahlt“ bei den Anmeldungen). „offen“: geplant minus bezahlt, rot, solange etwas offen ist; „zu viel“, wenn mehr bezahlt wurde. Gibt es [Spenden](#spenden), steht ihre Summe als „Spenden“ dahinter. |
 | Ausgaben | „laut Belegen“: Summe der [Belege](#belege) mit Betrag |
 
-Darunter steht der **Kassenstand**: bezahlt minus Ausgaben, rot, wenn er negativ ist. Ein „–“
+Darunter steht der **Kassenstand**: bezahlt plus Spenden minus Ausgaben, rot, wenn er negativ ist. Ein „–“
 heißt: dazu gibt es noch nichts, etwa noch keinen Beleg. Haben Belege keinen Betrag, steht
 darunter „1 Beleg hat noch keinen Betrag und fehlt in der Summe.“ Dann den Beleg löschen und
 mit Betrag neu anhängen. Gibt es Preise in der Einkaufsliste, steht als Hinweis „Die
