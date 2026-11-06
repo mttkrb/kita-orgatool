@@ -153,7 +153,7 @@ fuer_sql_editor() {
 
 cmd_erzeugen() {
   schritt "Struktur des Quellprojekts lesen"
-  local stamp orga_spalten cron
+  local stamp orga_spalten
   stamp="$(date '+%Y-%m-%d %H:%M')"
 
   pg pg_dump --format=custom --schema=public --schema=intern --schema-only \
@@ -179,13 +179,14 @@ cmd_erzeugen() {
             where e.extname <> 'plpgsql' order by e.extname" > "$ARBEIT/erweiterungen.sql" \
     || fehler "Erweiterungen nicht lesbar."
 
-  cron=f
-  if [ "$(abfrage "select to_regclass('cron.job') is not null")" = t ]; then
-    sql_datei "$UMZUG_SQL/cron-export.sql" > "$ARBEIT/cron.sql" || fehler "Cron-Aufträge nicht lesbar."
-    [ -s "$ARBEIT/cron.sql" ] && cron=t
-  fi
-  if [ "$cron" = t ]; then ok "Cron-Aufträge gelesen"
-  else hinweis "Im Quellprojekt gibt es keine aktiven Cron-Aufträge; daten_aufraeumen() läuft dann nicht von selbst."; fi
+  # Das nächtliche Aufräumen ist Pflicht (Löschfrist im Einwilligungstext). Ohne Auftrag im
+  # Quellprojekt bekäme jede Neuinstallation keinen, deshalb hier abbrechen.
+  [ "$(abfrage "select to_regclass('cron.job') is not null")" = t ] \
+    || fehler "Im Quellprojekt ist pg_cron nicht eingeschaltet. Erst den Cron-Auftrag einrichten (anleitungen/technik.md, Abschnitt 4)."
+  sql_datei "$UMZUG_SQL/cron-export.sql" > "$ARBEIT/cron.sql" || fehler "Cron-Aufträge nicht lesbar."
+  grep -q 'daten_aufraeumen' "$ARBEIT/cron.sql" \
+    || fehler "Im Quellprojekt gibt es keinen aktiven Cron-Auftrag für daten_aufraeumen(). Erst einrichten (anleitungen/technik.md, Abschnitt 4)."
+  ok "Cron-Aufträge gelesen"
 
   sql_datei "$UMZUG_SQL/struktur.sql" | grep -v -E "$SUPABASE_EIGENES" > "$ARBEIT/struktur.txt" \
     || fehler "Struktur nicht lesbar."
@@ -196,9 +197,9 @@ cmd_erzeugen() {
 
   schritt "Vorlage schreiben"
   mkdir -p "$ZIEL"
-  schreibe_neuinstallation "$stamp" "$orga_spalten" "$cron" > "$ZIEL/neuinstallation.sql"
+  schreibe_neuinstallation "$stamp" "$orga_spalten" > "$ZIEL/neuinstallation.sql"
   ok "sql/neuinstallation.sql ($(wc -c < "$ZIEL/neuinstallation.sql" | tr -d ' ') Bytes)"
-  schreibe_pruefen "$stamp" "$cron" > "$ZIEL/pruefen.sql"
+  schreibe_pruefen "$stamp" > "$ZIEL/pruefen.sql"
   ok "sql/pruefen.sql"
 
   pruefe_auf_geheimnisse
@@ -226,7 +227,7 @@ EOF
 }
 
 schreibe_neuinstallation() {
-  local stamp=$1 orga_spalten=$2 cron=$3
+  local stamp=$1 orga_spalten=$2
   cat <<EOF
 -- =====================================================================
 --  Kita-Orgatool – Neuinstallation
@@ -259,8 +260,7 @@ end \$\$;
 -- 1. Erweiterungen (die meisten bringt Supabase schon mit)
 -- ---------------------------------------------------------------------
 EOF
-  if [ "$cron" != t ]; then grep -v ' pg_cron ' "$ARBEIT/erweiterungen.sql" || true
-  else cat "$ARBEIT/erweiterungen.sql"; fi
+  cat "$ARBEIT/erweiterungen.sql"
   cat <<'EOF'
 
 -- ---------------------------------------------------------------------
@@ -280,15 +280,13 @@ EOF
   sed -n '/^do \$\$/,$p' "$REPO/umzug/sql/rechte-leeren.sql"
   echo
   fuer_sql_editor "$ARBEIT/rechte.sql"
-  if [ "$cron" = t ]; then
-    cat <<'EOF'
+  cat <<'EOF'
 
 -- ---------------------------------------------------------------------
 -- 4. Zeitgesteuerte Aufträge (pg_cron), z. B. das nächtliche Aufräumen
 -- ---------------------------------------------------------------------
 EOF
-    cat "$ARBEIT/cron.sql"
-  fi
+  cat "$ARBEIT/cron.sql"
   cat <<'EOF'
 
 -- ---------------------------------------------------------------------
@@ -310,7 +308,7 @@ EOF
 }
 
 schreibe_pruefen() {
-  local stamp=$1 cron=$2
+  local stamp=$1
   cat <<EOF
 -- =====================================================================
 --  Kita-Orgatool – Neuinstallation prüfen
@@ -356,14 +354,12 @@ select ergebnis from (
                  then 'OK: Orga-Passwort angelegt'
                  else 'FEHLT: kein Orga-Passwort in orga_keys' end
 EOF
-  if [ "$cron" = t ]; then
-    cat <<'EOF'
+  cat <<'EOF'
   union all
-  select 7, case when (select count(*) from cron.job where active) > 0
+  select 7, case when (select count(*) from cron.job where active and command like '%daten_aufraeumen%') > 0
                  then 'OK: ' || (select count(*) from cron.job where active) || ' Cron-Auftrag/Aufträge aktiv'
-                 else 'FEHLT: kein aktiver Cron-Auftrag, daten_aufraeumen() läuft nicht' end
+                 else 'FEHLT: kein aktiver Cron-Auftrag für daten_aufraeumen(), die Löschfrist wird nicht eingehalten' end
 EOF
-  fi
   cat <<'EOF'
 ) z
 order by nr, ergebnis;
