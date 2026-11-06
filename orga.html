@@ -226,6 +226,8 @@ create policy "eigene loeschen" on signups for delete to anon
   .todo .wann{white-space:nowrap;font-size:.82rem;color:var(--moss)}
   .todo .wann.spaet{color:var(--berry);font-weight:600}
   .todo .wo{display:block;color:var(--ink-soft);font-size:.82rem}
+  .hist .entsch{margin:6px 0 0;padding-left:18px;font-size:.88rem}
+  .hist .entsch li{margin:2px 0}
   .hist{background:#fff;border:1px solid var(--line);border-left:3px solid var(--ochre);
     border-radius:5px;padding:12px;margin-bottom:10px;font-size:.88rem}
   .hist b{font-weight:600}
@@ -600,6 +602,15 @@ create policy "eigene loeschen" on signups for delete to anon
         Pavillon leihen, Kaffee bestellen, Aushang drucken.</p>
       <div id="checks"></div>
       <button type="button" class="ghost" id="add-check">+ Punkt</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Entscheidungen</legend>
+      <p class="hint" style="margin:0 0 10px">Nur fürs Orgateam. Was festgelegt wurde, etwa Location,
+        Motto oder Caterer, und warum. Beim nächsten Mal aus derselben Vorlage steht es oben unter
+        „Aus den letzten Malen“.</p>
+      <div id="entscheidungen"></div>
+      <button type="button" class="ghost" id="add-entscheidung">+ Entscheidung</button>
     </fieldset>
 
     <fieldset>
@@ -987,6 +998,8 @@ demoEvents.push({
 let demoPlanning = { "e-alt": {
   checklist:[{id:"c1",label:"Kaffeemaschine leihen",who:"Nina",due:"2 Wochen vorher",done:true}],
   review:{ guests:82, expected:64, notes:"Kuchen war um 16 Uhr weg, Großeltern kamen zu zweit statt einzeln.",
+           entscheidungen:[{ id:"en1", thema:"Ort", ergebnis:"Kita-Außengelände mit Pavillon",
+             warum:"Gemeindesaal war belegt, bei Regen reicht der Pavillon", datum:"2025-09-01" }],
            cats:{ kuchen:{ist:10, urteil:"wenig"}, herzhaft:{ist:6, urteil:"ok"}, kaffee:{ist:9, urteil:"viel"} } }
 }};
 let demoSignups = [
@@ -2450,6 +2463,47 @@ $("add-spende").onclick = () => { $("spenden").appendChild(spendeRow()); refresh
 $("spenden").addEventListener("input", renderSpendenSumme);
 $("spenden").addEventListener("change", renderSpendenSumme);
 
+/* ---------- Entscheidungen: was festgelegt wurde, fürs nächste Mal ---------- */
+function entscheidungRow(e){
+  e = e || {};
+  const d = document.createElement("div");
+  d.className = "item";
+  d.innerHTML = TOOLS +
+    '<div class="row"><div style="flex:1;min-width:130px"><label>Thema</label>'+
+    '<input type="text" class="en-thema" maxlength="120" value="'+esc(e.thema||"")+'" placeholder="Location"></div>'+
+    '<div style="flex:2;min-width:170px"><label>Entscheidung</label>'+
+    '<input type="text" class="en-ergebnis" maxlength="300" value="'+esc(e.ergebnis||"")+'" placeholder="Gemeindesaal"></div></div>'+
+    '<label>Warum <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>'+
+    '<textarea class="en-warum" maxlength="1000" placeholder="Günstiger, mit Küche, bei Regen sicher">'+esc(e.warum||"")+'</textarea>';
+  d.dataset.id = e.id || "";
+  d.dataset.datum = e.datum || "";
+  wireTools(d);
+  faltbar(d, x=>{
+    const thema = x.querySelector(".en-thema").value.trim();
+    const ergebnis = x.querySelector(".en-ergebnis").value.trim();
+    if(!thema && !ergebnis) return "";
+    return "<b>" + esc(thema || "Entscheidung") + ":</b> " + esc(ergebnis || "noch offen") +
+      (x.dataset.datum ? " <span>" + new Date(x.dataset.datum + "T12:00:00").toLocaleDateString("de-DE") + "</span>" : "");
+  });
+  d._auf(!e.thema && !e.ergebnis);
+  return d;
+}
+// Das Datum setzt das Tool beim ersten Speichern, danach bleibt es
+const readEntscheidungen = box => [...box.children].map(d=>{
+  const thema = d.querySelector(".en-thema").value.trim();
+  const ergebnis = d.querySelector(".en-ergebnis").value.trim();
+  return thema || ergebnis ? { id:d.dataset.id || uid(), thema, ergebnis,
+    warum:d.querySelector(".en-warum").value.trim(), datum:d.dataset.datum || heute() } : null;
+}).filter(Boolean);
+$("add-entscheidung").onclick = () => {
+  $("entscheidungen").appendChild(entscheidungRow()); refreshTools($("entscheidungen"));
+};
+function entscheidungenHtml(liste){
+  return (liste || []).length ? '<ul class="entsch">' + liste.map(e =>
+    '<li><b>' + esc(e.thema || "Entscheidung") + ':</b> ' + esc(e.ergebnis || "noch offen") +
+    (e.warum ? ' <span style="color:var(--ink-soft)">— ' + esc(e.warum) + '</span>' : "") + '</li>').join("") + '</ul>' : "";
+}
+
 const readKauf = box => [...box.children].map(d=>{
   const artikel = d.querySelector(".k-artikel").value.trim();
   return artikel ? { id:d.dataset.id || uid(), artikel,
@@ -2917,7 +2971,8 @@ async function renderHistory(ev){
       (st.ausArchiv ? ' <span style="color:var(--ink-soft)">(aus der Zusammenfassung, '+
         'die Anmeldungen sind gelöscht)</span>' : "")+
       (rv.guests ? " tatsächlich da (angemeldet: "+st.people+")" : "")+
-      '<table><tr><th>Kategorie</th><th>Ziel</th><th>Ist</th><th>Bewertung</th></tr>'+cats+"</table>"+
+      (cats ? '<table><tr><th>Kategorie</th><th>Ziel</th><th>Ist</th><th>Bewertung</th></tr>'+cats+"</table>" : "")+
+      entscheidungenHtml(rv.entscheidungen)+
       (rv.notes ? '<p class="quote">„'+esc(rv.notes)+'"</p>' : "") + "</div>";
   }).join("");
 
@@ -3067,6 +3122,9 @@ async function openEditor(ev, opts){
   (((planning.review||{}).geld||{}).spenden||[]).forEach(p=>$("spenden").appendChild(spendeRow(p)));
   refreshTools($("spenden"));
   $("spenden-summe").textContent = "";
+  $("entscheidungen").innerHTML = "";
+  ((planning.review||{}).entscheidungen||[]).forEach(e=>$("entscheidungen").appendChild(entscheidungRow(e)));
+  refreshTools($("entscheidungen"));
   refreshTools($("einkauf"));
   $("kauf-summe").textContent = "";
   $("kauf-tpl").classList.toggle("hidden",
@@ -3586,6 +3644,7 @@ function collectPlanning(){
     review.geld = { ...(alt.geld || {}), einnahmen: einnahmenJetzt(), ausgaben: belegSumme() ?? ausgabenListe };
   }
   review.geld.spenden = readSpenden($("spenden"));
+  review.entscheidungen = readEntscheidungen($("entscheidungen"));
   return {
     shopping: readKauf($("einkauf")),
     checklist: readChecks($("checks")),

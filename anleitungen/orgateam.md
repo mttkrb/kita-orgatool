@@ -629,6 +629,27 @@ Einkaufsliste springen“.
 
 Offene Punkte mit Vorlauf erscheinen zwei Wochen vor ihrer Fälligkeit im Reiter „To-dos“.
 
+### Entscheidungen
+
+Unter der Checkliste hältst du fest, was entschieden wurde, damit es im nächsten Jahr niemand
+neu herausfinden muss: welche Location gebucht ist, welches Motto gilt, welcher Caterer kommt.
+Den Abschnitt sieht nur das Orgateam.
+
+| Feld | Bedeutung |
+| --- | --- |
+| „Thema“ | etwa „Location“ oder „Motto“ |
+| „Entscheidung“ | etwa „Gemeindesaal“ oder „Piraten“ |
+| „Warum“ (optional) | etwa „Günstiger, mit Küche, bei Regen sicher“ |
+
+„+ Entscheidung“ fügt eine Zeile hinzu. Beim ersten Speichern merkt sich das Tool das Datum;
+die Kurzfassung zeigt dann „Location: Gemeindesaal 12.03.2026“. Ändert sich eine Entscheidung,
+überschreibst du sie einfach oder legst eine neue Zeile an. Ist ein Thema noch offen, lass
+„Entscheidung“ leer, dann steht dort „noch offen“.
+
+Entscheidungen gehören zum Rückblick und bleiben dauerhaft, auch nach der Löschfrist. Legst du
+später eine Veranstaltung aus derselben Vorlage an, stehen sie oben unter „Aus den letzten
+Malen“, je Jahr mit dem Warum.
+
 ### Einkaufsliste
 
 | Feld | Bedeutung |
@@ -792,7 +813,8 @@ dauerhaft bleiben; ohne Belege mit dem Feld „Ausgaben“.
 
 Wird eine Veranstaltung aus einer Vorlage angelegt, die schon gelaufen ist, steht oben im Editor
 „Aus den letzten Malen“: für jede frühere Veranstaltung Anmeldungen, Personen (und „tatsächlich
-da“), eine Tabelle mit Kategorie, Ziel, Ist und Bewertung und die Notiz. Sind die Anmeldungen
+da“), eine Tabelle mit Kategorie, Ziel, Ist und Bewertung, die [Entscheidungen](#entscheidungen)
+und die Notiz. Sind die Anmeldungen
 schon gelöscht, steht dabei „(aus der Zusammenfassung, die Anmeldungen sind gelöscht)“, und
 Absagen werden mitgenannt, falls sie gepflegt sind. Ist-Werte, die nicht festgehalten sind, stehen
 als „–“.

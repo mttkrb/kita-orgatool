@@ -106,6 +106,8 @@ Felder je Veranstaltung unterscheiden.
 
 JSON-Strukturen: `categories`, `tasks`, `fields`, `checklist`, `shopping`, `review`,
 `people`, `visibility`, `payment` — Felder siehe Kommentare in `sql/` und der Code in `orga.html`.
+`planning.review.entscheidungen` hält `[{ id, thema, ergebnis, warum, datum }]`; die Historie
+(„Aus den letzten Malen“) zeigt sie beim nächsten Mal aus derselben Vorlage.
 
 Zeitfenster: Eine Aufgabe in Schichten ist eine Reihe eigener Einträge in `tasks` mit gleichem
 `label`, eigener `id` und `when` und gemeinsamem `group` (Kennung der ursprünglichen Aufgabe).
