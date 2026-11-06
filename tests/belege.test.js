@@ -161,3 +161,22 @@ test("Foto wird beim Auswählen gelesen; ist es nicht lesbar, Hinweis und neu au
     assert.deepEqual(s.fehler, []);
   }finally{ s.schliessen(); }
 });
+
+test("Posten-Auswahl nur, wenn die Einkaufsliste Posten hat", async () => {
+  const { s, w, $ } = await orga();
+  try{
+    await w.eval(`(async () => {
+      demoPlanning["e-neu"].shopping = [];
+      await openEditor(events.find(e => e.id === "e-neu"));
+    })()`);
+    await warte(() => sichtbar($("view-edit")), "Editor");
+    assert.ok(!sichtbar($("b-posten-box")), "leere Einkaufsliste: kein Feld");
+    $("add-kauf").click();
+    const art = $("einkauf").lastElementChild.querySelector(".k-artikel");
+    art.value = "Glühwein";
+    art.dispatchEvent(new w.Event("input", { bubbles:true }));
+    assert.ok(sichtbar($("b-posten-box")), "erscheint beim Tippen");
+    assert.ok([...$("b-posten").options].some(o => /Glühwein/.test(o.textContent)));
+    assert.deepEqual(s.fehler, []);
+  }finally{ s.schliessen(); }
+});

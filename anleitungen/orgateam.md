@@ -664,7 +664,7 @@ speichern, dann Belege anhängen.“ Belege sieht nur das Orgateam.
 | „Laden“ | etwa „Aldi“ (optional) |
 | „Gekauft am“ | Datum des Einkaufs (optional) |
 | „Betrag (€)“ | Summe auf dem Bon, etwa „12,90“ (optional) |
-| „Zu welchem Posten?“ | ein Posten der Einkaufsliste (optional) |
+| „Zu welchem Posten?“ | ein Posten der Einkaufsliste (optional). Das Feld erscheint erst, wenn die Einkaufsliste dieser Veranstaltung Posten hat. |
 | „Foto“ | Bild vom Bon, Pflicht. Das Handy bietet Kamera oder Galerie an. |
 
 Was im Einzelnen gekauft wurde, steht auf dem Bon selbst; abtippen musst du nichts.

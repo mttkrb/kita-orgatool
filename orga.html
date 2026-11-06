@@ -631,8 +631,10 @@ create policy "eigene loeschen" on signups for delete to anon
           <div><label for="b-betrag">Betrag (€)</label>
             <input type="text" id="b-betrag" inputmode="decimal" placeholder="12,90"></div>
         </div>
-        <label for="b-posten">Zu welchem Posten? <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
-        <select id="b-posten"></select>
+        <div id="b-posten-box" class="hidden">
+          <label for="b-posten">Zu welchem Posten? <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+          <select id="b-posten"></select>
+        </div>
         <label for="b-foto">Foto</label>
         <input type="file" id="b-foto" accept="image/*">
         <div style="margin-top:8px"><button type="button" class="ghost" id="b-dazu">Beleg hinzufügen</button></div>
@@ -2490,9 +2492,12 @@ async function ladeBelege(){
   belege = current && current.id ? await db.receipts(current.id).catch(()=>[]) : [];
   renderBelege();
 }
+// Auswahl nur, wenn die Einkaufsliste Posten hat; sonst stünde dort allein "—"
 function belegPosten(){
   const sel = $("b-posten"), alt = sel.value;
-  sel.innerHTML = '<option value="">—</option>' + readKauf($("einkauf")).map(p=>
+  const liste = readKauf($("einkauf"));
+  $("b-posten-box").classList.toggle("hidden", !liste.length);
+  sel.innerHTML = '<option value="">—</option>' + liste.map(p=>
     '<option value="'+esc(p.id)+'">'+esc([p.menge, p.einheit, p.artikel].filter(Boolean).join(" "))+'</option>').join("");
   sel.value = [...sel.options].some(o=>o.value === alt) ? alt : "";
 }
@@ -2536,6 +2541,7 @@ function renderBelege(){
     : "";
 }
 $("einkauf").addEventListener("change", renderBelege);
+$("einkauf").addEventListener("input", belegPosten);
 $("add-kauf").addEventListener("click", () => setTimeout(belegPosten));
 
 // Kassenbons sind lang und schmal; die längere Kante darf deshalb mehr Pixel haben als bei
