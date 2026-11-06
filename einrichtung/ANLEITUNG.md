@@ -243,6 +243,11 @@ Policies, Trigger, Rechte), die Liste der Erweiterungen und die Cron-Aufträge. 
 Anmeldungen, keine Veranstaltungen, kein Orga-Passwort. Das Projekt wird nicht
 verändert.
 
+Das Skript bricht ab, wenn das Projekt keinen aktiven Cron-Auftrag für
+`daten_aufraeumen()` hat. Sonst bekäme jede Neuinstallation keinen, und die Löschfrist
+würde nicht eingehalten. Einrichten wie in
+[anleitungen/technik.md](../anleitungen/technik.md#wann-es-läuft), Abschnitt 4.
+
 **Werkzeuge:** PostgreSQL-Kommandozeilenwerkzeuge oder Docker, wie beim Umzug
 ([umzug/ANLEITUNG.md](../umzug/ANLEITUNG.md), Abschnitt 2). Das Skript läuft unter
 Linux und macOS, unter Windows in WSL oder Git Bash.
