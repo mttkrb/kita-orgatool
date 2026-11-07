@@ -180,3 +180,80 @@ test("Posten-Auswahl nur, wenn die Einkaufsliste Posten hat", async () => {
     assert.deepEqual(s.fehler, []);
   }finally{ s.schliessen(); }
 });
+
+test("Ausgabe ohne Beleg: nur mit Betrag, zählt im Kassensturz", async () => {
+  const { s, w, $ } = await orga();
+  try{
+    await w.eval(`openEditor(events.find(e => e.id === "e-neu"))`);
+    await warte(() => sichtbar($("view-edit")), "Editor");
+    $("b-laden").value = "Wochenmarkt";
+    $("b-dazu").click();
+    await warte(() => /Betrag eintragen/.test($("beleg-msg").textContent), "Betrag fehlt");
+    assert.equal(w.eval("demoReceipts.length"), 0);
+    $("b-betrag").value = "7,50";
+    $("b-dazu").click();
+    await warte(() => w.eval("demoReceipts.length") === 1, "gespeichert");
+    assert.equal(w.eval("demoReceipts[0].image"), null);
+    assert.equal(w.eval("demoReceipts[0].amount"), 7.5);
+    await warte(() => $("belege").querySelector(".beleg-ohne"), "Liste");
+    assert.match($("belege").textContent, /ohne Beleg.*Wochenmarkt · 7,50/);
+    assert.match($("kasse").textContent.replace(/\s/g, " "), /laut Belegen7,50/);
+    assert.deepEqual(s.fehler, []);
+  }finally{ s.schliessen(); }
+});
+
+test("PDF als Beleg: unverändert gespeichert, in der Liste zum Herunterladen", async () => {
+  const { s, w, $ } = await orga();
+  try{
+    await w.eval(`openEditor(events.find(e => e.id === "e-neu"))`);
+    await warte(() => sichtbar($("view-edit")), "Editor");
+    const pdf = new w.File(["%PDF-1.4 Rechnung"], "rechnung.pdf", { type:"application/pdf" });
+    Object.defineProperty($("b-foto"), "files", { configurable:true, value:[pdf] });
+    $("b-foto").dispatchEvent(new w.Event("change"));
+    await warte(() => /PDF bereit/.test($("beleg-msg").textContent), "PDF bereit");
+    $("b-laden").value = "Onlineshop"; $("b-betrag").value = "19,99";
+    $("b-dazu").click();
+    await warte(() => w.eval("demoReceipts.length") === 1, "gespeichert");
+    const bild = w.eval("demoReceipts[0].image");
+    assert.match(bild, /^data:application\/pdf;base64,/);
+    assert.equal(Buffer.from(bild.split(",")[1], "base64").toString(), "%PDF-1.4 Rechnung");
+    await warte(() => $("belege").querySelector(".beleg-pdf"), "PDF in der Liste");
+    assert.ok(!$("belege").querySelector("img"), "kein Bild");
+    // Herunterladen erzeugt einen Link mit Dateinamen
+    let datei = "";
+    w.URL.createObjectURL = () => "blob:test";
+    w.URL.revokeObjectURL = () => {};
+    w.HTMLAnchorElement.prototype.click = function(){ datei = this.download; };
+    $("belege").querySelector(".beleg-pdf").click();
+    assert.equal(datei, "beleg-onlineshop.pdf");
+    assert.deepEqual(s.fehler, []);
+  }finally{ s.schliessen(); }
+});
+
+test("PDF über 1 MB wird abgelehnt", async () => {
+  const { s, w, $ } = await orga();
+  try{
+    await w.eval(`openEditor(events.find(e => e.id === "e-neu"))`);
+    await warte(() => sichtbar($("view-edit")), "Editor");
+    const gross = new w.File([new Uint8Array(1200000)], "gross.pdf", { type:"application/pdf" });
+    Object.defineProperty($("b-foto"), "files", { configurable:true, value:[gross] });
+    $("b-foto").dispatchEvent(new w.Event("change"));
+    await warte(() => /PDF zu groß/.test($("beleg-msg").textContent), "zu groß");
+    assert.equal($("b-foto").value, "");
+  }finally{ s.schliessen(); }
+});
+
+test("Nachbau: ohne Beleg nur mit Betrag, PDF ja, HTML nein", async () => {
+  const db = fakeDb();
+  const s = ladeSeite("orga.html", { supabase:SUPABASE, fetch:db.fetch });
+  const w = s.window;
+  try{
+    await s.geladen;
+    w.eval(`orgaKey = "${ORGA}"`);
+    await w.eval(`db.addReceipt({ event_id:"e1", amount:3 })`);
+    await w.eval(`db.addReceipt({ event_id:"e1", amount:9, image:"data:application/pdf;base64,JVBERi0x" })`);
+    await assert.rejects(w.eval(`db.addReceipt({ event_id:"e1", shop:"leer" })`));
+    await assert.rejects(w.eval(`db.addReceipt({ event_id:"e1", amount:1, image:"data:text/html;base64,PGI+" })`));
+    assert.equal(db.receipts.length, 2);
+  }finally{ s.schliessen(); }
+});

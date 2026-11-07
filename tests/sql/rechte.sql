@@ -1,5 +1,5 @@
 -- Rechteprüfung für Migration 22 (Zahlungseingang), 23 und 25 (Check-in), 24 (Abmelden mit
--- Zahlung, Aufräumen), 27 (orga_keys), 28 (Belege), 29 (Zahlung erlassen), dazu die gesperrte
+-- Zahlung, Aufräumen), 27 (orga_keys), 28 und 30 (Belege), 29 (Zahlung erlassen), dazu die gesperrte
 -- Token-Spalte aus schema.sql.
 -- Weist auch nach, was verboten ist. Jede Zeile beginnt mit OK oder FEHLER.
 \set QUIET on
@@ -135,6 +135,17 @@ do $$ begin insert into receipts (event_id, image) values ('11111111-1111-1111-1
 do $$ begin insert into receipts (event_id, shop, image) values ('11111111-1111-1111-1111-111111111111', repeat('x', 200), 'data:image/jpeg;base64,QUJD');
   perform pruef('Beleg mit zu langem Text abgelehnt', false);
   exception when check_violation then perform pruef('Beleg mit zu langem Text abgelehnt', true); end $$;
+-- migration-30: ohne Beleg mit Betrag, als PDF; ohne Beleg und Betrag oder fremdes Format nicht
+insert into receipts (event_id, shop, amount) values ('11111111-1111-1111-1111-111111111111', 'Markt', 3.2);
+insert into receipts (event_id, shop, amount, image) values
+  ('11111111-1111-1111-1111-111111111111', 'Markt', 9, 'data:application/pdf;base64,JVBERi0x');
+select pruef('Orga legt Beleg ohne Foto und als PDF an', (select count(*) from receipts where shop = 'Markt') = 3);
+do $$ begin insert into receipts (event_id, shop) values ('11111111-1111-1111-1111-111111111111', 'Leer');
+  perform pruef('Beleg ohne Foto und ohne Betrag abgelehnt', false);
+  exception when check_violation then perform pruef('Beleg ohne Foto und ohne Betrag abgelehnt', true); end $$;
+do $$ begin insert into receipts (event_id, amount, image) values ('11111111-1111-1111-1111-111111111111', 1, 'data:text/html;base64,PGI+');
+  perform pruef('Beleg als HTML abgelehnt', false);
+  exception when check_violation then perform pruef('Beleg als HTML abgelehnt', true); end $$;
 delete from receipts where shop = 'Markt';
 select pruef('Orga löscht Beleg', (select count(*) from receipts) = 1);
 select pruef('Orga liest Erlass, Eltern haben ihn nicht weggenommen', (select count(*) from fee_waivers) = 1);

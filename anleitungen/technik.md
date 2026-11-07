@@ -73,14 +73,14 @@ Schnittstelle an. Es gibt vierzehn Tabellen:
 | `payments` | Zahlungseingang je Anmeldung | nur Orgateam |
 | `attendance` | Check-in: gekommen, gegangen, Stunden | nur Orgateam |
 | `checkin_codes` | Code vom Aushang je Veranstaltung | nur Orgateam |
-| `receipts` | Belege zur Einkaufsliste: Foto vom Kassenbon, Laden, Datum, Betrag, Posten; bleiben dauerhaft | nur Orgateam |
+| `receipts` | Belege zur Einkaufsliste: Foto vom Kassenbon oder PDF, Laden, Datum, Betrag, Posten; ab `migration-30.sql` auch ohne Beleg mit Betrag; bleiben dauerhaft | nur Orgateam |
 | `fee_waivers` | Zahlung erlassen je Anmeldung, Kaskade mit `signups` | nur Orgateam |
 | `orga_keys` | Orga-Passwort | niemand über die Schnittstelle |
 
 Die SQL-Dateien im Ordner `sql/`:
 
 - `schema.sql`: der erste Stand der Datenbank
-- `migration-2.sql` bis `migration-29.sql`: alle späteren Änderungen, in dieser
+- `migration-2.sql` bis `migration-30.sql`: alle späteren Änderungen, in dieser
   Reihenfolge. Oben in jeder Datei steht, was sie ändert.
 
 Für eine Neuinstallation werden sie nicht einzeln ausgeführt, sondern

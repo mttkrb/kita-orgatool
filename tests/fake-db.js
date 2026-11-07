@@ -107,8 +107,11 @@ function fakeDb(start = {}){
       if(methode === "GET") return antwort(200, treffer());
       if(methode === "POST"){
         if(!orga) return antwort(403, { code:"42501", message:"new row violates row-level security policy for table receipts" });
-        const ok = body.event_id && typeof body.image === "string" && body.image.length <= 1500000 &&
-          /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(body.image) &&
+        // migration-30: Bild, PDF oder ohne Beleg; ohne Beleg braucht es einen Betrag
+        const bildOk = body.image == null ? body.amount != null
+          : typeof body.image === "string" && body.image.length <= 1500000 &&
+            /^data:(image\/(jpeg|png|webp)|application\/pdf);base64,[A-Za-z0-9+/=]+$/.test(body.image);
+        const ok = body.event_id && bildOk &&
           String(body.shop || "").length <= 120 &&
           String(body.item_id || "").length <= 100 &&
           (body.amount == null || (body.amount >= 0 && body.amount <= 100000));
