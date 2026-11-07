@@ -155,3 +155,33 @@ test("ältere config.js ohne SETTINGS funktioniert", async () => {
   assert.equal(s.g("kitaName"), "");
   assert.deepEqual(s.fehler, []);
 });
+
+// Die Content-Security-Policy in deploy/.htaccess erlaubt Bilder nur als 'self' und data:.
+// Ein blob:-Bild blockiert der Browser, dann scheitert jedes Foto (so geschehen mit PR #11).
+test("verkleinern kommt ohne blob:-Adressen aus, wie die CSP verlangt", async () => {
+  const fs = require("fs"), path = require("path");
+  const csp = fs.readFileSync(path.join(__dirname, "..", "deploy", ".htaccess"), "utf8")
+    .match(/img-src ([^;"]+)/)[1];
+  assert.doesNotMatch(csp, /blob:/, "CSP erlaubt keine blob:-Bilder; sonst darf dieser Test fallen");
+
+  const s = await common();
+  const w = s.window;
+  let objektAdresse = 0;
+  w.URL.createObjectURL = () => { objektAdresse++; return "blob:verboten"; };
+  w.HTMLCanvasElement.prototype.getContext = () => ({ drawImage(){} });
+  w.HTMLCanvasElement.prototype.toDataURL = () => "data:image/jpeg;base64,AA";
+  const datei = new w.File(["x"], "bon.jpg", { type:"image/jpeg" });
+
+  // Weg 1: createImageBitmap
+  w.createImageBitmap = async () => ({ width:3000, height:4000, close(){} });
+  assert.equal(await s.g("verkleinern")(datei, 2000), "data:image/jpeg;base64,AA");
+
+  // Weg 2: kein createImageBitmap, dann FileReader mit data:-Adresse
+  delete w.createImageBitmap;
+  const bilder = [];
+  Object.defineProperty(w.HTMLImageElement.prototype, "src", { configurable:true,
+    set(v){ bilder.push(v); setTimeout(() => this.onload && this.onload()); }, get(){ return ""; } });
+  assert.equal(await s.g("verkleinern")(datei), "data:image/jpeg;base64,AA");
+  assert.ok(bilder.length && bilder.every(b => b.startsWith("data:")), "nur data:-Adressen");
+  assert.equal(objektAdresse, 0, "keine blob:-Adresse");
+});
