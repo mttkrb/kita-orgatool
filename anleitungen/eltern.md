@@ -443,6 +443,17 @@ steht vorher über dem Formular: „Die Aufgaben verteilen wir am Tag selbst. Di
 erscheint hier am …“. Ohne diese Einstellung ist die Liste schon vorher sichtbar, und du
 kannst dich auch schon vorher eintragen.
 
+### Nach Anmeldeschluss: Dienstplan
+
+Bei „vorab“ verschwindet das Formular, wenn die Anmeldung geschlossen ist. Dann steht auf der
+Seite der **„Dienstplan“**: „Die Anmeldung ist geschlossen. Hier steht, wer was übernimmt. Wo
+noch Plätze frei sind, trag dich einfach mit deinem Namen ein.“
+
+- Bei jeder Aufgabe steht, wer schon zugesagt hat, gekürzt wie „Anna B.“. Zeigt die
+  Veranstaltung keine Namen bei Aufgaben, steht dort nur „2 Familien eingetragen“.
+- Sind noch Plätze frei, steht dort „1 von 3 noch frei“ und darunter das Feld „Dein Name“ mit
+  „Ich mach das“, wie unten beschrieben. Ist die Aufgabe voll, steht „voll“, und es gibt kein Feld.
+
 ### Eine Aufgabe übernehmen
 
 Jede Aufgabe zeigt ihren Namen, wie viele Plätze noch frei sind („2 von 4 noch frei“), eine

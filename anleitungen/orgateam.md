@@ -541,16 +541,17 @@ Haben für die Aufgabe schon Familien zugesagt, fragt das Tool vorher: Ihre Zusa
 dem Aufteilen an keinem Fenster mehr. Am besten teilst du auf, bevor die Anmeldung freigegeben ist.
 
 Die Eltern sehen die Fenster unter einer Überschrift und kreuzen eines oder mehrere an. In der
-Liste der Anmeldungen, im Aufgabenstand, in der CSV und im Rückblick steht die Uhrzeit mit dabei,
+Liste der Anmeldungen, im Dienstplan, in der CSV und im Rückblick steht die Uhrzeit mit dabei,
 etwa „Grillen (10–11 Uhr)“. Gezählt wird je Fenster.
 
 Wie die Eltern Aufgaben übernehmen, hängt vom Haken „Aufgaben werden vor Ort verteilt“ ab:
 
 - **Haken aus (Standard):** Eltern kreuzen Aufgaben im Anmeldeformular an („vorab“). Die
-  Plätze sind begrenzt durch „Wie viele“. Die Aufgaben stehen in der Anmeldung.
+  Plätze sind begrenzt durch „Wie viele“. Die Aufgaben stehen in der Anmeldung und im
+  [Dienstplan](#dienstplan) bei den Anmeldungen.
 - **Haken an:** Aufgaben werden am Tag übernommen. Helfer tragen auf der Anmeldeseite ihren
   Namen ein („Ich mach das“) und haken ab, wenn es erledigt ist. Diese Übernahmen siehst du in
-  den Anmeldungen im Kasten „Aufgabenstand“.
+  den Anmeldungen im [Dienstplan](#dienstplan).
 
 Unter der Liste:
 
@@ -859,11 +860,27 @@ Vorlage). Prüf die Werte gegen die erwartete Personenzahl und speichere dann.
 | „Aktualisieren“ | Liste neu laden |
 | „Nur offene Zahlungen“ | nur wenn die Veranstaltung etwas kostet; siehe unten. Ein zweiter Tipp („Alle Anmeldungen zeigen“) hebt den Filter auf. |
 
-### Aufgabenstand
+### Dienstplan
 
-Haben Helfer Aufgaben am Tag übernommen (Haken „Aufgaben werden vor Ort verteilt“), zeigt der
-Kasten „Aufgabenstand“ je Aufgabe, wer sie übernommen hat (mit ✓, wenn abgehakt), und
-„niemand“, „läuft“ oder „erledigt“.
+Hat die Veranstaltung Aufgaben, steht über der Tabelle der Kasten **„Dienstplan“**: je Aufgabe,
+wer sie übernimmt, mit vollen Namen. Er sammelt beides, die Haken aus dem Anmeldeformular
+(„vorab“) und die Übernahmen am Tag („Ich mach das“, mit ✓, wenn abgehakt). Absagen zählen
+nicht. Rechts steht „2 von 6, 4 frei“, „voll“ oder „erledigt“.
+
+Der Dienstplan bleibt sichtbar, auch wenn die Anmeldung geschlossen ist.
+
+**Für die Eltern:** Nach Anmeldeschluss wird auf der Anmeldeseite aus der Auswahl im Formular
+ebenfalls ein Dienstplan. Er zeigt je Aufgabe die Zusagen, gekürzt wie „Anna B.“; zeigt die
+Veranstaltung keine Namen bei Aufgaben, nur „2 Familien eingetragen“. Freie Plätze können
+Eltern dort am Tag mit ihrem Namen übernehmen („Ich mach das“), wie bei „Aufgaben werden vor
+Ort verteilt“. Diese Einträge erscheinen hier mit.
+
+**„Dienstplan drucken“** öffnet eine Druckansicht: Tabelle mit Aufgabe, Wann und Wer, für jeden
+freien Platz eine leere Zeile zum Eintragen von Hand am Tag. Mit dem Haken **„Namen kürzen
+(„Tim B.“), zum Teilen mit den Eltern“** stehen gekürzte Namen drin. „Drucken oder als PDF
+sichern“ öffnet den Druckdialog; dort „Als PDF speichern“ wählen, um den Plan etwa in der
+Eltern-Gruppe zu teilen. „Schließen“ führt zurück. Ohne Haken enthält der Ausdruck die vollen
+Namen, für das Orgateam am Tag.
 
 ### Die Tabelle
 

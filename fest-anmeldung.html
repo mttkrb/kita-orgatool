@@ -531,6 +531,10 @@ const api = {
 };
 
 let EV = null, EVENT_ID = null, BELEGT = [];
+// Nach Anmeldeschluss wird aus der Auswahl im Formular ein Dienstplan: wer schon zugesagt
+// hat, steht drin, freie Plätze nimmt man am Tag mit Namen (task_claims), wie bei
+// "Aufgaben vor Ort verteilen".
+let nachSchluss = false;
 let DEMO_ANWESEND = Object.create(null); // ohne Prototyp: sid kommt aus der Adresse
 let DEMO_CLAIMS = [{id:"c1", task_id:"aufbau", name:"Sarah Klein", done:true}];
 let entries = [];
@@ -623,6 +627,7 @@ function renderHead(){
   const hatKategorien = (EV.categories||[]).length > 0;
   const hatAufgaben = (EV.tasks||[]).length > 0;
   const vorOrt = (EV.visibility||{}).taskSignup === false;
+  nachSchluss = !vorOrt && !!schonVorbei && !checkinModus();
 
   $("board-section").classList.toggle("hidden", !hatKategorien);
   $("brings-block").classList.toggle("hidden", !hatKategorien);
@@ -632,7 +637,7 @@ function renderHead(){
   // Liste für den Tag: auf Wunsch erst am Veranstaltungstag selbst
   const erstAmTag = (EV.visibility||{}).tasksOnDay === true;
   const nochZu = erstAmTag && EV.event_on && heute() < EV.event_on;
-  $("tasks-section").classList.toggle("hidden", !hatAufgaben || !vorOrt || nochZu);
+  $("tasks-section").classList.toggle("hidden", !hatAufgaben || !(vorOrt || nachSchluss) || nochZu);
 
   if(hatAufgaben && vorOrt && nochZu){
     $("aufgaben-spaeter").classList.remove("hidden");
@@ -648,7 +653,7 @@ function renderHead(){
   const mainEl = $("main");
   const formTeil = $("form").closest("section");
   mainEl.appendChild(formTeil);
-  if(vorOrt) mainEl.appendChild($("tasks-section"));
+  if(vorOrt || nachSchluss) mainEl.appendChild($("tasks-section"));
   mainEl.appendChild($("board-section"));
   const verteilen = (EV.visibility||{}).taskSignup !== false;
   $("tasks-block").classList.toggle("hidden", !verteilen || !(EV.tasks||[]).length);
@@ -665,6 +670,11 @@ function renderHead(){
   if(!verteilen) $("tasks-lead").textContent =
     "Die Aufgaben verteilen wir am Tag selbst vor Ort. Hier siehst du schon mal, was ansteht — "+
     "und was vorher besorgt werden muss.";
+  if(nachSchluss){
+    $("tasks-head").textContent = "Dienstplan";
+    $("tasks-lead").textContent = "Die Anmeldung ist geschlossen. Hier steht, wer was übernimmt. " +
+      "Wo noch Plätze frei sind, trag dich einfach mit deinem Namen ein.";
+  }
 
 
 }
@@ -795,7 +805,7 @@ document.addEventListener("click", async ev => {
   const nehmen = ev.target.closest("[data-nehmen]");
   if(nehmen){
     const id = nehmen.dataset.nehmen;
-    const feld = document.querySelector('[data-name="'+CSS.escape(id)+'"]');
+    const feld = nehmen.closest(".claim").querySelector("[data-name]");
     const name = feld ? feld.value.trim() : "";
     if(!name){ if(feld) feld.focus(); return; }
     nehmen.disabled = true;
@@ -842,23 +852,33 @@ function renderTasks(){
     const extra = (t.info ? '<span class="task-info">'+esc(t.info)+'</span>' : "") +
       (shots.length ? '<div class="task-shots">'+shots.map(b=>
         '<img src="'+bildUrl(b.data)+'" alt="Foto zu '+esc(t.label)+'" loading="lazy">').join("")+'</div>' : "");
-    if(!verteilen){
+    if(!verteilen || nachSchluss){
       const meine = BELEGT.filter(c=>c.task_id === t.id);
-      const alleFertig = meine.length && meine.every(c=>c.done);
+      // Nach Anmeldeschluss zählen die Zusagen aus dem Formular mit; Namen nur, wenn die
+      // Veranstaltung Namen bei Aufgaben zeigt (sonst liefert die Datenbank keine)
+      const zusagen = nachSchluss ? entries.filter(e=>(e.tasks||[]).includes(t.id)) : [];
+      const zusagenText = !zusagen.length ? ""
+        : vis(EV).taskNames && zusagen.every(e=>e.name)
+          ? zusagen.map(e=>shortName(e.name)).join(", ")
+          : zusagen.length + (zusagen.length === 1 ? " Familie" : " Familien") + " eingetragen";
+      const alleFertig = !zusagen.length && meine.length && meine.every(c=>c.done);
       const zeilen = meine.map(c=>
         '<div class="wer-zeile'+(c.done?" fertig":"")+'">'+
         '<input type="checkbox" data-done="'+esc(c.id)+'" '+(c.done?"checked":"")+' title="erledigt">'+
         '<span class="t-name">'+esc(c.name)+'</span>'+
         '<button type="button" class="weg" data-weg="'+esc(c.id)+'">entfernen</button></div>').join("");
-      const frei = Math.max(0, t.needed - meine.length);
+      const frei = Math.max(0, t.needed - zusagen.length - meine.length);
       return '<div class="task block'+(alleFertig?" fertig":"")+'">'+
         '<strong class="t-name">'+esc(aufgabeName(t))+'</strong>'+
         (alleFertig ? ' <span class="task-free">erledigt</span>'
-                    : (frei ? ' <span class="task-free">'+frei+' von '+t.needed+' noch frei</span>' : ""))+
+                    : (frei ? ' <span class="task-free">'+frei+' von '+t.needed+' noch frei</span>'
+                            : nachSchluss ? ' <span class="task-free full">voll</span>' : ""))+
         extra +
+        (zusagenText ? '<div class="wer"><div class="wer-zeile"><span class="t-name">'+esc(zusagenText)+'</span></div></div>' : "") +
         (zeilen ? '<div class="wer">'+zeilen+'</div>' : "") +
+        (nachSchluss && !frei ? "" :
         '<div class="claim"><input type="text" placeholder="Dein Name" data-name="'+esc(t.id)+'">'+
-        '<button type="button" data-nehmen="'+esc(t.id)+'">Ich mach das</button></div></div>';
+        '<button type="button" data-nehmen="'+esc(t.id)+'">Ich mach das</button></div>')+'</div>';
     }
     const wer = vis(EV).taskNames
       ? (who.length ? esc(who.join(", ")) : "noch niemand")

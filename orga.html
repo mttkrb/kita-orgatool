@@ -260,7 +260,13 @@ create policy "eigene loeschen" on signups for delete to anon
     border:0;padding:8px;line-height:0;color:var(--ink-soft);cursor:pointer;border-radius:5px}
   .pw-zeigen:hover{color:var(--ink)}
   .pw-zeigen svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-  #aushang-ansicht{position:fixed;inset:0;background:#fff;z-index:70;overflow:auto;padding:24px 16px}
+  #aushang-ansicht, #dienstplan-ansicht{position:fixed;inset:0;background:#fff;z-index:70;overflow:auto;padding:24px 16px}
+  .dienstplan{max-width:720px;margin:0 auto}
+  .dienstplan table{width:100%;border-collapse:collapse;margin-top:12px}
+  .dienstplan th, .dienstplan td{border:1px solid #999;padding:6px 8px;text-align:left;vertical-align:top}
+  .dienstplan td.leer{height:1.6em}
+  .dp-zeile{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .dp-zeile .wer{display:block;color:var(--ink-soft);font-size:.88rem}
   .beleg{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
   .beleg img{width:56px;height:56px;object-fit:cover;border-radius:5px;cursor:zoom-in;border:1px solid var(--line)}
   .beleg .was{flex:1;font-size:.9rem}
@@ -274,8 +280,8 @@ create policy "eigene loeschen" on signups for delete to anon
   .aushang .klein{font-size:.8rem;color:var(--ink-soft);word-break:break-all}
   .aushang-knoepfe{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:20px}
   @media print{
-    .wrap > *:not(#aushang-ansicht){display:none!important}
-    #aushang-ansicht{position:static;padding:0}
+    .wrap > *:not(#aushang-ansicht):not(#dienstplan-ansicht){display:none!important}
+    #aushang-ansicht, #dienstplan-ansicht{position:static;padding:0}
     .aushang-knoepfe{display:none!important}
   }
   code{background:#fff;border:1px solid var(--line);border-radius:4px;padding:2px 5px;
@@ -351,6 +357,24 @@ create policy "eigene loeschen" on signups for delete to anon
         <button class="ghost" id="ah-zu">Schließen</button>
       </div>
       <p class="hint aushang-knoepfe" id="ah-msg"></p>
+    </div>
+  </div>
+
+  <div id="dienstplan-ansicht" class="hidden">
+    <div class="dienstplan">
+      <p class="klein" id="dp-kita"></p>
+      <h1 id="dp-titel" style="margin:4px 0"></h1>
+      <p id="dp-datum" style="margin:0"></p>
+      <div id="dp-tabelle"></div>
+      <label class="check aushang-knoepfe" style="justify-content:center"><input type="checkbox" id="dp-kurz">
+        <span>Namen kürzen („Tim B.“), zum Teilen mit den Eltern</span></label>
+      <div class="aushang-knoepfe">
+        <button class="primary" id="dp-drucken">Drucken oder als PDF sichern</button>
+        <button class="ghost" id="dp-zu">Schließen</button>
+      </div>
+      <p class="hint aushang-knoepfe">Ohne Haken enthält der Ausdruck die vollen Namen, für das Orgateam
+        am Tag. Zum Teilen in der Eltern-Gruppe Namen kürzen und im Druckdialog „Als PDF speichern“
+        wählen. Die Eltern sehen den Dienstplan nach Anmeldeschluss auch auf der Anmeldeseite.</p>
     </div>
   </div>
 
@@ -820,6 +844,7 @@ create policy "eigene loeschen" on signups for delete to anon
       <button class="ghost" id="export">Als CSV exportieren</button>
       <button class="ghost" id="reload">Aktualisieren</button>
       <button class="ghost hidden" id="nur-offen" aria-pressed="false">Nur offene Zahlungen</button>
+      <button class="ghost hidden" id="dienstplan">Dienstplan drucken</button>
     </div>
 
     <div id="manual-form" class="card hidden" style="margin-top:14px">
@@ -4056,17 +4081,21 @@ async function loadSignups(){
 
   let belegt = [];
   try{ belegt = await db.claims(current.id); }catch(e){}
-  const standBox = belegt.length
-    ? '<div class="card" style="margin-top:16px"><h3>Aufgabenstand</h3>' +
-      (current.tasks||[]).map(t=>{
-        const wer = belegt.filter(c=>c.task_id === t.id);
-        if(!wer.length) return '<div class="task"><div><strong>'+esc(aufgabeName(t))+'</strong></div>'+
-          '<span class="task-free full">niemand</span></div>';
-        const fertig = wer.every(c=>c.done);
-        return '<div class="task"><div><strong>'+esc(aufgabeName(t))+'</strong>'+
-          '<span class="task-people">'+wer.map(c=>esc(c.name)+(c.done?" ✓":"")).join(", ")+'</span></div>'+
-          '<span class="task-free'+(fertig?"":" full")+'">'+(fertig?"erledigt":"läuft")+'</span></div>';
-      }).join("") + '</div>'
+  // Dienstplan: wer welche Aufgabe übernimmt, aus den Anmeldungen (vorab angekreuzt) und
+  // aus den Übernahmen vor Ort. Bleibt sichtbar, auch wenn die Anmeldung geschlossen ist.
+  dienstplanDaten = dienstplan(belegt);
+  $("dienstplan").classList.toggle("hidden", !dienstplanDaten.length);
+  const standBox = dienstplanDaten.length
+    ? '<div class="card" style="margin-top:16px"><h3>Dienstplan</h3>' +
+      dienstplanDaten.map(d =>
+        '<div class="dp-zeile"><div><strong>' + esc(aufgabeName(d.t)) + '</strong>' +
+        (d.t.when && !d.t.group ? ' <span style="color:var(--ink-soft)">' + esc(d.t.when) + '</span>' : "") +
+        '<span class="wer">' + (d.wer.length ? d.wer.map(w => esc(w.name) + (w.done ? " ✓" : "")).join(", ")
+          : "noch niemand") + '</span></div>' +
+        '<span class="task-free' + (d.frei > 0 ? " full" : "") + '">' +
+        (d.wer.length && d.wer.every(w => w.done) ? "erledigt"
+          : d.frei > 0 ? d.wer.length + " von " + d.t.needed + ", " + d.frei + " frei" : "voll") +
+        '</span></div>').join("") + '</div>'
     : "";
 
   // Filter für die Person, die sammelt: offen oder nach Abmeldung zurückzuzahlen
@@ -4123,6 +4152,63 @@ async function loadSignups(){
   });
 }
 $("reload").onclick = loadSignups;
+
+/* ---------- Dienstplan: wer übernimmt welche Aufgabe ---------- */
+let dienstplanDaten = [];
+// Je Aufgabe die Namen aus den Zusagen (Haken im Anmeldeformular) und den Übernahmen vor
+// Ort (task_claims, mit Erledigt-Haken). Absagen zählen nicht.
+function dienstplan(belegt){
+  return (current.tasks || []).map(t => {
+    const wer = signups.filter(s => s.status !== "absage" && (s.tasks || []).includes(t.id))
+      .map(s => ({ name:s.name, done:false }))
+      .concat((belegt || []).filter(c => c.task_id === t.id).map(c => ({ name:c.name, done:!!c.done })));
+    return { t, wer, frei:Math.max(0, (+t.needed || 0) - wer.length) };
+  });
+}
+// Kürzt wie shortName() in fest-anmeldung.html und intern.kurzname() in der Datenbank
+const kurzName = n => { const p = String(n || "").trim().split(/\s+/);
+  return p.length < 2 ? p[0] : p[0] + " " + p[p.length-1][0] + "."; };
+function dienstplanTabelle(){
+  $("dp-kita").textContent = kitaName;
+  $("dp-titel").textContent = "Dienstplan " + current.title;
+  $("dp-datum").textContent = [current.event_date || fmtDate(current.event_on), current.event_time, current.place]
+    .filter(Boolean).join(" · ");
+  const kurz = $("dp-kurz").checked;
+  const tab = document.createElement("table");
+  tab.innerHTML = "<tr><th>Aufgabe</th><th>Wann</th><th>Wer</th></tr>";
+  dienstplanDaten.forEach(d => {
+    // Freie Plätze als leere Zeilen, zum Eintragen von Hand am Tag
+    const zeilen = d.wer.map(w => (kurz ? kurzName(w.name) : w.name) + (w.done ? " ✓" : ""))
+      .concat(Array(d.frei).fill(""));
+    if(!zeilen.length) zeilen.push("");
+    zeilen.forEach((name, i) => {
+      const tr = document.createElement("tr");
+      if(i === 0){
+        [d.t.label, d.t.when || ""].forEach(text => {
+          const td = document.createElement("td");
+          td.rowSpan = zeilen.length;
+          td.textContent = text;
+          tr.appendChild(td);
+        });
+      }
+      const td = document.createElement("td");
+      td.textContent = name;
+      if(!name) td.className = "leer";
+      tr.appendChild(td);
+      tab.appendChild(tr);
+    });
+  });
+  $("dp-tabelle").innerHTML = "";
+  $("dp-tabelle").appendChild(tab);
+}
+$("dienstplan").onclick = () => {
+  $("dp-kurz").checked = false;
+  dienstplanTabelle();
+  $("dienstplan-ansicht").classList.remove("hidden");
+};
+$("dp-kurz").onchange = dienstplanTabelle;
+$("dp-drucken").onclick = () => window.print();
+$("dp-zu").onclick = () => $("dienstplan-ansicht").classList.add("hidden");
 
 // Haken für die Person, die das Geld sammelt. Gespeichert wird der Betrag, der beim
 // Abhaken fällig war; ändert die Familie danach ihre Anmeldung, steht die Differenz da.
