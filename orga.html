@@ -839,6 +839,7 @@ create policy "eigene loeschen" on signups for delete to anon
       <button type="button" class="ghost" id="m-add-item">+ Mitbringsel</button>
       <label>Hilft bei</label>
       <div class="checks" id="m-tasks"></div>
+      <div id="m-fields"></div>
       <div id="m-orders"></div>
       <label for="m-note">Anmerkung</label>
       <textarea id="m-note"></textarea>
@@ -1272,7 +1273,7 @@ const db = {
     if(!slugs.length) return [];
     if(!live) return demoSignups.filter(s=>slugs.includes(s.event)).map(s=>({...s}));
     const list = slugs.map(s=>'"'+s+'"').join(",");
-    return req("signups?select=event,adults,kids,items,tasks&event=in.("+encodeURIComponent(list)+")",
+    return req("signups?select=event,adults,kids,items,tasks,fields,status&event=in.("+encodeURIComponent(list)+")",
       { headers: head() });
   },
   async saveSignup(id, data, slug){
@@ -2303,7 +2304,13 @@ function fieldRow(f){
       (+f.max || 10)+'"></div></div>'+
     '<p class="hint">Die Eltern tragen eine Anzahl ein, der Betrag kommt zum Gesamtpreis dazu. '+
     'Die Mengen hängen am Text der Frage: nach den ersten Anmeldungen nicht mehr umbenennen, '+
-    'sonst fallen die bisherigen Bestellungen aus der Rechnung.</p></div>';
+    'sonst fallen die bisherigen Bestellungen aus der Rechnung.</p>'+
+    '<label>Dazu je eins für jede Antwort auf <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>'+
+    '<select class="f-basis"><option value="">—</option>'+
+      (f.basis ? '<option value="'+esc(f.basis)+'" selected>'+esc(f.basis)+'</option>' : "")+'</select>'+
+    '<p class="hint">Etwa: Jedes Kita-Kind bekommt einen Weckmann, Extras werden bestellt. Hier die '+
+    'Zahl-Frage „Wie viele Kita-Kinder?“ wählen; die Anmeldungen zeigen dann die Gesamtmenge. '+
+    'Die Grundmenge kostet nichts.</p></div>';
   d.dataset.id = f.id || "";
   const type = d.querySelector(".f-type"), opts = d.querySelector(".f-opts");
   const order = d.querySelector(".f-order"), req = d.querySelector(".f-req");
@@ -2315,6 +2322,18 @@ function fieldRow(f){
     req.closest("div").classList.toggle("hidden", type.value === "order");
   };
   type.onchange = sync; sync();
+  // Auswahl der Zahl-Fragen derselben Liste; frisch beim Öffnen, weil sich die Liste ändert
+  const basis = d.querySelector(".f-basis");
+  const basisFuellen = () => {
+    const wert = basis.value;
+    const zahlen = d.parentNode ? [...d.parentNode.children].filter(x => x !== d &&
+      x.querySelector(".f-type").value === "number").map(x => x.querySelector(".f-label").value.trim()).filter(Boolean) : [];
+    basis.innerHTML = '<option value="">—</option>' + zahlen.map(l =>
+      '<option value="'+esc(l)+'">'+esc(l)+'</option>').join("");
+    basis.value = zahlen.includes(wert) ? wert : "";
+  };
+  basis.addEventListener("focus", basisFuellen);
+  basis.addEventListener("mousedown", basisFuellen);
   wireTools(d);
   const ARTEN = { text:"kurzer Text", textarea:"langer Text", select:"Auswahl",
                   checkbox:"Ja/Nein", number:"Zahl", order:"Bestellung" };
@@ -2323,7 +2342,8 @@ function fieldRow(f){
     if(!label) return "";
     const typ = x.querySelector(".f-type").value;
     const preis = preisZahl(x.querySelector(".f-price").value);
-    const art = (ARTEN[typ] || "") + (typ === "order" && preis ? ", " + euro(preis) + " pro Stück" : "");
+    const art = (ARTEN[typ] || "") + (typ === "order" && preis ? ", " + euro(preis) + " pro Stück" : "") +
+      (typ === "order" && x.querySelector(".f-basis").value ? ", plus je " + esc(x.querySelector(".f-basis").value) : "");
     const pflicht = x.querySelector(".f-req").value === "1" ? " · Pflicht" : "";
     return "<b>"+esc(label)+"</b> <span>" + art + pflicht + "</span>";
   });
@@ -2498,6 +2518,15 @@ const readEntscheidungen = box => [...box.children].map(d=>{
 $("add-entscheidung").onclick = () => {
   $("entscheidungen").appendChild(entscheidungRow()); refreshTools($("entscheidungen"));
 };
+// Bestellmengen eines früheren Mals: aus den Anmeldungen, sonst aus dem Rückblick
+function bestellHtml(ev, rows, rv){
+  const eigene = (rows || []).filter(r => r.event === ev.slug);
+  const summen = eigene.length ? bestellSummen(ev, eigene)
+    : Object.entries(rv.bestellungen || {}).map(([label, b]) => ({ label, ...b }));
+  return summen.length ? '<p style="margin:6px 0 0">' + summen.map(b => b.basis
+    ? '<b>' + esc(b.label) + ':</b> ' + b.gesamt + ' gesamt (' + b.grund + ' ' + esc(b.basis) + ' + ' + b.extra + ' bestellt)'
+    : '<b>' + esc(b.label) + ':</b> ' + b.extra + ' bestellt').join(" · ") + '</p>' : "";
+}
 function entscheidungenHtml(liste){
   return (liste || []).length ? '<ul class="entsch">' + liste.map(e =>
     '<li><b>' + esc(e.thema || "Entscheidung") + ':</b> ' + esc(e.ergebnis || "noch offen") +
@@ -2847,7 +2876,8 @@ const readFields = box => [...box.children].map(d=>{
     options:d.querySelector(".f-options").value.split(",").map(s=>s.trim()).filter(Boolean),
     ...(d.querySelector(".f-type").value === "order"
       ? { price:preisZahl(d.querySelector(".f-price").value),
-          max:Math.min(99, Math.max(1, +d.querySelector(".f-max").value || 10)) } : {}) } : null;
+          max:Math.min(99, Math.max(1, +d.querySelector(".f-max").value || 10)),
+          ...(d.querySelector(".f-basis").value ? { basis:d.querySelector(".f-basis").value } : {}) } : {}) } : null;
 }).filter(Boolean);
 
 const readChecks = box => [...box.children].map(d=>{
@@ -2972,6 +3002,7 @@ async function renderHistory(ev){
         'die Anmeldungen sind gelöscht)</span>' : "")+
       (rv.guests ? " tatsächlich da (angemeldet: "+st.people+")" : "")+
       (cats ? '<table><tr><th>Kategorie</th><th>Ziel</th><th>Ist</th><th>Bewertung</th></tr>'+cats+"</table>" : "")+
+      bestellHtml(s, rows, rv)+
       entscheidungenHtml(rv.entscheidungen)+
       (rv.notes ? '<p class="quote">„'+esc(rv.notes)+'"</p>' : "") + "</div>";
   }).join("");
@@ -3640,6 +3671,12 @@ function collectPlanning(){
       ausgaben: geld("r-a-aus") ?? belegSumme() ?? (ausgabenListe || null) };
   } else {
     review.expected = +$("r-expected").value || 0;
+    // Bestellmengen samt Grundmenge (etwa Weckmänner) fürs nächste Jahr festhalten
+    if(signups.length){
+      const summen = bestellSummen(collectEvent(), signups);
+      if(summen.length) review.bestellungen = Object.fromEntries(summen.map(b =>
+        [b.label, { gesamt:b.gesamt, extra:b.extra, grund:b.grund, basis:b.basis }]));
+    }
     // Festgehalten werden die tatsächlichen Ausgaben laut Belegen, sonst die Einkaufsliste
     review.geld = { ...(alt.geld || {}), einnahmen: einnahmenJetzt(), ausgaben: belegSumme() ?? ausgabenListe };
   }
@@ -4039,8 +4076,9 @@ async function loadSignups(){
     "<div><b>"+items+"</b>Mitbringsel</div>"+
     (current.checkin ? "<div><b>"+daZahl+"</b>da</div>" +
       (stundenSumme ? "<div><b>"+dauerText(stundenSumme)+"</b>Stunden zusammen</div>" : "") : "")+
-    bestellArtikel(current).map(f=>"<div><b>"+signups.reduce((a,s)=>a+bestellMenge(s.status==="absage"?{}:s, f),0)+
-      "</b>"+esc(f.label)+"</div>").join("")+
+    bestellSummen(current, signups).map(b=>b.basis
+      ? "<div><b>"+b.gesamt+"</b>"+esc(b.label)+" gesamt ("+b.grund+" "+esc(b.basis)+" + "+b.extra+" bestellt)</div>"
+      : "<div><b>"+b.extra+"</b>"+esc(b.label)+"</div>").join("")+
     (kostet
       ? "<div><b>"+euro(signups.reduce((a,s)=>a+soll(s),0))+"</b>Einnahmen (Soll)</div>"+
         "<div><b>"+euro(signups.reduce((a,s)=>a+gezahlt(s),0))+"</b>bezahlt</div>"+
@@ -4123,6 +4161,18 @@ async function loadSignups(){
   });
 }
 $("reload").onclick = loadSignups;
+
+// Bestellartikel mit Grundmenge: je Antwort auf eine Zahl-Frage eins, dazu die Bestellungen.
+// St. Martin: jedes Kita-Kind bekommt einen Weckmann, Extras werden bestellt. Absagen zählen nicht.
+const zahlAntwort = (s, label) => Math.max(0, Math.floor(+String(((s.fields || {})[label]) ?? "").replace(",", ".") || 0));
+function bestellSummen(ev, liste){
+  const zu = liste.filter(s => s.status !== "absage");
+  return bestellArtikel(ev).map(f => {
+    const extra = zu.reduce((a, s) => a + bestellMenge(s, f), 0);
+    const grund = f.basis ? zu.reduce((a, s) => a + zahlAntwort(s, f.basis), 0) : 0;
+    return { label:f.label, basis:f.basis || null, extra, grund, gesamt:grund + extra };
+  });
+}
 
 // Haken für die Person, die das Geld sammelt. Gespeichert wird der Betrag, der beim
 // Abhaken fällig war; ändert die Familie danach ihre Anmeldung, steht die Differenz da.
@@ -4226,6 +4276,18 @@ function openManual(entry){
       '<span>'+esc(t.label)+(t.when?", "+esc(t.when):"")+" — "+
       (frei>0 ? frei+" frei" : "voll, geht aber")+'</span></label>';
   }).join("") || '<p class="hint">Für diese Veranstaltung sind keine Aufgaben angelegt.</p>';
+  // Zusatzfragen außer Bestellungen, etwa "Wie viele Kita-Kinder?"
+  const antwort = f => ((entry && entry.fields) || {})[f.label] ?? "";
+  $("m-fields").innerHTML = (current.fields||[]).filter(f=>f.type !== "order").map(f=>{
+    const v = antwort(f);
+    const feld = f.type === "textarea" ? '<textarea data-mf="'+esc(f.label)+'">'+esc(v)+'</textarea>'
+      : f.type === "select" ? '<select data-mf="'+esc(f.label)+'"><option value="">bitte wählen</option>'+
+          (f.options||[]).map(o=>'<option'+(o===v?" selected":"")+'>'+esc(o)+'</option>').join("")+'</select>'
+      : f.type === "checkbox" ? '<label class="check"><input type="checkbox" data-mf="'+esc(f.label)+'"'+
+          (v === "ja" ? " checked" : "")+'><span>ja</span></label>'
+      : '<input type="'+(f.type === "number" ? "number" : "text")+'" data-mf="'+esc(f.label)+'" value="'+esc(v)+'">';
+    return (f.type === "checkbox" ? '<label style="margin-top:12px">'+esc(f.label)+'</label>' : '<label>'+esc(f.label)+'</label>') + feld;
+  }).join("");
   $("m-orders").innerHTML = bestellArtikel(current).map(f=>
     '<label>'+esc(f.label)+(preisZahl(f.price) ? ' <span style="font-weight:400;color:var(--ink-soft)">('+
       euro(preisZahl(f.price))+' pro Stück)</span>' : "")+'</label>'+
@@ -4259,6 +4321,11 @@ $("m-save").onclick = async () => {
     fields:{ ...((editingSignup && editingSignup.fields) || {}) },
     note:$("m-note").value.trim() || null
   };
+  $("m-fields").querySelectorAll("[data-mf]").forEach(el=>{
+    const v = el.type === "checkbox" ? (el.checked ? "ja" : "") : el.value.trim();
+    if(v) data.fields[el.dataset.mf] = v;
+    else delete data.fields[el.dataset.mf];
+  });
   $("m-orders").querySelectorAll("[data-order]").forEach(el=>{
     const n = Math.max(0, Math.floor(+el.value || 0));
     if(n > 0) data.fields[el.dataset.order] = String(n);
