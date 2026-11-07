@@ -162,7 +162,8 @@ Daraus folgt:
 - **Anmeldungen liest anon nicht direkt** (ab `migration-26.sql`). Die Elternseiten holen
   Zahlen, Mitbringsel, Aufgaben und gekürzte Namen über `anmeldungen_oeffentlich()`;
   die eigene Zeile liest nur, wer `X-Entry-Token` mitschickt. `intern.kurzname()` kürzt
-  wie `shortName()` in `fest-anmeldung.html` — wer eines ändert, ändert beide.
+  wie `shortName()` in `fest-anmeldung.html` und `kurzName()` in `orga.html` (Dienstplan
+  zum Teilen) — wer eines ändert, ändert alle drei.
 - **Spaltenrechte gelten auch fürs Orgateam**, weil es dieselbe Rolle nutzt. Interne
   Daten gehören in eigene Tabellen, nicht in versteckte Spalten.
 - **Alles, was `anon` schreiben darf, kann jeder schreiben.** Neue Schreibpfade

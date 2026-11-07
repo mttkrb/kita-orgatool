@@ -74,3 +74,76 @@ test("Ohne Aufgaben kein Dienstplan", async () => {
     assert.ok($("dienstplan").classList.contains("hidden"));
   }finally{ s.schliessen(); }
 });
+
+test("Druckansicht: Namen kürzen zum Teilen mit den Eltern", async () => {
+  const { s, w, $ } = await anmeldungen(`
+    events.find(e => e.id === "e-neu").tasks = [{ id:"aufbau", label:"Aufbau", needed:2 }];
+  `);
+  try{
+    $("dienstplan").click();
+    assert.equal($("dp-tabelle").querySelectorAll("tr")[1].lastElementChild.textContent, "Tim Bergmann");
+    $("dp-kurz").checked = true;
+    $("dp-kurz").dispatchEvent(new w.Event("change"));
+    assert.equal($("dp-tabelle").querySelectorAll("tr")[1].lastElementChild.textContent, "Tim B.");
+    assert.deepEqual(s.fehler, []);
+  }finally{ s.schliessen(); }
+});
+
+// Anmeldeseite nach Anmeldeschluss: Dienstplan mit Zusagen, freie Plätze nimmt man am Tag
+const { fakeDb, SUPABASE } = require("./fake-db");
+const FEST = { id:"e1", slug:"fest", title:"Sommerfest", event_on:"2099-06-20", signup_until:"2000-01-01",
+  categories:[], fields:[], visibility:{ taskNames:true },
+  tasks:[{ id:"aufbau", label:"Aufbau", needed:2 }, { id:"kuchen", label:"Kuchentheke", needed:1 }] };
+const ZUSAGE = { id:"s1", event:"fest", token:"token-a-123456", name:"Anna Berg", adults:1, kids:0,
+  items:[], tasks:["aufbau", "kuchen"], fields:{}, status:null };
+
+async function eltern(ev, start = {}){
+  const db = fakeDb({ events:[ev], signups:[ZUSAGE], ...start });
+  const s = ladeSeite("fest-anmeldung.html", { supabase:SUPABASE, fetch:db.fetch, query:"?event=fest" });
+  const $ = id => s.window.document.getElementById(id);
+  await warte(() => $("tasks").querySelector(".task"), "Dienstplan");
+  return { s, db, $ };
+}
+
+test("Anmeldeseite nach Schluss: Dienstplan mit Zusagen und Eintragen am Tag", async () => {
+  const { s, db, $ } = await eltern(FEST, { task_claims:[{ id:"c1", event_id:"e1", task_id:"aufbau", name:"Ben Kurz", done:false }] });
+  try{
+    assert.equal($("tasks-head").textContent, "Dienstplan");
+    assert.ok(!$("tasks-section").classList.contains("hidden"));
+    const [aufbau, kuchen] = [...$("tasks").querySelectorAll(".task")];
+    assert.match(text(aufbau), /Anna B\./);
+    assert.match(text(aufbau), /Ben Kurz/);
+    assert.ok(!aufbau.querySelector("[data-nehmen]"), "voll: kein Eintragen");
+    assert.match(text(kuchen), /voll.*Anna B\./);
+
+    // Plätze frei machen: Aufbau braucht 3
+    s.window.eval("EV.tasks[0].needed = 3; renderTasks()");
+    const feld = $("tasks").querySelector('[data-name="aufbau"]');
+    feld.value = "Cem Neu";
+    $("tasks").querySelector('[data-nehmen="aufbau"]').click();
+    await warte(() => db.task_claims.length === 2, "eingetragen");
+    assert.equal(db.task_claims[1].name, "Cem Neu");
+    assert.equal(db.task_claims[1].task_id, "aufbau");
+    await warte(() => /Cem Neu/.test($("tasks").textContent), "angezeigt");
+    assert.deepEqual(db.unbekannt || [], []);
+  }finally{ s.schliessen(); }
+});
+
+test("Anmeldeseite nach Schluss ohne Namen: nur die Zahl der Familien", async () => {
+  const { s, $ } = await eltern({ ...FEST, visibility:{ taskNames:false, itemNames:false } });
+  try{
+    assert.match(text($("tasks").querySelector(".task")), /1 Familie eingetragen/);
+    assert.doesNotMatch($("tasks").textContent, /Anna/);
+  }finally{ s.schliessen(); }
+});
+
+test("Anmeldeseite vor Schluss: kein Dienstplan, Auswahl im Formular", async () => {
+  const { fakeDb: neu } = require("./fake-db");
+  const db = neu({ events:[{ ...FEST, signup_until:"2099-01-01" }], signups:[ZUSAGE] });
+  const s = ladeSeite("fest-anmeldung.html", { supabase:SUPABASE, fetch:db.fetch, query:"?event=fest" });
+  const $ = id => s.window.document.getElementById(id);
+  try{
+    await warte(() => $("task-checks").querySelector("input"), "Formular");
+    assert.ok($("tasks-section").classList.contains("hidden"));
+  }finally{ s.schliessen(); }
+});

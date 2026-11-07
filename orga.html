@@ -366,12 +366,15 @@ create policy "eigene loeschen" on signups for delete to anon
       <h1 id="dp-titel" style="margin:4px 0"></h1>
       <p id="dp-datum" style="margin:0"></p>
       <div id="dp-tabelle"></div>
+      <label class="check aushang-knoepfe" style="justify-content:center"><input type="checkbox" id="dp-kurz">
+        <span>Namen kürzen („Tim B.“), zum Teilen mit den Eltern</span></label>
       <div class="aushang-knoepfe">
-        <button class="primary" id="dp-drucken">Drucken</button>
+        <button class="primary" id="dp-drucken">Drucken oder als PDF sichern</button>
         <button class="ghost" id="dp-zu">Schließen</button>
       </div>
-      <p class="hint aushang-knoepfe">Der Ausdruck enthält die vollen Namen. Für das Orgateam am Tag,
-        nicht zum Aushängen, wenn Namen für die Eltern nicht sichtbar sein sollen.</p>
+      <p class="hint aushang-knoepfe">Ohne Haken enthält der Ausdruck die vollen Namen, für das Orgateam
+        am Tag. Zum Teilen in der Eltern-Gruppe Namen kürzen und im Druckdialog „Als PDF speichern“
+        wählen. Die Eltern sehen den Dienstplan nach Anmeldeschluss auch auf der Anmeldeseite.</p>
     </div>
   </div>
 
@@ -4162,16 +4165,21 @@ function dienstplan(belegt){
     return { t, wer, frei:Math.max(0, (+t.needed || 0) - wer.length) };
   });
 }
-$("dienstplan").onclick = () => {
+// Kürzt wie shortName() in fest-anmeldung.html und intern.kurzname() in der Datenbank
+const kurzName = n => { const p = String(n || "").trim().split(/\s+/);
+  return p.length < 2 ? p[0] : p[0] + " " + p[p.length-1][0] + "."; };
+function dienstplanTabelle(){
   $("dp-kita").textContent = kitaName;
   $("dp-titel").textContent = "Dienstplan " + current.title;
   $("dp-datum").textContent = [current.event_date || fmtDate(current.event_on), current.event_time, current.place]
     .filter(Boolean).join(" · ");
+  const kurz = $("dp-kurz").checked;
   const tab = document.createElement("table");
   tab.innerHTML = "<tr><th>Aufgabe</th><th>Wann</th><th>Wer</th></tr>";
   dienstplanDaten.forEach(d => {
     // Freie Plätze als leere Zeilen, zum Eintragen von Hand am Tag
-    const zeilen = d.wer.map(w => w.name + (w.done ? " ✓" : "")).concat(Array(d.frei).fill(""));
+    const zeilen = d.wer.map(w => (kurz ? kurzName(w.name) : w.name) + (w.done ? " ✓" : ""))
+      .concat(Array(d.frei).fill(""));
     if(!zeilen.length) zeilen.push("");
     zeilen.forEach((name, i) => {
       const tr = document.createElement("tr");
@@ -4192,8 +4200,13 @@ $("dienstplan").onclick = () => {
   });
   $("dp-tabelle").innerHTML = "";
   $("dp-tabelle").appendChild(tab);
+}
+$("dienstplan").onclick = () => {
+  $("dp-kurz").checked = false;
+  dienstplanTabelle();
   $("dienstplan-ansicht").classList.remove("hidden");
 };
+$("dp-kurz").onchange = dienstplanTabelle;
 $("dp-drucken").onclick = () => window.print();
 $("dp-zu").onclick = () => $("dienstplan-ansicht").classList.add("hidden");
 

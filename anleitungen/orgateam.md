@@ -867,13 +867,20 @@ wer sie übernimmt, mit vollen Namen. Er sammelt beides, die Haken aus dem Anmel
 („vorab“) und die Übernahmen am Tag („Ich mach das“, mit ✓, wenn abgehakt). Absagen zählen
 nicht. Rechts steht „2 von 6, 4 frei“, „voll“ oder „erledigt“.
 
-Der Dienstplan bleibt sichtbar, auch wenn die Anmeldung geschlossen ist. Auf der Anmeldeseite
-verschwindet mit dem Formular auch die Liste der Aufgaben; hier im Orga-Bereich nicht.
+Der Dienstplan bleibt sichtbar, auch wenn die Anmeldung geschlossen ist.
+
+**Für die Eltern:** Nach Anmeldeschluss wird auf der Anmeldeseite aus der Auswahl im Formular
+ebenfalls ein Dienstplan. Er zeigt je Aufgabe die Zusagen, gekürzt wie „Anna B.“; zeigt die
+Veranstaltung keine Namen bei Aufgaben, nur „2 Familien eingetragen“. Freie Plätze können
+Eltern dort am Tag mit ihrem Namen übernehmen („Ich mach das“), wie bei „Aufgaben werden vor
+Ort verteilt“. Diese Einträge erscheinen hier mit.
 
 **„Dienstplan drucken“** öffnet eine Druckansicht: Tabelle mit Aufgabe, Wann und Wer, für jeden
-freien Platz eine leere Zeile zum Eintragen von Hand am Tag. „Drucken“ druckt nur diese Tabelle,
-„Schließen“ führt zurück. Der Ausdruck enthält die vollen Namen; nicht aushängen, wenn die
-Namen für die Eltern nicht sichtbar sein sollen.
+freien Platz eine leere Zeile zum Eintragen von Hand am Tag. Mit dem Haken **„Namen kürzen
+(„Tim B.“), zum Teilen mit den Eltern“** stehen gekürzte Namen drin. „Drucken oder als PDF
+sichern“ öffnet den Druckdialog; dort „Als PDF speichern“ wählen, um den Plan etwa in der
+Eltern-Gruppe zu teilen. „Schließen“ führt zurück. Ohne Haken enthält der Ausdruck die vollen
+Namen, für das Orgateam am Tag.
 
 ### Die Tabelle
 
