@@ -6,7 +6,7 @@
 --
 --  Vergleicht Tabellen, Spalten, Policies, Funktionen und Rechte mit dem
 --  Projekt, aus dem die Vorlage stammt (nur Namen und Prüfsummen).
---  Erzeugt am 2026-11-06 15:04 mit einrichtung/vorlage-erzeugen.sh. Nicht von Hand ändern.
+--  Erzeugt am 2026-11-08 08:29 mit einrichtung/vorlage-erzeugen.sh. Nicht von Hand ändern.
 -- =====================================================================
 
 with soll(zeile) as (values
@@ -37,7 +37,7 @@ with soll(zeile) as (values
   ('constraint|proposals|proposals_image_chk|331c0e05415b7914d4b53369c0e3579e'),
   ('constraint|proposals|proposals_pkey|795f8aa19bf8004d0e6d2e4a0dc930e3'),
   ('constraint|receipts|receipts_event_id_fkey|9d87ad85a21f29ae5578906cd0536a94'),
-  ('constraint|receipts|receipts_grenzen_chk|90cbce754efd2f50a32c51076b970cf7'),
+  ('constraint|receipts|receipts_grenzen_chk|145dc698edb7b59027684d83ddfd41fe'),
   ('constraint|receipts|receipts_pkey|795f8aa19bf8004d0e6d2e4a0dc930e3'),
   ('constraint|signups|signups_grenzen_chk|6a42ac02db276d802f369dc04771522e'),
   ('constraint|signups|signups_pkey|795f8aa19bf8004d0e6d2e4a0dc930e3'),
@@ -374,7 +374,7 @@ with soll(zeile) as (values
   ('spalte|receipts.created_at|timestamp with time zone|notnull=true|75230039beb12ce952f24927f2bfa2f2'),
   ('spalte|receipts.event_id|uuid|notnull=true|-'),
   ('spalte|receipts.id|uuid|notnull=true|f3b72bb359a50b640590970a2ab8e514'),
-  ('spalte|receipts.image|text|notnull=true|-'),
+  ('spalte|receipts.image|text|notnull=false|-'),
   ('spalte|receipts.item_id|text|notnull=false|-'),
   ('spalte|receipts.shop|text|notnull=false|-'),
   ('spalte|signups.adults|integer|notnull=true|c4ca4238a0b923820dcc509a6f75849b'),
@@ -546,5 +546,9 @@ select ergebnis from (
   select 6, case when (select count(*) from public.orga_keys) > 0
                  then 'OK: Orga-Passwort angelegt'
                  else 'FEHLT: kein Orga-Passwort in orga_keys' end
+  union all
+  select 7, case when (select count(*) from cron.job where active and command like '%daten_aufraeumen%') > 0
+                 then 'OK: ' || (select count(*) from cron.job where active) || ' Cron-Auftrag/Aufträge aktiv'
+                 else 'FEHLT: kein aktiver Cron-Auftrag für daten_aufraeumen(), die Löschfrist wird nicht eingehalten' end
 ) z
 order by nr, ergebnis;

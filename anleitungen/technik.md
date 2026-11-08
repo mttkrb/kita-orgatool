@@ -73,14 +73,14 @@ Schnittstelle an. Es gibt vierzehn Tabellen:
 | `payments` | Zahlungseingang je Anmeldung | nur Orgateam |
 | `attendance` | Check-in: gekommen, gegangen, Stunden | nur Orgateam |
 | `checkin_codes` | Code vom Aushang je Veranstaltung | nur Orgateam |
-| `receipts` | Belege zur Einkaufsliste: Foto vom Kassenbon, Laden, Datum, Betrag, Posten; bleiben dauerhaft | nur Orgateam |
+| `receipts` | Belege zur Einkaufsliste: Foto vom Kassenbon oder PDF, Laden, Datum, Betrag, Posten; ab `migration-30.sql` auch ohne Beleg mit Betrag; bleiben dauerhaft | nur Orgateam |
 | `fee_waivers` | Zahlung erlassen je Anmeldung, Kaskade mit `signups` | nur Orgateam |
 | `orga_keys` | Orga-Passwort | niemand über die Schnittstelle |
 
 Die SQL-Dateien im Ordner `sql/`:
 
 - `schema.sql`: der erste Stand der Datenbank
-- `migration-2.sql` bis `migration-29.sql`: alle späteren Änderungen, in dieser
+- `migration-2.sql` bis `migration-30.sql`: alle späteren Änderungen, in dieser
   Reihenfolge. Oben in jeder Datei steht, was sie ändert.
 
 Für eine Neuinstallation werden sie nicht einzeln ausgeführt, sondern
@@ -195,18 +195,18 @@ Planung, Rückblick, Fotos der Aufgaben, Belege (`receipts`) und Zahlen bleiben 
 
 Die Funktion wird auf zwei Wegen ausgelöst:
 
-1. **Aus dem Orga-Bereich.** `orga.html` ruft sie nach dem Login auf und jedes Mal,
-   wenn die Übersicht neu geladen wird, etwa nach „Fertig“ in einer Veranstaltung.
-   Was gelöscht wurde, steht danach in den „To-dos“ als „Aufgeräumt: …“.
-2. **Nächtlich über `pg_cron`**, wenn der Auftrag eingerichtet ist. Die Neuinstallation
-   legt ihn an, sofern das Projekt, aus dem die Vorlage erzeugt wurde, einen hatte. Die
-   Vorlage dafür steht als Kommentar in `sql/migration-16.sql`:
+1. **Nächtlich über `pg_cron`. Dieser Auftrag ist Pflicht.** Nur er hält die Löschfrist
+   ein, die der Einwilligungstext den Eltern verspricht. Neuinstallation und Umzug legen
+   ihn an. Fehlt er, im SQL-Editor anlegen (vorher unter Database → Extensions `pg_cron`
+   einschalten):
 
    ```sql
    select cron.schedule('kita-aufraeumen', '0 3 * * *', 'select daten_aufraeumen()');
    ```
 
-   Vorher unter Database → Extensions `pg_cron` einschalten.
+2. **Aus dem Orga-Bereich**, zusätzlich. `orga.html` ruft sie nach dem Login auf und
+   jedes Mal, wenn die Übersicht neu geladen wird, etwa nach „Fertig“ in einer
+   Veranstaltung. Was gelöscht wurde, steht danach in den „To-dos“ als „Aufgeräumt: …“.
 
 Prüfen, ob der Auftrag läuft, im SQL-Editor:
 
@@ -219,7 +219,8 @@ Von Hand auslösen, ebenfalls im SQL-Editor: `select * from daten_aufraeumen();`
 
 Ohne Cron-Auftrag wird nur aufgeräumt, wenn sich jemand im Orga-Bereich anmeldet.
 Zwischen zwei Festen kann das Wochen dauern, und die versprochene Frist wird dann nicht
-eingehalten.
+eingehalten. Der Auftrag läuft auch nicht, solange Supabase das Projekt pausiert hat;
+dagegen hilft der Keep-alive vom NAS (`nas/keepalive.sh`).
 
 Wer `retention_days` oder die Sichtbarkeit ändert, ändert den Einwilligungstext auf der
 Anmeldeseite und damit ein Versprechen an die Eltern. Vorher im Vorstand absprechen.

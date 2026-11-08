@@ -260,10 +260,18 @@ create policy "eigene loeschen" on signups for delete to anon
     border:0;padding:8px;line-height:0;color:var(--ink-soft);cursor:pointer;border-radius:5px}
   .pw-zeigen:hover{color:var(--ink)}
   .pw-zeigen svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-  #aushang-ansicht{position:fixed;inset:0;background:#fff;z-index:70;overflow:auto;padding:24px 16px}
+  #aushang-ansicht, #dienstplan-ansicht{position:fixed;inset:0;background:#fff;z-index:70;overflow:auto;padding:24px 16px}
+  .dienstplan{max-width:720px;margin:0 auto}
+  .dienstplan table{width:100%;border-collapse:collapse;margin-top:12px}
+  .dienstplan th, .dienstplan td{border:1px solid #999;padding:6px 8px;text-align:left;vertical-align:top}
+  .dienstplan td.leer{height:1.6em}
+  .dp-zeile{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .dp-zeile .wer{display:block;color:var(--ink-soft);font-size:.88rem}
   .beleg{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
   .beleg img{width:56px;height:56px;object-fit:cover;border-radius:5px;cursor:zoom-in;border:1px solid var(--line)}
   .beleg .was{flex:1;font-size:.9rem}
+  .beleg .beleg-pdf{width:56px;height:56px;padding:0;font-weight:600}
+  .beleg .beleg-ohne{width:56px;font-size:.72rem;color:var(--ink-soft);text-align:center;line-height:1.2}
   #beleg-gross{position:fixed;inset:0;background:rgba(0,0,0,.86);z-index:80;display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:12px;padding:16px}
   #beleg-gross img{max-width:100%;max-height:82vh;background:#fff;border-radius:4px}
@@ -274,8 +282,8 @@ create policy "eigene loeschen" on signups for delete to anon
   .aushang .klein{font-size:.8rem;color:var(--ink-soft);word-break:break-all}
   .aushang-knoepfe{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:20px}
   @media print{
-    .wrap > *:not(#aushang-ansicht){display:none!important}
-    #aushang-ansicht{position:static;padding:0}
+    .wrap > *:not(#aushang-ansicht):not(#dienstplan-ansicht){display:none!important}
+    #aushang-ansicht, #dienstplan-ansicht{position:static;padding:0}
     .aushang-knoepfe{display:none!important}
   }
   code{background:#fff;border:1px solid var(--line);border-radius:4px;padding:2px 5px;
@@ -351,6 +359,24 @@ create policy "eigene loeschen" on signups for delete to anon
         <button class="ghost" id="ah-zu">Schließen</button>
       </div>
       <p class="hint aushang-knoepfe" id="ah-msg"></p>
+    </div>
+  </div>
+
+  <div id="dienstplan-ansicht" class="hidden">
+    <div class="dienstplan">
+      <p class="klein" id="dp-kita"></p>
+      <h1 id="dp-titel" style="margin:4px 0"></h1>
+      <p id="dp-datum" style="margin:0"></p>
+      <div id="dp-tabelle"></div>
+      <label class="check aushang-knoepfe" style="justify-content:center"><input type="checkbox" id="dp-kurz">
+        <span>Namen kürzen („Tim B.“), zum Teilen mit den Eltern</span></label>
+      <div class="aushang-knoepfe">
+        <button class="primary" id="dp-drucken">Drucken oder als PDF sichern</button>
+        <button class="ghost" id="dp-zu">Schließen</button>
+      </div>
+      <p class="hint aushang-knoepfe">Ohne Haken enthält der Ausdruck die vollen Namen, für das Orgateam
+        am Tag. Zum Teilen in der Eltern-Gruppe Namen kürzen und im Druckdialog „Als PDF speichern“
+        wählen. Die Eltern sehen den Dienstplan nach Anmeldeschluss auch auf der Anmeldeseite.</p>
     </div>
   </div>
 
@@ -646,8 +672,11 @@ create policy "eigene loeschen" on signups for delete to anon
           <label for="b-posten">Zu welchem Posten? <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
           <select id="b-posten"></select>
         </div>
-        <label for="b-foto">Foto</label>
-        <input type="file" id="b-foto" accept="image/*">
+        <label for="b-foto">Foto oder PDF <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+        <input type="file" id="b-foto" accept="image/*,application/pdf,.pdf">
+        <p class="hint" style="margin:4px 0 0">Ohne Beleg geht auch, etwa wenn der Bon weg ist; dann bitte den
+          Betrag eintragen. PDF bis 1 MB, etwa eine Online-Rechnung. Rechnungen enthalten oft Name und
+          Adresse: nur hochladen, was das Orgateam sehen darf.</p>
         <div style="margin-top:8px"><button type="button" class="ghost" id="b-dazu">Beleg hinzufügen</button></div>
         <p class="hint" id="beleg-msg"></p>
       </div>
@@ -820,6 +849,7 @@ create policy "eigene loeschen" on signups for delete to anon
       <button class="ghost" id="export">Als CSV exportieren</button>
       <button class="ghost" id="reload">Aktualisieren</button>
       <button class="ghost hidden" id="nur-offen" aria-pressed="false">Nur offene Zahlungen</button>
+      <button class="ghost hidden" id="dienstplan">Dienstplan drucken</button>
     </div>
 
     <div id="manual-form" class="card hidden" style="margin-top:14px">
@@ -2651,8 +2681,12 @@ function renderBelege(){
     const d = document.createElement("div");
     d.className = "beleg";
     const bild = bildUrl(r.image);
-    d.innerHTML = (bild ? '<img alt="Beleg ansehen" tabindex="0">' : "") + '<div class="was"></div>' +
-      '<button type="button" class="ghost">Löschen</button>';
+    const pdf = /^data:application\/pdf;base64,/.test(r.image || "");
+    d.innerHTML = (bild ? '<img alt="Beleg ansehen" tabindex="0">'
+        : pdf ? '<button type="button" class="ghost beleg-pdf">PDF</button>'
+        : '<span class="beleg-ohne">ohne Beleg</span>') + '<div class="was"></div>' +
+      '<button type="button" class="ghost beleg-weg">Löschen</button>';
+    if(pdf) d.querySelector(".beleg-pdf").onclick = () => pdfHerunterladen(r);
     const img = d.querySelector("img");
     if(img){
       img.src = bild;
@@ -2664,7 +2698,7 @@ function renderBelege(){
       r.bought_on && new Date(r.bought_on + "T12:00:00").toLocaleDateString("de-DE"),
       r.amount != null && euro(+r.amount),
       r.item_id && posten[r.item_id] && "für " + posten[r.item_id]].filter(Boolean).join(" · ") || "Beleg";
-    d.querySelector("button").onclick = async () => {
+    d.querySelector(".beleg-weg").onclick = async () => {
       if(!confirm("Beleg" + (r.shop ? " von " + r.shop : "") + " löschen?")) return;
       try{ await db.delReceipt(r.id); }catch(e){ msg($("beleg-msg"), "Löschen hat nicht geklappt: " + e.message, true); return; }
       msg($("beleg-msg"), "Beleg gelöscht.");
@@ -2685,6 +2719,30 @@ $("einkauf").addEventListener("change", renderBelege);
 $("einkauf").addEventListener("input", belegPosten);
 $("add-kauf").addEventListener("click", () => setTimeout(belegPosten));
 
+// PDF-Belege werden heruntergeladen: Ein data:-PDF öffnen Browser nicht direkt im Tab.
+function pdfHerunterladen(r){
+  const roh = atob(r.image.split(",")[1]);
+  const bytes = new Uint8Array(roh.length);
+  for(let i = 0; i < roh.length; i++) bytes[i] = roh.charCodeAt(i);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([bytes], { type:"application/pdf" }));
+  a.download = "beleg" + (r.shop ? "-" + slugify(r.shop) : "") + (r.bought_on ? "-" + r.bought_on : "") + ".pdf";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+// PDF bleibt, wie es ist; als data:-Adresse darf es höchstens 1,5 MB groß sein (migration-30.sql)
+const istPdf = datei => datei.type === "application/pdf" || /\.pdf$/i.test(datei.name || "");
+function belegPdf(datei){
+  if(datei.size > 1100000) return Promise.reject(new Error("PDF zu groß (höchstens 1 MB)"));
+  return new Promise((ok, fehler) => {
+    const leser = new FileReader();
+    leser.onerror = () => fehler(new Error("Foto nicht lesbar"));
+    leser.onload = () => ok("data:application/pdf;base64," + String(leser.result).split(",")[1]);
+    leser.readAsDataURL(datei);
+  });
+}
+const belegDatei = datei => istPdf(datei) ? belegPdf(datei) : belegBild(datei);
 // Kassenbons sind lang und schmal; die längere Kante darf deshalb mehr Pixel haben als bei
 // Aufgabenfotos. Passt das Bild nicht unter die Grenze der Datenbank, wird es kleiner.
 async function belegBild(datei){
@@ -2702,20 +2760,22 @@ const FOTO_NEU = "Das Foto ließ sich nicht lesen. Bitte noch einmal auswählen,
   "aus der Kamera; liegt es nur in der Cloud, erst in der Galerie öffnen.";
 $("b-foto").addEventListener("change", () => {
   const datei = $("b-foto").files && $("b-foto").files[0];
-  belegFoto = datei ? belegBild(datei) : null;
+  belegFoto = datei ? belegDatei(datei) : null;
   if(!belegFoto) return;
-  msg($("beleg-msg"), "Foto wird vorbereitet …");
+  const art = istPdf(datei) ? "PDF" : "Foto";
+  msg($("beleg-msg"), art + " wird vorbereitet …");
   const dieses = belegFoto;
-  dieses.then(() => { if(belegFoto === dieses) msg($("beleg-msg"), "Foto bereit."); },
-    () => { if(belegFoto !== dieses) return; belegFoto = null; $("b-foto").value = ""; msg($("beleg-msg"), FOTO_NEU, true); });
+  dieses.then(() => { if(belegFoto === dieses) msg($("beleg-msg"), art + " bereit."); },
+    e => { if(belegFoto !== dieses) return; belegFoto = null; $("b-foto").value = "";
+      msg($("beleg-msg"), e.message === "Foto nicht lesbar" ? FOTO_NEU : e.message + ".", true); });
 });
 $("b-dazu").addEventListener("click", async () => {
   const m = $("beleg-msg");
   if(!current || !current.id){ msg(m, "Erst speichern, dann Belege anhängen.", true); return; }
   const datei = $("b-foto").files && $("b-foto").files[0];
-  if(!datei && !belegFoto){ msg(m, "Bitte ein Foto vom Beleg auswählen.", true); return; }
   const betrag = $("b-betrag").value.trim();
   if(betrag && !preisZahl(betrag)){ msg(m, "Betrag bitte als Zahl, zum Beispiel 12,90.", true); return; }
+  if(!datei && !belegFoto && !betrag){ msg(m, "Ohne Foto oder PDF bitte den Betrag eintragen.", true); return; }
   $("b-dazu").disabled = true;
   try{
     await db.addReceipt({ event_id:current.id,
@@ -2723,9 +2783,12 @@ $("b-dazu").addEventListener("click", async () => {
       bought_on:$("b-datum").value || null,
       amount:betrag ? preisZahl(betrag) : null,
       item_id:$("b-posten").value || null,
-      image:await (belegFoto || belegBild(datei)) });
+      image:belegFoto ? await belegFoto : datei ? await belegDatei(datei) : null });
   }catch(e){
     if(e.message === "Foto nicht lesbar"){ belegFoto = null; $("b-foto").value = ""; msg(m, FOTO_NEU, true); }
+    // Ohne migration-30.sql verlangt die Datenbank noch ein Bild
+    else if(/null value|not-null|receipts_grenzen_chk|23502|23514/i.test(e.message))
+      msg(m, "Beleg wurde nicht gespeichert. Ohne Foto oder als PDF braucht die Datenbank Migration 30.", true);
     else msg(m, "Beleg wurde nicht gespeichert: " + e.message, true);
     $("b-dazu").disabled = false;
     return;
@@ -4094,17 +4157,21 @@ async function loadSignups(){
 
   let belegt = [];
   try{ belegt = await db.claims(current.id); }catch(e){}
-  const standBox = belegt.length
-    ? '<div class="card" style="margin-top:16px"><h3>Aufgabenstand</h3>' +
-      (current.tasks||[]).map(t=>{
-        const wer = belegt.filter(c=>c.task_id === t.id);
-        if(!wer.length) return '<div class="task"><div><strong>'+esc(aufgabeName(t))+'</strong></div>'+
-          '<span class="task-free full">niemand</span></div>';
-        const fertig = wer.every(c=>c.done);
-        return '<div class="task"><div><strong>'+esc(aufgabeName(t))+'</strong>'+
-          '<span class="task-people">'+wer.map(c=>esc(c.name)+(c.done?" ✓":"")).join(", ")+'</span></div>'+
-          '<span class="task-free'+(fertig?"":" full")+'">'+(fertig?"erledigt":"läuft")+'</span></div>';
-      }).join("") + '</div>'
+  // Dienstplan: wer welche Aufgabe übernimmt, aus den Anmeldungen (vorab angekreuzt) und
+  // aus den Übernahmen vor Ort. Bleibt sichtbar, auch wenn die Anmeldung geschlossen ist.
+  dienstplanDaten = dienstplan(belegt);
+  $("dienstplan").classList.toggle("hidden", !dienstplanDaten.length);
+  const standBox = dienstplanDaten.length
+    ? '<div class="card" style="margin-top:16px"><h3>Dienstplan</h3>' +
+      dienstplanDaten.map(d =>
+        '<div class="dp-zeile"><div><strong>' + esc(aufgabeName(d.t)) + '</strong>' +
+        (d.t.when && !d.t.group ? ' <span style="color:var(--ink-soft)">' + esc(d.t.when) + '</span>' : "") +
+        '<span class="wer">' + (d.wer.length ? d.wer.map(w => esc(w.name) + (w.done ? " ✓" : "")).join(", ")
+          : "noch niemand") + '</span></div>' +
+        '<span class="task-free' + (d.frei > 0 ? " full" : "") + '">' +
+        (d.wer.length && d.wer.every(w => w.done) ? "erledigt"
+          : d.frei > 0 ? d.wer.length + " von " + d.t.needed + ", " + d.frei + " frei" : "voll") +
+        '</span></div>').join("") + '</div>'
     : "";
 
   // Filter für die Person, die sammelt: offen oder nach Abmeldung zurückzuzahlen
@@ -4173,6 +4240,63 @@ function bestellSummen(ev, liste){
     return { label:f.label, basis:f.basis || null, extra, grund, gesamt:grund + extra };
   });
 }
+
+/* ---------- Dienstplan: wer übernimmt welche Aufgabe ---------- */
+let dienstplanDaten = [];
+// Je Aufgabe die Namen aus den Zusagen (Haken im Anmeldeformular) und den Übernahmen vor
+// Ort (task_claims, mit Erledigt-Haken). Absagen zählen nicht.
+function dienstplan(belegt){
+  return (current.tasks || []).map(t => {
+    const wer = signups.filter(s => s.status !== "absage" && (s.tasks || []).includes(t.id))
+      .map(s => ({ name:s.name, done:false }))
+      .concat((belegt || []).filter(c => c.task_id === t.id).map(c => ({ name:c.name, done:!!c.done })));
+    return { t, wer, frei:Math.max(0, (+t.needed || 0) - wer.length) };
+  });
+}
+// Kürzt wie shortName() in fest-anmeldung.html und intern.kurzname() in der Datenbank
+const kurzName = n => { const p = String(n || "").trim().split(/\s+/);
+  return p.length < 2 ? p[0] : p[0] + " " + p[p.length-1][0] + "."; };
+function dienstplanTabelle(){
+  $("dp-kita").textContent = kitaName;
+  $("dp-titel").textContent = "Dienstplan " + current.title;
+  $("dp-datum").textContent = [current.event_date || fmtDate(current.event_on), current.event_time, current.place]
+    .filter(Boolean).join(" · ");
+  const kurz = $("dp-kurz").checked;
+  const tab = document.createElement("table");
+  tab.innerHTML = "<tr><th>Aufgabe</th><th>Wann</th><th>Wer</th></tr>";
+  dienstplanDaten.forEach(d => {
+    // Freie Plätze als leere Zeilen, zum Eintragen von Hand am Tag
+    const zeilen = d.wer.map(w => (kurz ? kurzName(w.name) : w.name) + (w.done ? " ✓" : ""))
+      .concat(Array(d.frei).fill(""));
+    if(!zeilen.length) zeilen.push("");
+    zeilen.forEach((name, i) => {
+      const tr = document.createElement("tr");
+      if(i === 0){
+        [d.t.label, d.t.when || ""].forEach(text => {
+          const td = document.createElement("td");
+          td.rowSpan = zeilen.length;
+          td.textContent = text;
+          tr.appendChild(td);
+        });
+      }
+      const td = document.createElement("td");
+      td.textContent = name;
+      if(!name) td.className = "leer";
+      tr.appendChild(td);
+      tab.appendChild(tr);
+    });
+  });
+  $("dp-tabelle").innerHTML = "";
+  $("dp-tabelle").appendChild(tab);
+}
+$("dienstplan").onclick = () => {
+  $("dp-kurz").checked = false;
+  dienstplanTabelle();
+  $("dienstplan-ansicht").classList.remove("hidden");
+};
+$("dp-kurz").onchange = dienstplanTabelle;
+$("dp-drucken").onclick = () => window.print();
+$("dp-zu").onclick = () => $("dienstplan-ansicht").classList.add("hidden");
 
 // Haken für die Person, die das Geld sammelt. Gespeichert wird der Betrag, der beim
 // Abhaken fällig war; ändert die Familie danach ihre Anmeldung, steht die Differenz da.

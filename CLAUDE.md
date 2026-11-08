@@ -100,7 +100,7 @@ Felder je Veranstaltung unterscheiden.
 | `payments` | Zahlungseingang je Anmeldung (Haken, Betrag, Datum), Kaskade mit `signups` | nur Orga |
 | `attendance` | Check-in: gekommen, gegangen, Stunden je Anmeldung, Kaskade mit `signups` | nur Orga |
 | `checkin_codes` | Code vom Aushang je Veranstaltung | nur Orga |
-| `receipts` | Belege zur Einkaufsliste: Foto vom Bon, Laden, Datum, Betrag, Posten (ab `migration-28.sql`) | nur Orga |
+| `receipts` | Belege zur Einkaufsliste: Foto vom Bon oder PDF, Laden, Datum, Betrag, Posten (ab `migration-28.sql`; ohne Beleg und PDF ab `migration-30.sql`) | nur Orga |
 | `fee_waivers` | Zahlung erlassen je Anmeldung, Kaskade mit `signups` (ab `migration-29.sql`) | nur Orga |
 | `orga_keys` | Orga-Passwort | niemand über die API |
 
@@ -162,7 +162,8 @@ Daraus folgt:
 - **Anmeldungen liest anon nicht direkt** (ab `migration-26.sql`). Die Elternseiten holen
   Zahlen, Mitbringsel, Aufgaben und gekürzte Namen über `anmeldungen_oeffentlich()`;
   die eigene Zeile liest nur, wer `X-Entry-Token` mitschickt. `intern.kurzname()` kürzt
-  wie `shortName()` in `fest-anmeldung.html` — wer eines ändert, ändert beide.
+  wie `shortName()` in `fest-anmeldung.html` und `kurzName()` in `orga.html` (Dienstplan
+  zum Teilen) — wer eines ändert, ändert alle drei.
 - **Spaltenrechte gelten auch fürs Orgateam**, weil es dieselbe Rolle nutzt. Interne
   Daten gehören in eigene Tabellen, nicht in versteckte Spalten.
 - **Alles, was `anon` schreiben darf, kann jeder schreiben.** Neue Schreibpfade
