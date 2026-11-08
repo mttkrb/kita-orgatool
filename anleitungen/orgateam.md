@@ -684,11 +684,21 @@ speichern, dann Belege anhängen.“ Belege sieht nur das Orgateam.
 | --- | --- |
 | „Laden“ | etwa „Aldi“ (optional) |
 | „Gekauft am“ | Datum des Einkaufs (optional) |
-| „Betrag (€)“ | Summe auf dem Bon, etwa „12,90“ (optional) |
+| „Betrag (€)“ | Summe auf dem Bon, etwa „12,90“ (optional; Pflicht, wenn es kein Foto und kein PDF gibt) |
 | „Zu welchem Posten?“ | ein Posten der Einkaufsliste (optional). Das Feld erscheint erst, wenn die Einkaufsliste dieser Veranstaltung Posten hat. |
-| „Foto“ | Bild vom Bon, Pflicht. Das Handy bietet Kamera oder Galerie an. |
+| „Foto oder PDF“ | Bild vom Bon (Kamera oder Galerie) oder ein PDF bis 1 MB, etwa eine Online-Rechnung. Optional. |
 
 Was im Einzelnen gekauft wurde, steht auf dem Bon selbst; abtippen musst du nichts.
+
+**Ausgabe ohne Beleg:** Ist der Bon weg oder gab es keine Quittung, lässt du „Foto oder PDF“
+leer und trägst den Betrag ein. Ohne Betrag steht dort „Ohne Foto oder PDF bitte den Betrag
+eintragen.“ In der Liste steht statt des Bildes „ohne Beleg“; im Kassensturz zählt der Betrag
+wie jeder andere.
+
+**PDF:** Das PDF wird unverändert gespeichert, nicht verkleinert. Darunter steht „PDF bereit.“,
+bei mehr als 1 MB „PDF zu groß (höchstens 1 MB).“ In der Liste steht statt des Bildes der Knopf
+„PDF“; ein Tipp lädt die Datei herunter, etwa als `beleg-onlineshop.pdf`. Rechnungen enthalten
+oft Name und Lieferadresse: nur hochladen, was das ganze Orgateam sehen darf.
 
 Sobald du ein Foto auswählst, liest das Tool es ein und verkleinert es; darunter steht „Foto wird
 vorbereitet …“, dann „Foto bereit.“ Steht stattdessen „Das Foto ließ sich nicht lesen. Bitte noch

@@ -264,6 +264,8 @@ create policy "eigene loeschen" on signups for delete to anon
   .beleg{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
   .beleg img{width:56px;height:56px;object-fit:cover;border-radius:5px;cursor:zoom-in;border:1px solid var(--line)}
   .beleg .was{flex:1;font-size:.9rem}
+  .beleg .beleg-pdf{width:56px;height:56px;padding:0;font-weight:600}
+  .beleg .beleg-ohne{width:56px;font-size:.72rem;color:var(--ink-soft);text-align:center;line-height:1.2}
   #beleg-gross{position:fixed;inset:0;background:rgba(0,0,0,.86);z-index:80;display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:12px;padding:16px}
   #beleg-gross img{max-width:100%;max-height:82vh;background:#fff;border-radius:4px}
@@ -646,8 +648,11 @@ create policy "eigene loeschen" on signups for delete to anon
           <label for="b-posten">Zu welchem Posten? <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
           <select id="b-posten"></select>
         </div>
-        <label for="b-foto">Foto</label>
-        <input type="file" id="b-foto" accept="image/*">
+        <label for="b-foto">Foto oder PDF <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+        <input type="file" id="b-foto" accept="image/*,application/pdf,.pdf">
+        <p class="hint" style="margin:4px 0 0">Ohne Beleg geht auch, etwa wenn der Bon weg ist; dann bitte den
+          Betrag eintragen. PDF bis 1 MB, etwa eine Online-Rechnung. Rechnungen enthalten oft Name und
+          Adresse: nur hochladen, was das Orgateam sehen darf.</p>
         <div style="margin-top:8px"><button type="button" class="ghost" id="b-dazu">Beleg hinzufügen</button></div>
         <p class="hint" id="beleg-msg"></p>
       </div>
@@ -2622,8 +2627,12 @@ function renderBelege(){
     const d = document.createElement("div");
     d.className = "beleg";
     const bild = bildUrl(r.image);
-    d.innerHTML = (bild ? '<img alt="Beleg ansehen" tabindex="0">' : "") + '<div class="was"></div>' +
-      '<button type="button" class="ghost">Löschen</button>';
+    const pdf = /^data:application\/pdf;base64,/.test(r.image || "");
+    d.innerHTML = (bild ? '<img alt="Beleg ansehen" tabindex="0">'
+        : pdf ? '<button type="button" class="ghost beleg-pdf">PDF</button>'
+        : '<span class="beleg-ohne">ohne Beleg</span>') + '<div class="was"></div>' +
+      '<button type="button" class="ghost beleg-weg">Löschen</button>';
+    if(pdf) d.querySelector(".beleg-pdf").onclick = () => pdfHerunterladen(r);
     const img = d.querySelector("img");
     if(img){
       img.src = bild;
@@ -2635,7 +2644,7 @@ function renderBelege(){
       r.bought_on && new Date(r.bought_on + "T12:00:00").toLocaleDateString("de-DE"),
       r.amount != null && euro(+r.amount),
       r.item_id && posten[r.item_id] && "für " + posten[r.item_id]].filter(Boolean).join(" · ") || "Beleg";
-    d.querySelector("button").onclick = async () => {
+    d.querySelector(".beleg-weg").onclick = async () => {
       if(!confirm("Beleg" + (r.shop ? " von " + r.shop : "") + " löschen?")) return;
       try{ await db.delReceipt(r.id); }catch(e){ msg($("beleg-msg"), "Löschen hat nicht geklappt: " + e.message, true); return; }
       msg($("beleg-msg"), "Beleg gelöscht.");
@@ -2656,6 +2665,30 @@ $("einkauf").addEventListener("change", renderBelege);
 $("einkauf").addEventListener("input", belegPosten);
 $("add-kauf").addEventListener("click", () => setTimeout(belegPosten));
 
+// PDF-Belege werden heruntergeladen: Ein data:-PDF öffnen Browser nicht direkt im Tab.
+function pdfHerunterladen(r){
+  const roh = atob(r.image.split(",")[1]);
+  const bytes = new Uint8Array(roh.length);
+  for(let i = 0; i < roh.length; i++) bytes[i] = roh.charCodeAt(i);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([bytes], { type:"application/pdf" }));
+  a.download = "beleg" + (r.shop ? "-" + slugify(r.shop) : "") + (r.bought_on ? "-" + r.bought_on : "") + ".pdf";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+// PDF bleibt, wie es ist; als data:-Adresse darf es höchstens 1,5 MB groß sein (migration-30.sql)
+const istPdf = datei => datei.type === "application/pdf" || /\.pdf$/i.test(datei.name || "");
+function belegPdf(datei){
+  if(datei.size > 1100000) return Promise.reject(new Error("PDF zu groß (höchstens 1 MB)"));
+  return new Promise((ok, fehler) => {
+    const leser = new FileReader();
+    leser.onerror = () => fehler(new Error("Foto nicht lesbar"));
+    leser.onload = () => ok("data:application/pdf;base64," + String(leser.result).split(",")[1]);
+    leser.readAsDataURL(datei);
+  });
+}
+const belegDatei = datei => istPdf(datei) ? belegPdf(datei) : belegBild(datei);
 // Kassenbons sind lang und schmal; die längere Kante darf deshalb mehr Pixel haben als bei
 // Aufgabenfotos. Passt das Bild nicht unter die Grenze der Datenbank, wird es kleiner.
 async function belegBild(datei){
@@ -2673,20 +2706,22 @@ const FOTO_NEU = "Das Foto ließ sich nicht lesen. Bitte noch einmal auswählen,
   "aus der Kamera; liegt es nur in der Cloud, erst in der Galerie öffnen.";
 $("b-foto").addEventListener("change", () => {
   const datei = $("b-foto").files && $("b-foto").files[0];
-  belegFoto = datei ? belegBild(datei) : null;
+  belegFoto = datei ? belegDatei(datei) : null;
   if(!belegFoto) return;
-  msg($("beleg-msg"), "Foto wird vorbereitet …");
+  const art = istPdf(datei) ? "PDF" : "Foto";
+  msg($("beleg-msg"), art + " wird vorbereitet …");
   const dieses = belegFoto;
-  dieses.then(() => { if(belegFoto === dieses) msg($("beleg-msg"), "Foto bereit."); },
-    () => { if(belegFoto !== dieses) return; belegFoto = null; $("b-foto").value = ""; msg($("beleg-msg"), FOTO_NEU, true); });
+  dieses.then(() => { if(belegFoto === dieses) msg($("beleg-msg"), art + " bereit."); },
+    e => { if(belegFoto !== dieses) return; belegFoto = null; $("b-foto").value = "";
+      msg($("beleg-msg"), e.message === "Foto nicht lesbar" ? FOTO_NEU : e.message + ".", true); });
 });
 $("b-dazu").addEventListener("click", async () => {
   const m = $("beleg-msg");
   if(!current || !current.id){ msg(m, "Erst speichern, dann Belege anhängen.", true); return; }
   const datei = $("b-foto").files && $("b-foto").files[0];
-  if(!datei && !belegFoto){ msg(m, "Bitte ein Foto vom Beleg auswählen.", true); return; }
   const betrag = $("b-betrag").value.trim();
   if(betrag && !preisZahl(betrag)){ msg(m, "Betrag bitte als Zahl, zum Beispiel 12,90.", true); return; }
+  if(!datei && !belegFoto && !betrag){ msg(m, "Ohne Foto oder PDF bitte den Betrag eintragen.", true); return; }
   $("b-dazu").disabled = true;
   try{
     await db.addReceipt({ event_id:current.id,
@@ -2694,9 +2729,12 @@ $("b-dazu").addEventListener("click", async () => {
       bought_on:$("b-datum").value || null,
       amount:betrag ? preisZahl(betrag) : null,
       item_id:$("b-posten").value || null,
-      image:await (belegFoto || belegBild(datei)) });
+      image:belegFoto ? await belegFoto : datei ? await belegDatei(datei) : null });
   }catch(e){
     if(e.message === "Foto nicht lesbar"){ belegFoto = null; $("b-foto").value = ""; msg(m, FOTO_NEU, true); }
+    // Ohne migration-30.sql verlangt die Datenbank noch ein Bild
+    else if(/null value|not-null|receipts_grenzen_chk|23502|23514/i.test(e.message))
+      msg(m, "Beleg wurde nicht gespeichert. Ohne Foto oder als PDF braucht die Datenbank Migration 30.", true);
     else msg(m, "Beleg wurde nicht gespeichert: " + e.message, true);
     $("b-dazu").disabled = false;
     return;
