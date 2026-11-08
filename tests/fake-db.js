@@ -94,6 +94,14 @@ function fakeDb(start = {}){
       const ev = eq(q, "event_id");
       return antwort(200, db.task_claims.filter(c => c.event_id === ev));
     }
+    // Übernahmen am Tag darf jede:r anlegen (migration-8), Name 1–120 Zeichen (migration-21)
+    if(tabelle === "task_claims" && methode === "POST"){
+      const n = String(body.name || "");
+      if(!body.event_id || !body.task_id || n.length < 1 || n.length > 120 || String(body.task_id).length > 100)
+        return antwort(400, { code:"23514", message:"task_claims_grenzen_chk" });
+      db.task_claims.push({ id:"tc-" + (db.task_claims.length + 1), done:false, ...body });
+      return antwort(201);
+    }
     if(tabelle === "task_images" && methode === "GET"){
       const ev = eq(q, "event_id");
       return antwort(200, db.task_images.filter(c => c.event_id === ev));
