@@ -582,6 +582,14 @@ und „höchstens pro Anmeldung“ (1 bis 99, Standard 10). Bestellungen sind ni
 bestellten Mengen siehst du in den Anmeldungen als eigene Summe, etwa „17 Bratwurst
 vorbestellen“.
 
+**Grundmenge plus Bestellung**, etwa bei St. Martin: Jedes Kita-Kind bekommt einen Weckmann,
+Extras werden bestellt. Dafür eine Zusatzfrage „Wie viele Kita-Kinder?“ als „Zahl“ anlegen und
+beim Bestellartikel unter „Dazu je eins für jede Antwort auf“ diese Frage wählen. Die Liste
+zeigt nur Fragen der Art „Zahl“. Die Anmeldungen zeigen dann die Gesamtmenge, etwa „89 Extra-
+Weckmänner gesamt (50 Wie viele Kita-Kinder? + 39 bestellt)“. Die Grundmenge kostet nichts;
+bezahlt werden nur die bestellten. Beim Speichern hält der Rückblick die Mengen fest, und
+beim nächsten Mal stehen sie unter „Aus den letzten Malen“.
+
 > **Fragen nach den ersten Anmeldungen nicht mehr umbenennen.** Die Antworten hängen am Text der
 > Frage. Bei Bestellungen fallen die bisherigen Mengen sonst aus der Rechnung.
 
@@ -824,7 +832,8 @@ dauerhaft bleiben; ohne Belege mit dem Feld „Ausgaben“.
 
 Wird eine Veranstaltung aus einer Vorlage angelegt, die schon gelaufen ist, steht oben im Editor
 „Aus den letzten Malen“: für jede frühere Veranstaltung Anmeldungen, Personen (und „tatsächlich
-da“), eine Tabelle mit Kategorie, Ziel, Ist und Bewertung, die [Entscheidungen](#entscheidungen)
+da“), eine Tabelle mit Kategorie, Ziel, Ist und Bewertung, die Mengen der Bestellartikel
+(etwa „Extra-Weckmänner: 89 gesamt (50 … + 39 bestellt)“), die [Entscheidungen](#entscheidungen)
 und die Notiz. Sind die Anmeldungen
 schon gelöscht, steht dabei „(aus der Zusammenfassung, die Anmeldungen sind gelöscht)“, und
 Absagen werden mitgenannt, falls sie gepflegt sind. Ist-Werte, die nicht festgehalten sind, stehen
@@ -858,7 +867,7 @@ Vorlage). Prüf die Werte gegen die erwartete Personenzahl und speichere dann.
 | Personen je Gruppe | je eingeschalteter Gruppe |
 | „Mitbringsel“ | Zahl aller Mitbringsel |
 | „da“, „Stunden zusammen“ | mit Check-in |
-| Menge je Bestellartikel | bei Bestellungen mit Stückpreis, ohne Absagen |
+| Menge je Bestellartikel | bei Bestellungen mit Stückpreis, ohne Absagen; mit Grundmenge als „… gesamt (Grundmenge + bestellt)“ |
 | „Einnahmen (Soll)“, „bezahlt“, „offen (2 Familien)“ | wenn die Veranstaltung etwas kostet; dazu „Zahlung erlassen“, wenn es Erlasse gibt ([siehe unten](#zahlung-erlassen)) |
 
 ### Knöpfe
@@ -915,6 +924,7 @@ die Liste.“
 | Personengruppen | Auswahl von 0 bis „höchstens“ |
 | „Bringt mit“ | je Zeile Kategorie, „Was genau?“ und Menge; „+ Mitbringsel“ für weitere |
 | „Hilft bei“ | Aufgaben mit „2 frei“ oder „voll, geht aber“; du kannst also über die Plätze hinaus eintragen |
+| Zusatzfragen | alle Fragen der Veranstaltung, etwa „Wie viele Kita-Kinder?“; Antworten der Eltern stehen beim Bearbeiten schon drin |
 | Bestellartikel | Anzahl je Bestellung mit Stückpreis |
 | „Anmerkung“ | freier Text |
 
