@@ -18,6 +18,9 @@ test("Entscheidung eintragen, speichern, Datum bleibt", async () => {
   try{
     await w.eval(`openEditor(events.find(e => e.id === "e-neu"))`);
     await warte(() => !$("view-edit").classList.contains("hidden"), "Editor");
+    // Die Einträge bleiben dauerhaft, deshalb der Hinweis wie bei den Spenden
+    assert.match($("entscheidungen").closest("fieldset").querySelector(".hint").textContent,
+      /Ohne Namen von Privatpersonen/);
     $("add-entscheidung").click();
     const d = $("entscheidungen").lastElementChild;
     d.querySelector(".en-thema").value = "Motto";
