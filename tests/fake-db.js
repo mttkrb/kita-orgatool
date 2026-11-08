@@ -16,7 +16,7 @@ const kurzname = n => {
 
 function fakeDb(start = {}){
   const db = {
-    events: [], signups: [], payments: [], task_claims: [], task_images: [], receipts: [], fee_waivers: [],
+    events: [], signups: [], payments: [], task_claims: [], task_images: [], receipts: [], fee_waivers: [], proposals: [],
     ...JSON.parse(JSON.stringify(start)),
     anfragen: []
   };
@@ -105,6 +105,12 @@ function fakeDb(start = {}){
     if(tabelle === "task_images" && methode === "GET"){
       const ev = eq(q, "event_id");
       return antwort(200, db.task_images.filter(c => c.event_id === ev));
+    }
+
+    // Gemeldete Aufgaben lesen (migration-10): alle außer abgelehnten, das Orgateam alles
+    if(tabelle === "proposals" && methode === "GET"){
+      const ev = eq(q, "event_id");
+      return antwort(200, db.proposals.filter(p => (!ev || p.event_id === ev) && (orga || p.status !== "abgelehnt")));
     }
 
     // Belege (migration-28): nur das Orgateam. Ohne Orga-Passwort liefert die Policy
