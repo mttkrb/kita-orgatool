@@ -12,7 +12,7 @@
 --  Läuft in einer Transaktion: Bei einem Fehler wird nichts angelegt.
 --  Enthält keine Daten.
 --
---  Erzeugt am 2026-11-06 15:04 mit einrichtung/vorlage-erzeugen.sh
+--  Erzeugt am 2026-11-08 08:29 mit einrichtung/vorlage-erzeugen.sh
 --  aus einem Projekt mit Postgres 17. Nicht von Hand ändern.
 -- =====================================================================
 
@@ -28,6 +28,7 @@ end $$;
 -- ---------------------------------------------------------------------
 -- 1. Erweiterungen (die meisten bringt Supabase schon mit)
 -- ---------------------------------------------------------------------
+create extension if not exists pg_cron with schema pg_catalog;
 create extension if not exists pg_stat_statements with schema extensions;
 create extension if not exists pgcrypto with schema extensions;
 create extension if not exists supabase_vault with schema vault;
@@ -532,8 +533,8 @@ CREATE TABLE public.receipts (
     bought_on date,
     amount numeric(8,2),
     item_id text,
-    image text NOT NULL,
-    CONSTRAINT receipts_grenzen_chk CHECK (((length(COALESCE(shop, ''::text)) <= 120) AND (length(COALESCE(item_id, ''::text)) <= 100) AND ((amount IS NULL) OR ((amount >= (0)::numeric) AND (amount < (100000)::numeric))) AND (length(image) <= 1500000) AND (image ~ '^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$'::text)))
+    image text,
+    CONSTRAINT receipts_grenzen_chk CHECK (((length(COALESCE(shop, ''::text)) <= 120) AND (length(COALESCE(item_id, ''::text)) <= 100) AND ((amount IS NULL) OR ((amount >= (0)::numeric) AND (amount < (100000)::numeric))) AND ((image IS NULL) OR ((length(image) <= 1500000) AND (image ~ '^data:(image/(jpeg|png|webp)|application/pdf);base64,[A-Za-z0-9+/=]+$'::text))) AND ((image IS NOT NULL) OR (amount IS NOT NULL))))
 );
 
 
@@ -1530,6 +1531,11 @@ GRANT SELECT(payment),INSERT(payment),UPDATE(payment) ON TABLE public.templates 
 --
 
 
+
+-- ---------------------------------------------------------------------
+-- 4. Zeitgesteuerte Aufträge (pg_cron), z. B. das nächtliche Aufräumen
+-- ---------------------------------------------------------------------
+select cron.schedule('kita-aufraeumen', '0 3 * * *', 'select daten_aufraeumen()');
 
 -- ---------------------------------------------------------------------
 -- 5. Orga-Passwort
