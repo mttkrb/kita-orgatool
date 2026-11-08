@@ -185,28 +185,37 @@ function textMitFormat(ziel, text){
 }
 
 // Bild im Browser verkleinern, damit die Datenbank klein bleibt (JPEG-Data-URL).
-// Liest über eine Objekt-Adresse statt über FileReader: Handyfotos mit 10 MB werden so
-// nicht erst als riesige Zeichenkette in den Speicher geladen. Kann das Handy die Datei
-// nicht mehr öffnen (Zugriff abgelaufen, Foto nur in der Cloud), heißt der Fehler
+// Keine blob:-Adressen: Die Content-Security-Policy in deploy/.htaccess erlaubt Bilder nur
+// von der eigenen Seite und als data:. Erst createImageBitmap (braucht keine Adresse und
+// lädt große Handyfotos sparsam), sonst FileReader mit data:-Adresse. Kann das Handy die
+// Datei nicht öffnen (Zugriff abgelaufen, Foto nur in der Cloud), heißt der Fehler
 // "Foto nicht lesbar"; dann hilft es, das Foto neu auszuwählen.
 function verkleinern(datei, kante=1000, guete=0.72){
-  return new Promise((ok, fehler)=>{
-    let url;
-    try{ url = URL.createObjectURL(datei); }
-    catch(e){ fehler(new Error("Foto nicht lesbar")); return; }
-    const bild = new Image();
-    bild.onerror = () => { URL.revokeObjectURL(url); fehler(new Error("Foto nicht lesbar")); };
-    bild.onload = () => {
-      const f = Math.min(1, kante / Math.max(bild.width, bild.height));
-      const c = document.createElement("canvas");
-      c.width = Math.round(bild.width * f);
-      c.height = Math.round(bild.height * f);
-      c.getContext("2d").drawImage(bild, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(url);
-      ok(c.toDataURL("image/jpeg", guete));
+  const zeichnen = (bild, b, h) => {
+    const f = Math.min(1, kante / Math.max(b, h));
+    const c = document.createElement("canvas");
+    c.width = Math.round(b * f);
+    c.height = Math.round(h * f);
+    c.getContext("2d").drawImage(bild, 0, 0, c.width, c.height);
+    return c.toDataURL("image/jpeg", guete);
+  };
+  const perLeser = () => new Promise((ok, fehler)=>{
+    const leser = new FileReader();
+    leser.onerror = () => fehler(new Error("Foto nicht lesbar"));
+    leser.onload = () => {
+      const bild = new Image();
+      bild.onerror = () => fehler(new Error("Foto nicht lesbar"));
+      bild.onload = () => ok(zeichnen(bild, bild.width, bild.height));
+      bild.src = leser.result;
     };
-    bild.src = url;
+    leser.readAsDataURL(datei);
   });
+  if(typeof createImageBitmap !== "function") return perLeser();
+  return createImageBitmap(datei).then(bild => {
+    const url = zeichnen(bild, bild.width, bild.height);
+    if(bild.close) bild.close();
+    return url;
+  }, perLeser);
 }
 
 /* ============================================================
