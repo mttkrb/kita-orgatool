@@ -648,14 +648,16 @@ Den Abschnitt sieht nur das Orgateam.
 | --- | --- |
 | „Thema“ | etwa „Location“ oder „Motto“ |
 | „Entscheidung“ | etwa „Gemeindesaal“ oder „Piraten“ |
-| „Warum“ (optional) | etwa „Günstiger, mit Küche, bei Regen sicher“ |
+| „Warum“ (optional) | etwa „Günstiger, mit Küche, bei Regen sicher“. **Keine Namen von Privatpersonen.** |
 
 „+ Entscheidung“ fügt eine Zeile hinzu. Beim ersten Speichern merkt sich das Tool das Datum;
 die Kurzfassung zeigt dann „Location: Gemeindesaal 12.03.2026“. Ändert sich eine Entscheidung,
 überschreibst du sie einfach oder legst eine neue Zeile an. Ist ein Thema noch offen, lass
 „Entscheidung“ leer, dann steht dort „noch offen“.
 
-Entscheidungen gehören zum Rückblick und bleiben dauerhaft, auch nach der Löschfrist. Legst du
+Entscheidungen gehören zum Rückblick und bleiben dauerhaft, auch nach der Löschfrist. Schreib
+deshalb keine Namen von Privatpersonen hinein, etwa „Caterer: Partyservice am Markt“ statt des
+Namens einer Mutter, die kocht. Legst du
 später eine Veranstaltung aus derselben Vorlage an, stehen sie oben unter „Aus den letzten
 Malen“, je Jahr mit dem Warum.
 
