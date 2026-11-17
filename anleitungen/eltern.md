@@ -44,6 +44,8 @@ Die Karten sind nach Datum sortiert, die nächste zuerst. Jede Karte zeigt:
 | „3 Anmeldungen“ | So viele haben schon zugesagt. Absagen zählen nicht mit. Nur wenn das Orgateam die Zahlen für alle sichtbar gemacht hat. |
 | „12 Personen“ | Erwachsene und Kinder zusammengezählt, ohne Absagen. Nur wenn das Orgateam die Zahlen für alle sichtbar gemacht hat. |
 | „4 × Kuchen & Süßes gesucht“ | In dieser Kategorie fehlt noch etwas. Es werden höchstens zwei solche Hinweise gezeigt, die größten Lücken zuerst. |
+| „noch 12 Plätze frei“ | Das Orgateam hat eine Höchstzahl eingestellt. So viele Personen, Erwachsene und Kinder zusammen, können sich noch anmelden. |
+| „Ausgebucht“ | Alle Plätze sind vergeben. Neue Anmeldungen gehen nicht mehr, unten steht dann „Ansehen →“. |
 | „5 Helferplätze offen“ | So viele Plätze bei den Aufgaben sind noch frei. |
 | „Kosten: Erwachsene 3,00 €, Kinder 5,00 €“ | Die Veranstaltung kostet etwas, hier der Preis je Person. |
 | „Kosten: mit Bestellung“ | Es kostet nur etwas, wenn du etwas bestellst, zum Beispiel einen zusätzlichen Weckmann. |
@@ -123,6 +125,12 @@ In zwei Auswahllisten stellst du ein, wie viele Erwachsene und wie viele Kinder 
 Das Orgateam kann die Bezeichnungen ändern (zum Beispiel „Eltern“ statt „Erwachsene“),
 eine der beiden Gruppen weglassen oder beide. Wählbar sind 0 bis höchstens 6 Personen je
 Gruppe, sofern das Orgateam keine andere Höchstzahl eingestellt hat.
+
+Hat das Orgateam eine Höchstzahl eingestellt, steht oben im Kopf zum Beispiel „noch 12 Plätze
+frei“ und unter den Auswahllisten „Noch 12 Plätze frei, Erwachsene und Kinder zusammen.“
+Mehr als frei ist, lässt sich nicht wählen. Wählst du zusammen zu viele, erscheint beim
+Abschicken „Es sind nur noch 3 Plätze frei. Bitte weniger Personen eintragen.“ Änderst du deine
+Anmeldung über den persönlichen Link, zählen deine bisherigen Plätze wieder als frei.
 
 **Achtung:** Vorausgewählt sind 2 Erwachsene und 1 Kind. Prüf die Zahlen, bevor du
 abschickst.
@@ -605,7 +613,14 @@ außer du kommst über deinen persönlichen Link oder über den QR-Code am Einga
 | „**Die Anmeldung ist noch nicht offen.** Ab … kannst du dich hier eintragen.“ | Die Anmeldung beginnt an einem festen Tag. |
 | „**Die Anmeldung ist geschlossen.** Wenn du noch dabei sein willst, sprich jemanden aus dem Orgateam an.“ | Die Anmeldefrist ist vorbei. Ohne eigene Frist schließt die Anmeldung nach dem Veranstaltungstag. |
 
+| „**Ausgebucht.** Alle Plätze sind vergeben. Wenn du noch dabei sein willst, sprich jemanden aus dem Orgateam an.“ | Die Höchstzahl ist erreicht. Bei verbindlichen Veranstaltungen steht stattdessen „Absagen kannst du hier weiterhin.“ und das Formular bleibt für Absagen da. |
+
 Den Termin und, falls vorhanden, die Liste „Was schon zusammenkommt“ siehst du trotzdem.
+
+Wer schon angemeldet ist, kommt bei „Ausgebucht“ über den persönlichen Link weiter an seine
+Anmeldung, kann sie ändern oder absagen. Wer abgesagt hat, kann bei „Ausgebucht“ nicht wieder
+zusagen: „Leider ausgebucht, es ist kein Platz mehr frei.“ Sagt jemand ab, wird der Platz
+wieder frei.
 
 Steht oben „Veranstaltung nicht gefunden“, ist der Link falsch oder die Veranstaltung gibt es
 nicht mehr. Über „Hier stehen alle offenen Veranstaltungen.“ kommst du zur Übersicht.

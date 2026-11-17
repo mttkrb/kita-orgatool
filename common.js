@@ -55,6 +55,25 @@ const groups = ev => {
   };
 };
 
+/* ---------- Höchstzahl ---------- */
+// Höchstens so viele Personen (beide Gruppen zusammen) in people.limit, 0 = keine Grenze.
+// Gilt nur auf der Anmeldeseite, die Datenbank begrenzt nichts; das Orgateam trägt
+// auch über die Grenze hinaus ein.
+const platzGrenze = ev => Math.max(0, Math.floor(+((ev && ev.people) || {}).limit || 0));
+
+// Freie Plätze nach den Anmeldungen in liste (Absagen zählen nicht), null ohne Grenze.
+const freiePlaetze = (ev, liste) => {
+  const grenze = platzGrenze(ev);
+  if(!grenze) return null;
+  const belegt = (liste || []).filter(s=>s.status !== "absage")
+    .reduce((a,s)=>a + (+s.adults||0) + (+s.kids||0), 0);
+  return Math.max(0, grenze - belegt);
+};
+
+// "noch 1 Platz frei", "noch 12 Plätze frei", "Ausgebucht"
+const plaetzeText = frei => frei === null ? "" : frei <= 0 ? "Ausgebucht"
+  : "noch " + frei + (frei === 1 ? " Platz frei" : " Plätze frei");
+
 /* ---------- Kosten ---------- */
 // Betrag als "3,50 €".
 const euro = n => (Math.round((+n||0)*100)/100).toLocaleString("de-DE",
