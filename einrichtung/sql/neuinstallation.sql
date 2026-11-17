@@ -12,7 +12,7 @@
 --  Läuft in einer Transaktion: Bei einem Fehler wird nichts angelegt.
 --  Enthält keine Daten.
 --
---  Erzeugt am 2026-11-08 08:29 mit einrichtung/vorlage-erzeugen.sh
+--  Erzeugt am 2026-11-17 22:06 mit einrichtung/vorlage-erzeugen.sh
 --  aus einem Projekt mit Postgres 17. Nicht von Hand ändern.
 -- =====================================================================
 
@@ -43,7 +43,7 @@ create extension if not exists "uuid-ossp" with schema extensions;
 
 
 -- Dumped from database version 17.6
--- Dumped by pg_dump version 17.11 (Debian 17.11-0+deb13u1)
+-- Dumped by pg_dump version 17.12 (Debian 17.12-0+deb13u1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -98,6 +98,8 @@ CREATE TABLE public.events (
     expected_families integer,
     payment jsonb DEFAULT '{}'::jsonb NOT NULL,
     checkin boolean DEFAULT false NOT NULL,
+    blocks jsonb DEFAULT '{}'::jsonb NOT NULL,
+    CONSTRAINT events_blocks_chk CHECK (((jsonb_typeof(blocks) = 'object'::text) AND (length((blocks)::text) <= 2000))),
     CONSTRAINT events_payment_groesse CHECK (((jsonb_typeof(payment) = 'object'::text) AND (octet_length((payment)::text) <= 4000)))
 );
 
@@ -582,6 +584,8 @@ CREATE TABLE public.templates (
     people jsonb DEFAULT '{}'::jsonb NOT NULL,
     shopping jsonb DEFAULT '[]'::jsonb NOT NULL,
     payment jsonb DEFAULT '{}'::jsonb NOT NULL,
+    blocks jsonb DEFAULT '{}'::jsonb NOT NULL,
+    CONSTRAINT templates_blocks_chk CHECK (((jsonb_typeof(blocks) = 'object'::text) AND (length((blocks)::text) <= 2000))),
     CONSTRAINT templates_payment_groesse CHECK (((jsonb_typeof(payment) = 'object'::text) AND (octet_length((payment)::text) <= 4000)))
 );
 
@@ -1215,7 +1219,7 @@ end $$;
 
 
 -- Dumped from database version 17.6
--- Dumped by pg_dump version 17.11 (Debian 17.11-0+deb13u1)
+-- Dumped by pg_dump version 17.12 (Debian 17.12-0+deb13u1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;

@@ -6,7 +6,7 @@
 --
 --  Vergleicht Tabellen, Spalten, Policies, Funktionen und Rechte mit dem
 --  Projekt, aus dem die Vorlage stammt (nur Namen und Prüfsummen).
---  Erzeugt am 2026-11-08 08:29 mit einrichtung/vorlage-erzeugen.sh. Nicht von Hand ändern.
+--  Erzeugt am 2026-11-17 22:06 mit einrichtung/vorlage-erzeugen.sh. Nicht von Hand ändern.
 -- =====================================================================
 
 with soll(zeile) as (values
@@ -17,6 +17,7 @@ with soll(zeile) as (values
   ('constraint|checkin_codes|checkin_codes_code_check|07a751f536d586467e8a4278af0e4a1e'),
   ('constraint|checkin_codes|checkin_codes_event_id_fkey|9d87ad85a21f29ae5578906cd0536a94'),
   ('constraint|checkin_codes|checkin_codes_pkey|cdfe71aaf47969fdd98aa3fde969c2ae'),
+  ('constraint|events|events_blocks_chk|74bf5d4d6f79b62ab075f5bbb9aeed24'),
   ('constraint|events|events_payment_groesse|037179f4cd19a455bbdba5e147bc81b2'),
   ('constraint|events|events_pkey|795f8aa19bf8004d0e6d2e4a0dc930e3'),
   ('constraint|events|events_slug_key|d94b85ea8a98ec24f91c9ebedac31e6a'),
@@ -47,6 +48,7 @@ with soll(zeile) as (values
   ('constraint|task_images|task_images_data_chk|44f3bbfd995a19ebf956bd0c2f992f60'),
   ('constraint|task_images|task_images_event_id_fkey|9d87ad85a21f29ae5578906cd0536a94'),
   ('constraint|task_images|task_images_pkey|795f8aa19bf8004d0e6d2e4a0dc930e3'),
+  ('constraint|templates|templates_blocks_chk|74bf5d4d6f79b62ab075f5bbb9aeed24'),
   ('constraint|templates|templates_payment_groesse|037179f4cd19a455bbdba5e147bc81b2'),
   ('constraint|templates|templates_pkey|795f8aa19bf8004d0e6d2e4a0dc930e3'),
   ('funktionsrecht|anmeldungen_oeffentlich(text[])|anon|EXECUTE'),
@@ -316,6 +318,7 @@ with soll(zeile) as (values
   ('spalte|checkin_codes.event_id|uuid|notnull=true|-'),
   ('spalte|events.archived|boolean|notnull=true|68934a3e9455fa72420237eb05902327'),
   ('spalte|events.ask_people|boolean|notnull=true|b326b5062b2f0e69046810717534cb09'),
+  ('spalte|events.blocks|jsonb|notnull=true|f3db357cf4f4a03883484fa3281a056c'),
   ('spalte|events.categories|jsonb|notnull=true|8b4b2df56ad0773943ef9179742da01b'),
   ('spalte|events.checkin|boolean|notnull=true|68934a3e9455fa72420237eb05902327'),
   ('spalte|events.created_at|timestamp with time zone|notnull=true|75230039beb12ce952f24927f2bfa2f2'),
@@ -402,6 +405,7 @@ with soll(zeile) as (values
   ('spalte|task_images.event_id|uuid|notnull=true|-'),
   ('spalte|task_images.id|uuid|notnull=true|f3b72bb359a50b640590970a2ab8e514'),
   ('spalte|task_images.task_id|text|notnull=true|-'),
+  ('spalte|templates.blocks|jsonb|notnull=true|f3db357cf4f4a03883484fa3281a056c'),
   ('spalte|templates.categories|jsonb|notnull=true|8b4b2df56ad0773943ef9179742da01b'),
   ('spalte|templates.checklist|jsonb|notnull=true|8b4b2df56ad0773943ef9179742da01b'),
   ('spalte|templates.created_at|timestamp with time zone|notnull=true|75230039beb12ce952f24927f2bfa2f2'),
