@@ -323,6 +323,40 @@ Wurde die Veranstaltung aus einer Vorlage angelegt, steht oben „Aus der Vorlag
 hier gelten nur für diese Veranstaltung.“ Darunter erscheint, sobald es frühere Veranstaltungen
 derselben Vorlage gibt, der Kasten „Aus den letzten Malen“ ([Abschnitt 9](#zielwerte-aus-dem-rückblick)).
 
+### Blöcke zuklappen und ausschalten
+
+Jeder Abschnitt ist ein Block mit Rahmen. Ein Tipp auf die Überschrift (▾) klappt ihn zu oder
+wieder auf. Das merkt sich dein Gerät für alle Veranstaltungen, etwa wenn du die Eckdaten
+selten brauchst. Springst du aus den To-dos in einen Block, geht er von selbst auf.
+
+Rechts in der Rahmenlinie steht bei den meisten Blöcken ein Schalter **„genutzt“**. Ausgeschaltet
+heißt: Diesen Block braucht diese Veranstaltung nicht. Er rutscht dann als schmale Zeile ganz
+nach unten unter „Bei dieser Veranstaltung nicht genutzt.“ Antippen schaltet ihn wieder ein, er
+steht dann wieder an seiner Stelle. Die Schalter gelten für alle im Orgateam und werden mit
+„Speichern“ gesichert.
+
+| Block | Schalter |
+| --- | --- |
+| Eckdaten, „Was sehen die Gäste auf der Seite?“, Gemeldete Aufgaben, Rückblick | nur zuklappen |
+| Kosten und Bezahlung, Mitbringsel-Kategorien, Aufgaben, Zusätzliche Fragen, Checkliste, Entscheidungen, Einkaufsliste, Spenden | zuklappen und ausschalten |
+
+Ausgeschaltet ist ein Block immer leer, damit auf der Anmeldeseite nichts Verstecktes wirkt:
+
+- **Leerer Block:** geht sofort aus.
+- **Block mit Einträgen:** Die Seite fragt „„…“ hat noch Einträge. Beim Ausschalten werden sie
+  entfernt, gespeichert erst mit Speichern. Weiter?“ Wer abbricht oder nicht speichert, behält
+  alles.
+- **Block, an dem Daten hängen:** bleibt an, oben steht der Grund. Das gilt für Kosten, wenn es
+  schon Anmeldungen gibt; Kategorien, wenn Eltern Mitbringsel eingetragen haben; Aufgaben mit
+  Zusagen oder Fotos; Fragen mit Antworten; die Einkaufsliste, solange es Belege gibt. Dann
+  einzeln entfernen.
+
+Kommt in einen ausgeschalteten Block doch etwas hinein, etwa eine übernommene gemeldete Aufgabe,
+schaltet er sich von selbst wieder ein.
+
+Die Schalter kommen aus der Vorlage ([Abschnitt 12](#vorlagen-editor)) und lassen sich je
+Veranstaltung ändern.
+
 ### Zeilen bearbeiten, verschieben, entfernen
 
 Kategorien, Aufgaben, Fragen, Checklistenpunkte und Einkaufsposten sind Zeilen. Fertige Zeilen
@@ -1123,6 +1157,11 @@ Checklistenpunkte und ein Etikett: „neu“ oder „2× gelaufen“.
 | „Zusätzliche Fragen“ | wie dort |
 | „Standard-Einkaufsliste“ | wird jeder Veranstaltung daraus mitgegeben |
 | „Planungs-Checkliste“ | mit „Wer“ und „Vorlauf“; ein Fälligkeitsdatum gibt es erst in der Veranstaltung |
+| „Weitere Blöcke“ | Haken „Entscheidungen“ und „Spenden“: ob Veranstaltungen aus der Vorlage diese Blöcke zeigen |
+
+Die Blöcke der Vorlage haben dieselben Schalter „genutzt“ wie der Editor einer Veranstaltung
+([Blöcke zuklappen und ausschalten](#blöcke-zuklappen-und-ausschalten)). Was in der Vorlage
+aus ist, ist bei jeder Veranstaltung daraus aus, etwa beim Laternenfest Kosten und Spenden.
 
 „Vorlage speichern“ speichert, „Fertig, zur Übersicht“ führt zurück.
 
@@ -1137,6 +1176,7 @@ Aufgaben in der Vorlage haben kein Feld „Fotos“. Fotos fügst du in der Vera
 | Kosten und Zahlweg | Pflichtveranstaltung, Check-in |
 | Kategorien, Aufgaben, Zusatzfragen | Löschfrist (steht auf 14 Tage) |
 | Checkliste, Einkaufsliste (als Startpunkt) | Freigabe (ist aus) |
+| Schalter „genutzt“ der Blöcke | |
 
 Spätere Änderungen an der Vorlage ändern bestehende Veranstaltungen nicht. Mit „+
 Standardaufgaben aus der Vorlage“ und „+ Standardliste aus der Vorlage“ holst du Ergänzungen
