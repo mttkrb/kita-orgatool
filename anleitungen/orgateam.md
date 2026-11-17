@@ -421,6 +421,20 @@ abgeschaltet ist, taucht im Formular nicht auf. Beim Oma-Opa-Tag etwa nur eine G
 „Großeltern“. Die Namen erscheinen überall: im Formular, in den Summen, im Export und an den
 Preisfeldern.
 
+Darunter „Plätze insgesamt (optional)“: die Höchstzahl für die ganze Veranstaltung, beide
+Gruppen zusammen. Leer heißt ohne Grenze. Mit Grenze sehen die Eltern auf der Startseite und auf
+der Anmeldeseite „noch 12 Plätze frei“. Sind alle Plätze belegt, steht dort „Ausgebucht“, und
+neue Anmeldungen gehen nicht mehr. Wer schon angemeldet ist, kann über den persönlichen Link
+ändern oder absagen; Absagen geben Plätze frei.
+
+> Die Grenze prüft nur die Anmeldeseite, nicht die Datenbank. Melden sich zwei Familien im
+> selben Moment für die letzten Plätze an, kann es knapp darüber gehen. Du selbst kannst im
+> Orga-Bereich immer eintragen, auch über die Grenze hinaus („+ Anmeldung eintragen“). Die
+> Grenze zählt Personen; sind beide Gruppen abgeschaltet, wirkt sie nicht.
+
+Auch in Vorlagen gibt es „Plätze insgesamt“; neue Veranstaltungen aus der Vorlage übernehmen
+den Wert.
+
 ### Kosten und Bezahlung
 
 Leer lassen, wenn die Veranstaltung nichts kostet. Die Eltern sehen beim Anmelden, was es für
@@ -867,6 +881,7 @@ Vorlage). Prüf die Werte gegen die erwartete Personenzahl und speichere dann.
 | „Anmeldungen“ | bei normalen Veranstaltungen: Zahl aller Einträge, Absagen eingeschlossen |
 | „Zusagen“, „Absagen“, „ohne Antwort“ | bei Pflichtveranstaltungen; „ohne Antwort“ nur mit „Wie viele Familien insgesamt?“ |
 | Personen je Gruppe | je eingeschalteter Gruppe |
+| „12 von 40 Plätzen belegt“ | mit „Plätze insgesamt“; Absagen zählen nicht. Ist alles belegt, steht „(ausgebucht)“ dabei, über der Grenze in Rot |
 | „Mitbringsel“ | Zahl aller Mitbringsel |
 | „da“, „Stunden zusammen“ | mit Check-in |
 | Menge je Bestellartikel | bei Bestellungen mit Stückpreis, ohne Absagen; mit Grundmenge als „… gesamt (Grundmenge + bestellt)“ |

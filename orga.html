@@ -546,6 +546,10 @@ create policy "eigene loeschen" on signups for delete to anon
           <input type="text" id="e-g2-label" value="Kinder">
           <label>höchstens</label><input type="number" id="e-g2-max" min="1" max="30" value="6"></div>
       </div>
+      <label for="e-limit">Plätze insgesamt <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <input type="number" id="e-limit" min="1" max="9999" placeholder="leer = ohne Grenze" style="max-width:12em">
+      <p class="hint">Beide Gruppen zusammen. Sind alle Plätze belegt, steht auf der Anmeldeseite
+        „Ausgebucht" und neue Anmeldungen gehen nicht mehr. Im Orga-Bereich kannst du trotzdem eintragen.</p>
       </div>
       <label class="check"><input type="checkbox" id="e-archived">
         <span>Archivieren — verschwindet von der Startseite, der direkte Link bleibt gültig</span></label>
@@ -777,6 +781,10 @@ create policy "eigene loeschen" on signups for delete to anon
           <input type="text" id="t-g2-label" value="Kinder">
           <label>höchstens</label><input type="number" id="t-g2-max" min="1" max="30" value="6"></div>
       </div>
+      <label for="t-limit">Plätze insgesamt <span style="font-weight:400;color:var(--ink-soft)">(optional)</span></label>
+      <input type="number" id="t-limit" min="1" max="9999" placeholder="leer = ohne Grenze" style="max-width:12em">
+      <p class="hint">Beide Gruppen zusammen. Sind alle Plätze belegt, steht auf der Anmeldeseite
+        „Ausgebucht" und neue Anmeldungen gehen nicht mehr. Im Orga-Bereich kannst du trotzdem eintragen.</p>
     </fieldset>
 
     <fieldset>
@@ -914,9 +922,12 @@ function fillGroups(prefix, o){
   $(prefix+"-g2-on").checked = g.kids.on;
   $(prefix+"-g2-label").value = g.kids.label;
   $(prefix+"-g2-max").value = g.kids.max;
+  $(prefix+"-limit").value = platzGrenze(o) || "";
 }
 function readGroups(prefix){
+  const limit = Math.min(9999, Math.max(0, Math.floor(+$(prefix+"-limit").value || 0)));
   return {
+    ...(limit ? { limit } : {}),
     adults:{ on:$(prefix+"-g1-on").checked, label:$(prefix+"-g1-label").value.trim() || "Erwachsene",
              max:Math.max(1, +$(prefix+"-g1-max").value || 6) },
     kids:  { on:$(prefix+"-g2-on").checked, label:$(prefix+"-g2-label").value.trim() || "Kinder",
@@ -4130,6 +4141,9 @@ async function loadSignups(){
   const absagen = signups.filter(s=>s.status === "absage");
   const erwartet = +current.expected_families || 0;
   const fehlend = erwartet ? Math.max(0, erwartet - signups.length) : 0;
+  // Höchstzahl gilt nur für die Anmeldeseite; hier nur anzeigen, nichts sperren
+  const grenze = platzGrenze(current);
+  const belegtPl = zusagen.reduce((a,s)=>a+(+s.adults||0)+(+s.kids||0),0);
   $("totals").innerHTML =
     (current.mandatory
       ? "<div><b>"+zusagen.length+"</b>Zusagen</div><div><b>"+absagen.length+"</b>Absagen</div>" +
@@ -4137,6 +4151,8 @@ async function loadSignups(){
       : "<div><b>"+signups.length+"</b>Anmeldungen</div>")+
     (g.adults.on ? "<div><b>"+adults+"</b>"+esc(g.adults.label)+"</div>" : "")+
     (g.kids.on ? "<div><b>"+kids+"</b>"+esc(g.kids.label)+"</div>" : "")+
+    (grenze ? "<div><b"+(belegtPl > grenze ? ' style="color:var(--berry)"' : "")+">"+belegtPl+" von "+grenze+
+      "</b>Plätzen belegt"+(belegtPl >= grenze ? " (ausgebucht)" : "")+"</div>" : "")+
     "<div><b>"+items+"</b>Mitbringsel</div>"+
     (current.checkin ? "<div><b>"+daZahl+"</b>da</div>" +
       (stundenSumme ? "<div><b>"+dauerText(stundenSumme)+"</b>Stunden zusammen</div>" : "") : "")+
