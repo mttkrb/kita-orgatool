@@ -58,7 +58,8 @@ const DEMO = {
       event_time:"17–19 Uhr", place:"Treffpunkt Kita-Tor", archived:false,
       categories:[{id:"punsch",label:"Punsch & Heißes",target:6}],
       tasks:[{id:"fackeln",label:"Fackeln tragen",needed:4}],
-      fields:[{label:"Zusätzlicher Weckmann",type:"order",price:2.5}], payment:{ kids:3 } }
+      fields:[{label:"Zusätzlicher Weckmann",type:"order",price:2.5}], payment:{ kids:3 },
+      people:{ limit:30 } }
   ],
   signups:[
     { event:"sommerfest-2026", adults:2, kids:2, items:[{cat:"kuchen"},{cat:"salat"}], tasks:["aufbau"] },
@@ -98,7 +99,7 @@ function stats(ev, rows){
     .filter(g=>g.fehlt>0).sort((a,b)=>b.fehlt-a.fehlt).slice(0,2);
   const helperGap = (ev.tasks||[]).reduce((a,t)=>
     a + Math.max(0, t.needed - mine.filter(s=>(s.tasks||[]).includes(t.id)).length), 0);
-  return { count:mine.length, people, gaps, helperGap };
+  return { count:mine.length, people, gaps, helperGap, frei: freiePlaetze(ev, mine) };
 }
 
 // Preise je Person, damit niemand erst beim Anmelden merkt, dass es etwas kostet
@@ -132,11 +133,14 @@ function preisPill(ev){
     const nichtFrei = ev.signup_released === false;
     const nochNicht = ev.signup_from && ev.signup_from > heuteIso;
     const zu = ev.signup_until && ev.signup_until < heuteIso;
+    const voll = s.frei === 0 && !nichtFrei && !nochNicht && !zu;
     const pills = [
       nichtFrei ? '<span class="pill need">Anmeldung folgt</span>' : "",
       (!nichtFrei && nochNicht) ? '<span class="pill need">Anmeldung ab ' +
         new Date(ev.signup_from+"T12:00:00").toLocaleDateString("de-DE") + "</span>" : "",
       zu ? '<span class="pill need">Anmeldung geschlossen</span>' : "",
+      voll ? '<span class="pill need">Ausgebucht</span>' : "",
+      (s.frei && !nichtFrei && !zu) ? '<span class="pill">' + plaetzeText(s.frei) + "</span>" : "",
       vis(ev).totals ? '<span class="pill">' + s.count + (s.count===1?" Anmeldung":" Anmeldungen") + "</span>" : "",
       vis(ev).totals && s.people ? '<span class="pill">' + s.people + " Personen</span>" : "",
       ...s.gaps.map(g=>'<span class="pill need">' + g.fehlt + " × " + esc(g.label) + " gesucht</span>"),
@@ -148,7 +152,7 @@ function preisPill(ev){
       '<p class="when">' + [esc(ev.event_date || fmtDate(ev.event_on)), esc(ev.event_time||""), esc(ev.place||"")]
         .filter(Boolean).join(" · ") + "</p>" +
       '<div class="stats">' + pills + "</div>" +
-      '<span class="go">' + ((nichtFrei || nochNicht) ? "Ansehen →" : zu ? "Ansehen →"
+      '<span class="go">' + ((nichtFrei || nochNicht) ? "Ansehen →" : (zu || voll) ? "Ansehen →"
         : "Anmelden und Mitbringsel eintragen →") + "</span></a>";
   }).join("")
   : '<div class="empty"><p style="margin:0">Gerade steht nichts an. Sobald das Orgateam eine Veranstaltung ' +
