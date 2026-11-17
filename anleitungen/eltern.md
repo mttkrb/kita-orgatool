@@ -44,7 +44,8 @@ Die Karten sind nach Datum sortiert, die nächste zuerst. Jede Karte zeigt:
 | „3 Anmeldungen“ | So viele haben schon zugesagt. Absagen zählen nicht mit. Nur wenn das Orgateam die Zahlen für alle sichtbar gemacht hat. |
 | „12 Personen“ | Erwachsene und Kinder zusammengezählt, ohne Absagen. Nur wenn das Orgateam die Zahlen für alle sichtbar gemacht hat. |
 | „4 × Kuchen & Süßes gesucht“ | In dieser Kategorie fehlt noch etwas. Es werden höchstens zwei solche Hinweise gezeigt, die größten Lücken zuerst. |
-| „noch 12 Plätze frei“ | Das Orgateam hat eine Höchstzahl eingestellt. So viele Personen, Erwachsene und Kinder zusammen, können sich noch anmelden. |
+| „noch 12 Plätze frei“ | Das Orgateam hat eine Höchstzahl eingestellt. So viele Personen, Erwachsene und Kinder zusammen, können sich noch anmelden. Nur wenn das Orgateam die Zahlen für alle sichtbar gemacht hat. |
+| „nur noch wenige Plätze frei“ | Es gibt eine Höchstzahl, und es ist fast alles belegt. Steht so da, wenn das Orgateam die Zahlen nicht sichtbar gemacht hat. |
 | „Ausgebucht“ | Alle Plätze sind vergeben. Neue Anmeldungen gehen nicht mehr, unten steht dann „Ansehen →“. |
 | „5 Helferplätze offen“ | So viele Plätze bei den Aufgaben sind noch frei. |
 | „Kosten: Erwachsene 3,00 €, Kinder 5,00 €“ | Die Veranstaltung kostet etwas, hier der Preis je Person. |
@@ -131,6 +132,10 @@ frei“ und unter den Auswahllisten „Noch 12 Plätze frei, Erwachsene und Kind
 Mehr als frei ist, lässt sich nicht wählen. Wählst du zusammen zu viele, erscheint beim
 Abschicken „Es sind nur noch 3 Plätze frei. Bitte weniger Personen eintragen.“ Änderst du deine
 Anmeldung über den persönlichen Link, zählen deine bisherigen Plätze wieder als frei.
+
+Hat das Orgateam die Zahlen nicht für alle sichtbar gemacht, steht keine Zahl da. Wird es
+knapp, heißt es oben „Nur noch wenige Plätze frei“, und beim Abschicken mit zu vielen
+Personen „So viele Plätze sind nicht mehr frei. Bitte weniger Personen eintragen.“
 
 **Achtung:** Vorausgewählt sind 2 Erwachsene und 1 Kind. Prüf die Zahlen, bevor du
 abschickst.
@@ -646,6 +651,7 @@ sagt dir, was bei dieser Veranstaltung gilt.
 | dein voller Name | nur das Orgateam |
 | dein Name gekürzt (Vorname und erster Buchstabe des Nachnamens) | nur dort, wo Namen eingeblendet sind |
 | Anzahl Anmeldungen, Erwachsene und Kinder (Summe) | wenn das Orgateam die Zahlen freigegeben hat |
+| Zahl der freien Plätze bei einer Höchstzahl | wenn das Orgateam die Zahlen freigegeben hat; sonst nur „nur noch wenige Plätze frei“ und „Ausgebucht“ |
 | deine Mitbringsel | wenn das Orgateam sie freigegeben hat, mit oder ohne deinen Namen |
 | deine Aufgaben (vorab) | die Zahl der belegten Plätze immer; dein Name, wenn das Orgateam Namen bei Aufgaben freigegeben hat |
 | Name bei einer Aufgabe am Tag | immer, ungekürzt, so wie du ihn in das Feld eingetippt hast |

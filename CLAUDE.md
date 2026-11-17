@@ -74,7 +74,7 @@ gesetzt sind; das Skript der Seite steht am Ende von `<body>`. `common.js` fasst
 Laden das DOM nicht an, außer über `DOMContentLoaded`. Seitentitel, die erst nach dem
 Laden feststehen, über `titel(text)` setzen, nicht über `document.title`.
 Namen aus `common.js` (`live`, `$`, `esc`, `bildUrl`, `SIGNUP_COLS`, `anonHead`,
-`isoDatum`, `heute`, `fmtDate`, `vis`, `groups`, `platzGrenze`, `freiePlaetze`, `plaetzeText`, `verkleinern`, `EINSTELLUNG`,
+`isoDatum`, `heute`, `fmtDate`, `vis`, `groups`, `platzGrenze`, `freiePlaetze`, `wenigePlaetze`, `plaetzeZahl`, `plaetzeText`, `verkleinern`, `EINSTELLUNG`,
 `kitaName`, `eigeneAdresse`, `farbe`, `titel`, `euro`, `preisZahl`, `aufgabeName`, `bestellArtikel`, `bestellMax`, `bestellMenge`,
 `kostetEtwas`, `kosten`, `paypalName`, `paypalMail`, `paypalLink`, `zahlLink`, `zahlweg`, `textMitFormat`, `nurOrga`) in den Seiten nicht auf oberster Ebene
 neu deklarieren — das ergibt einen SyntaxError und die ganze Seite bleibt stehen.
@@ -122,7 +122,8 @@ Gerät unter `localStorage` `kita-orga-zu`.
 
 Höchstzahl: `people.limit` in `events` und `templates` (ohne Migration, liegt im vorhandenen
 JSON) begrenzt Erwachsene und Kinder zusammen. `freiePlaetze(ev, liste)` aus `common.js` rechnet
-ohne Absagen. Durchgesetzt wird nur auf der Anmeldeseite, bewusst nicht in der Datenbank (wie
+ohne Absagen. Die Zahl freier Plätze zeigen die Elternseiten nur mit `visibility.totals`,
+sonst nur „nur noch wenige Plätze frei“ (`wenigePlaetze`) und „Ausgebucht“. Durchgesetzt wird nur auf der Anmeldeseite, bewusst nicht in der Datenbank (wie
 bei den Helferplätzen); das Orgateam trägt auch darüber hinaus ein.
 
 Kosten (ab `migration-22.sql`): `events.payment` und `templates.payment` halten
