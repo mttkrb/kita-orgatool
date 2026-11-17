@@ -580,7 +580,7 @@ function renderHead(){
     : entries.length + " Anmeldungen" + (teile.length ? " · " + teile.join(", ") : "");
   // Höchstzahl: nur hier auf der Anmeldeseite, die Datenbank begrenzt nicht
   const frei = freiePlaetze(EV, entries);
-  const platz = plaetzeText(frei);
+  const platz = plaetzeText(frei, EV);
   $("ev-count").textContent = zahlen && platz ? zahlen + " · " + platz
     : zahlen || (platz && platz[0].toUpperCase() + platz.slice(1));
   const fuerMich = frei === null ? null : frei + eigenePlaetze();
@@ -594,10 +594,11 @@ function renderHead(){
   };
   fuellen("f-adults", fuerMich === null ? g.adults.max : Math.min(g.adults.max, fuerMich), 2);
   fuellen("f-kids", fuerMich === null ? g.kids.max : Math.min(g.kids.max, fuerMich), 1);
-  $("plaetze-hint").textContent = fuerMich ? (fuerMich === 1 ? "Noch 1 Platz frei" : "Noch " + fuerMich +
+  // Die Zahl nur mit "Gesamtzahlen im Kopf", sie verrät die Belegung
+  $("plaetze-hint").textContent = fuerMich && plaetzeZahl(EV) ? (fuerMich === 1 ? "Noch 1 Platz frei" : "Noch " + fuerMich +
     " Plätze frei") + ((g.adults.on && g.kids.on) ? ", " + g.adults.label + " und " + g.kids.label +
     " zusammen." : ".") : "";
-  $("plaetze-hint").classList.toggle("hidden", !fuerMich || absage);
+  $("plaetze-hint").classList.toggle("hidden", !$("plaetze-hint").textContent || absage);
   const P = EV.payment || {};
   const jePerson = v => preisZahl(v) ? " (je " + euro(preisZahl(v)) + ")" : "";
   $("lbl-adults").textContent = g.adults.label + jePerson(P.adults);
@@ -1214,6 +1215,7 @@ $("form").addEventListener("submit", async ev=>{
     const n = data.adults + data.kids;
     if(!fuerMich || n > fuerMich){
       showError(!fuerMich ? "Leider ausgebucht, es ist kein Platz mehr frei."
+        : !plaetzeZahl(EV) ? "So viele Plätze sind nicht mehr frei. Bitte weniger Personen eintragen."
         : "Es " + (fuerMich === 1 ? "ist nur noch 1 Platz" : "sind nur noch " + fuerMich + " Plätze") +
           " frei. Bitte weniger Personen eintragen.");
       return;

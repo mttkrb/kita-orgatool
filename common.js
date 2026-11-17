@@ -70,8 +70,17 @@ const freiePlaetze = (ev, liste) => {
   return Math.max(0, grenze - belegt);
 };
 
-// "noch 1 Platz frei", "noch 12 Plätze frei", "Ausgebucht"
-const plaetzeText = frei => frei === null ? "" : frei <= 0 ? "Ausgebucht"
+// Ab hier gilt es als knapp: 5 Plätze oder 10 % der Grenze, je nachdem, was größer ist.
+const wenigePlaetze = ev => Math.max(5, Math.ceil(platzGrenze(ev) / 10));
+
+// Ob die Zahl freier Plätze genannt wird. Sie verrät die Belegung, deshalb nur mit
+// "Gesamtzahlen im Kopf" (visibility.totals). Ohne ev wie bisher immer.
+const plaetzeZahl = ev => !ev || vis(ev).totals;
+
+// "noch 1 Platz frei", "noch 12 Plätze frei", "Ausgebucht". Mit ev und ohne Gesamtzahlen
+// ohne Zahl: "nur noch wenige Plätze frei", wenn es knapp ist, sonst nichts.
+const plaetzeText = (frei, ev) => frei === null ? "" : frei <= 0 ? "Ausgebucht"
+  : !plaetzeZahl(ev) ? (frei <= wenigePlaetze(ev) ? "nur noch wenige Plätze frei" : "")
   : "noch " + frei + (frei === 1 ? " Platz frei" : " Plätze frei");
 
 /* ---------- Kosten ---------- */

@@ -427,6 +427,12 @@ der Anmeldeseite „noch 12 Plätze frei“. Sind alle Plätze belegt, steht dor
 neue Anmeldungen gehen nicht mehr. Wer schon angemeldet ist, kann über den persönlichen Link
 ändern oder absagen; Absagen geben Plätze frei.
 
+Die Zahl der freien Plätze verrät, wie viele angemeldet sind. Deshalb steht sie nur da, wenn der
+Haken „Gesamtzahlen im Kopf“ gesetzt ist. Ohne den Haken sehen die Eltern keine Zahl, nur
+„nur noch wenige Plätze frei“, sobald höchstens 5 Plätze frei sind (bei großen Grenzen
+höchstens ein Zehntel), und „Ausgebucht“. Ganz kurz vor voll lässt sich die Restzahl trotzdem
+erahnen, weil die Auswahllisten nur so viele Personen anbieten, wie noch frei sind.
+
 > Die Grenze prüft nur die Anmeldeseite, nicht die Datenbank. Melden sich zwei Familien im
 > selben Moment für die letzten Plätze an, kann es knapp darüber gehen. Du selbst kannst im
 > Orga-Bereich immer eintragen, auch über die Grenze hinaus („+ Anmeldung eintragen“). Die
@@ -471,7 +477,7 @@ Die Haken betreffen nur die öffentliche Anmeldeseite. Im Orga-Bereich siehst du
 
 | Haken | Wirkung, wenn gesetzt | Standard |
 | --- | --- | --- |
-| „Gesamtzahlen im Kopf — Anmeldungen und Personen“ | Oben steht, wie viele angemeldet sind. | an |
+| „Gesamtzahlen im Kopf — Anmeldungen und Personen“ | Oben steht, wie viele angemeldet sind. Mit „Plätze insgesamt“ auch, wie viele Plätze frei sind; ohne den Haken nur „nur noch wenige Plätze frei“ und „Ausgebucht“. | an |
 | „Liste der Mitbringsel“ | Eltern sehen, was schon zugesagt ist. Ohne den Haken bleiben nur die Fortschrittsbalken. | an |
 | „Namen an den Mitbringseln“ | Bei jedem Mitbringsel steht, wer es bringt. | an |
 | „Namen in der Helferliste“ | Bei Aufgaben steht, wer hilft. Sonst nur „3 von 6 belegt“. | an |
@@ -1166,6 +1172,7 @@ Weitere Exporte: „Als CSV exportieren“ in den Anmeldungen ([Abschnitt 10](#e
 | Veranstaltung auf der Startseite | solange nicht archiviert und Datum nicht vorbei | immer |
 | Veranstaltung über den direkten Link | immer, auch archiviert | immer |
 | Gesamtzahl der Anmeldungen und Personen, ohne Absagen | wenn Haken „Gesamtzahlen im Kopf“, auf der Anmeldeseite und der Startseite | immer |
+| Freie Plätze bei „Plätze insgesamt“ | als Zahl nur mit Haken „Gesamtzahlen im Kopf“, sonst „nur noch wenige Plätze frei“ und „Ausgebucht“ | immer als „12 von 40 Plätzen belegt“ |
 | Liste der Mitbringsel | wenn Haken „Liste der Mitbringsel“, sonst nur Fortschrittsbalken | immer |
 | Namen an Mitbringseln und vorab angekreuzten Aufgaben | wenn die jeweiligen Haken gesetzt sind, gekürzt | immer, voller Name |
 | Namen bei Aufgaben am Tag („Ich mach das“) | immer, ungekürzt, so wie eingetippt | ja |

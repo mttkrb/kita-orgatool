@@ -140,7 +140,7 @@ function preisPill(ev){
         new Date(ev.signup_from+"T12:00:00").toLocaleDateString("de-DE") + "</span>" : "",
       zu ? '<span class="pill need">Anmeldung geschlossen</span>' : "",
       voll ? '<span class="pill need">Ausgebucht</span>' : "",
-      (s.frei && !nichtFrei && !zu) ? '<span class="pill">' + plaetzeText(s.frei) + "</span>" : "",
+      (s.frei && plaetzeText(s.frei, ev) && !nichtFrei && !zu) ? '<span class="pill">' + plaetzeText(s.frei, ev) + "</span>" : "",
       vis(ev).totals ? '<span class="pill">' + s.count + (s.count===1?" Anmeldung":" Anmeldungen") + "</span>" : "",
       vis(ev).totals && s.people ? '<span class="pill">' + s.people + " Personen</span>" : "",
       ...s.gaps.map(g=>'<span class="pill need">' + g.fehlt + " × " + esc(g.label) + " gesucht</span>"),

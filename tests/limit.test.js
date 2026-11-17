@@ -40,6 +40,14 @@ test("common.js: freie Plätze ohne Absagen, ohne Grenze null", async () => {
     assert.equal(w.eval("plaetzeText(0)"), "Ausgebucht");
     assert.equal(w.eval("plaetzeText(1)"), "noch 1 Platz frei");
     assert.equal(w.eval("plaetzeText(12)"), "noch 12 Plätze frei");
+    // ohne Gesamtzahlen keine Zahl, die die Belegung verrät
+    const ohne = "{ people:{ limit:40 }, visibility:{ totals:false } }";
+    assert.equal(w.eval("plaetzeText(20, " + ohne + ")"), "");
+    assert.equal(w.eval("plaetzeText(5, " + ohne + ")"), "nur noch wenige Plätze frei");
+    assert.equal(w.eval("plaetzeText(0, " + ohne + ")"), "Ausgebucht");
+    assert.equal(w.eval("plaetzeText(12, { people:{ limit:40 }, visibility:{ totals:true } })"), "noch 12 Plätze frei");
+    assert.equal(w.eval("wenigePlaetze({ people:{ limit:40 } })"), 5);
+    assert.equal(w.eval("wenigePlaetze({ people:{ limit:200 } })"), 20);
   }finally{ s.schliessen(); }
 });
 
@@ -189,4 +197,38 @@ test("Orga: Plätze insgesamt speichern und Belegung zeigen, ohne zu sperren", a
     assert.match($("totals").textContent, /\d+ von 3Plätzen belegt \(ausgebucht\)/);
     assert.deepEqual(s.fehler, []);
   }finally{ s.schliessen(); }
+});
+
+test("Ohne Gesamtzahlen: keine Zahl freier Plätze auf Anmelde- und Startseite", async () => {
+  const ohne = { ...EVENT, visibility:{ totals:false } };
+  const { s, db, $ } = await seite({ signups:[SARAH, ANNE] }, "?event=fest", ohne);
+  try{
+    // 3 von 6 frei: knapp
+    assert.equal($("ev-count").textContent, "Nur noch wenige Plätze frei");
+    assert.doesNotMatch($("main").textContent, /\d+ Pl(atz|ätze) frei/);
+    assert.ok(!sichtbar($("plaetze-hint")));
+    $("f-name").value = "Tim Bergmann";
+    $("f-adults").value = "3"; $("f-kids").value = "1";
+    $("f-consent").checked = true;
+    $("form").requestSubmit();
+    await warte(() => sichtbar($("error")), "Fehler");
+    assert.match($("error").textContent, /So viele Plätze sind nicht mehr frei/);
+    assert.doesNotMatch($("error").textContent, /\d/);
+    assert.equal(db.signups.length, 2);
+    assert.deepEqual(s.fehler, []);
+  }finally{ s.schliessen(); }
+
+  const gross = { ...EVENT, visibility:{ totals:false }, people:{ limit:40 } };
+  const voll = { ...EVENT, id:"e2", slug:"voll", title:"Laternenfest", people:{ limit:2 },
+    visibility:{ totals:false } };
+  const db2 = fakeDb({ events:[gross, voll], signups:[SARAH, { ...TIM, event:"voll" }] });
+  const s2 = ladeSeite("index.html", { supabase:SUPABASE, fetch:db2.fetch });
+  const $2 = id => s2.window.document.getElementById(id);
+  try{
+    await warte(() => $2("list").children.length === 2, "Liste");
+    const [a, b] = [...$2("list").children].map(c => c.textContent);
+    assert.doesNotMatch(a, /Plätze frei|Platz frei/, "viel frei: nichts");
+    assert.match(b, /Ausgebucht/);
+    assert.deepEqual(s2.fehler, []);
+  }finally{ s2.schliessen(); }
 });
