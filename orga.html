@@ -170,6 +170,31 @@ create policy "eigene loeschen" on signups for delete to anon
 
   fieldset{border:1px solid var(--line);border-radius:6px;padding:14px;margin:22px 0 0;background:var(--paper)}
   legend{font-weight:600;font-size:.92rem;padding:0 6px}
+  /* Bausteine: ein- und ausschalten, auf- und zuklappen */
+  .klapp{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px}
+  .klapp::before{content:"\25BE";display:inline-block;transition:transform .15s}
+  fieldset.zu .klapp::before{transform:rotate(-90deg)}
+  fieldset.aus .klapp{cursor:default}
+  fieldset.aus .klapp::before{content:none}
+  fieldset.zu > :not(legend),
+  fieldset.aus > :not(legend){display:none}
+  fieldset.zu{padding-bottom:4px}
+  fieldset.aus{background:transparent;border-style:dashed;padding:0 14px 4px;margin-top:14px}
+  fieldset.aus legend{color:var(--ink-soft);font-weight:500}
+  fieldset[data-block]{position:relative}
+  /* Steht in der legend; ohne top bleibt er auf deren Zeile, also auf der Rahmenlinie */
+  .schalter{position:absolute;right:12px;margin-top:-1px;display:inline-flex;align-items:center;gap:8px;
+    padding:0 6px;background:linear-gradient(var(--sand) 50%, var(--paper) 50%);font-size:.82rem;font-weight:400;color:var(--ink-soft);cursor:pointer}
+  fieldset.aus .schalter{background:var(--sand)}
+  .schalter input{appearance:none;-webkit-appearance:none;width:36px;height:20px;border-radius:10px;
+    background:var(--line);position:relative;margin:0;cursor:pointer;transition:background .15s;flex:none}
+  .schalter input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;
+    border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+  .schalter input:checked{background:var(--moss)}
+  .schalter input:checked::after{left:18px}
+  .bloecke-aus{margin-top:26px}
+  .bloecke-aus > .hint{margin:0 0 -2px}
   .item{border:1px dashed var(--line);border-radius:5px;padding:11px;margin-bottom:9px;
     position:relative;background:#fff}
   .shots{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
@@ -459,7 +484,7 @@ create policy "eigene loeschen" on signups for delete to anon
 
     <div id="history"></div>
 
-    <fieldset>
+    <fieldset data-block="eckdaten">
       <legend>Eckdaten</legend>
       <label class="check" style="margin-top:0"><input type="checkbox" id="e-intern">
         <span><strong>Projekt nur fürs Orgateam</strong> — ohne Anmeldung, etwa eine Geldsammlung
@@ -551,7 +576,7 @@ create policy "eigene loeschen" on signups for delete to anon
         <span>Archivieren — verschwindet von der Startseite, der direkte Link bleibt gültig</span></label>
     </fieldset>
 
-    <fieldset class="oeffentlich">
+    <fieldset class="oeffentlich" data-block="kosten" data-schalter>
       <legend>Kosten und Bezahlung</legend>
       <p class="hint" style="margin:0 0 6px">Leer lassen, wenn die Veranstaltung nichts kostet. Die Eltern
         sehen beim Anmelden, was es für sie zusammen kostet.</p>
@@ -573,7 +598,7 @@ create policy "eigene loeschen" on signups for delete to anon
         Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.</p>
     </fieldset>
 
-    <fieldset class="oeffentlich">
+    <fieldset class="oeffentlich" data-block="sichtbarkeit">
       <legend>Was sehen die Gäste auf der Seite?</legend>
       <p class="hint" style="margin:0 0 10px">Betrifft nur die öffentliche Anmeldeseite. Im Orga-Bereich
         siehst du immer alles.</p>
@@ -591,14 +616,14 @@ create policy "eigene loeschen" on signups for delete to anon
         <span>Aufgaben werden vor Ort verteilt — keine Plätze, kein Eintragen vorab</span></label>
     </fieldset>
 
-    <fieldset class="oeffentlich">
+    <fieldset class="oeffentlich" data-block="mitbringsel" data-schalter data-box="cats">
       <legend>Mitbringsel-Kategorien</legend>
       <p class="hint" style="margin:0 0 10px">Zielwert steuert den Fortschrittsbalken. 0 = kein Ziel.</p>
       <div id="cats"></div>
       <button type="button" class="ghost" id="add-cat">+ Kategorie</button>
     </fieldset>
 
-    <fieldset id="box-vorschlaege" class="hidden">
+    <fieldset id="box-vorschlaege" class="hidden" data-block="vorschlaege">
       <legend>Gemeldete Aufgaben</legend>
       <p class="hint" style="margin:0 0 6px">Eingegangen über den Meldelink von Leitung, Vorstand
         und Teamleitungen. Übernommene Aufgaben landen unten in der Aufgabenliste.</p>
@@ -606,7 +631,7 @@ create policy "eigene loeschen" on signups for delete to anon
       <div id="vorschlaege"></div>
     </fieldset>
 
-    <fieldset class="oeffentlich">
+    <fieldset class="oeffentlich" data-block="aufgaben" data-schalter data-box="tasks">
       <legend>Aufgaben am Veranstaltungstag</legend>
       <div id="tasks"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -616,13 +641,13 @@ create policy "eigene loeschen" on signups for delete to anon
       </div>
     </fieldset>
 
-    <fieldset class="oeffentlich">
+    <fieldset class="oeffentlich" data-block="fragen" data-schalter data-box="fields">
       <legend>Zusätzliche Fragen an die Gäste</legend>
       <div id="fields"></div>
       <button type="button" class="ghost" id="add-field">+ Frage</button>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-block="checkliste" data-schalter data-box="checks">
       <legend>Planung — interne Checkliste</legend>
       <p class="hint" style="margin:0 0 10px">Sieht nur das Orgateam. Alles, was vorher passieren muss:
         Pavillon leihen, Kaffee bestellen, Aushang drucken.</p>
@@ -630,7 +655,7 @@ create policy "eigene loeschen" on signups for delete to anon
       <button type="button" class="ghost" id="add-check">+ Punkt</button>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-block="entscheidungen" data-schalter data-box="entscheidungen">
       <legend>Entscheidungen</legend>
       <p class="hint" style="margin:0 0 10px">Nur fürs Orgateam. Was festgelegt wurde, etwa Location,
         Motto oder Caterer, und warum. Beim nächsten Mal aus derselben Vorlage steht es oben unter
@@ -640,7 +665,7 @@ create policy "eigene loeschen" on signups for delete to anon
       <button type="button" class="ghost" id="add-entscheidung">+ Entscheidung</button>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-block="einkauf" data-schalter data-box="einkauf">
       <legend>Einkaufsliste</legend>
       <p class="hint" style="margin:0 0 10px">Nur fürs Orgateam. Zum Verteilen als Text kopieren
         und in WhatsApp einfügen.</p>
@@ -683,7 +708,7 @@ create policy "eigene loeschen" on signups for delete to anon
       </div>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-block="spenden" data-schalter data-box="spenden">
       <legend>Spenden</legend>
       <p class="hint" style="margin:0 0 10px">Nur fürs Orgateam. Geld, das für diese Veranstaltung
         gespendet wurde und eingegangen ist, etwa aus der Spendendose. Ohne Namen von Privatpersonen.
@@ -693,7 +718,7 @@ create policy "eigene loeschen" on signups for delete to anon
       <button type="button" class="ghost" id="add-spende">+ Spende</button>
     </fieldset>
 
-    <fieldset class="oeffentlich">
+    <fieldset class="oeffentlich" data-block="rueckblick">
       <legend>Rückblick — für das nächste Mal</legend>
       <p class="hint" style="margin:0 0 10px">Nach der Veranstaltung ausfüllen. Die Ist-Zahlen sind aus den
         Anmeldungen vorbelegt und überschreibbar. Die Bewertung wird beim nächsten Veranstaltung aus derselben
@@ -739,6 +764,11 @@ create policy "eigene loeschen" on signups for delete to anon
       <textarea id="r-notes" placeholder="Kuchen war um 16 Uhr weg. Nächstes Mal mehr herzhaft, Punsch blieb übrig."></textarea>
     </fieldset>
 
+    <div id="e-aus" class="bloecke-aus hidden">
+      <p class="hint">Bei dieser Veranstaltung nicht genutzt. Schalter antippen, um einen Block wieder
+        einzuschalten.</p>
+    </div>
+
     <div class="sticky">
       <div id="edit-msg" class="msg hidden" style="width:100%;margin:0 0 10px"></div>
       <button class="primary" id="save">Speichern</button>
@@ -760,7 +790,7 @@ create policy "eigene loeschen" on signups for delete to anon
     <h2 style="margin-top:12px" id="tpl-title">Neue Vorlage</h2>
     <p class="lead">Was diese Vorlage enthält, wird beim Anlegen einer Veranstaltung übernommen.</p>
 
-    <fieldset>
+    <fieldset data-block="eckdaten">
       <legend>Eckdaten</legend>
       <label for="t-name">Name</label>
       <input type="text" id="t-name" placeholder="Oma-Opa-Tag">
@@ -779,7 +809,7 @@ create policy "eigene loeschen" on signups for delete to anon
       </div>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-block="kosten" data-schalter>
       <legend>Kosten und Bezahlung</legend>
       <p class="hint" style="margin:0 0 6px">Leer lassen, wenn die Veranstaltung nichts kostet. Die Eltern
         sehen beim Anmelden, was es für sie zusammen kostet.</p>
@@ -801,25 +831,25 @@ create policy "eigene loeschen" on signups for delete to anon
         Eltern einen Knopf, der PayPal mit dem richtigen Betrag öffnet. Die Seite selbst lädt nichts von PayPal.</p>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-block="mitbringsel" data-schalter data-box="t-cats">
       <legend>Mitbringsel-Kategorien</legend>
       <div id="t-cats"></div>
       <button type="button" class="ghost" id="t-add-cat">+ Kategorie</button>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-block="aufgaben" data-schalter data-box="t-tasks">
       <legend>Aufgaben am Veranstaltungstag</legend>
       <div id="t-tasks"></div>
       <button type="button" class="ghost" id="t-add-task">+ Aufgabe</button>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-block="fragen" data-schalter data-box="t-fields">
       <legend>Zusätzliche Fragen</legend>
       <div id="t-fields"></div>
       <button type="button" class="ghost" id="t-add-field">+ Frage</button>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-block="einkauf" data-schalter data-box="t-einkauf">
       <legend>Standard-Einkaufsliste</legend>
       <p class="hint" style="margin:0 0 10px">Wird bei jeder Veranstaltung aus dieser Vorlage
         als Startpunkt angeboten.</p>
@@ -827,11 +857,26 @@ create policy "eigene loeschen" on signups for delete to anon
       <button type="button" class="ghost" id="t-add-kauf">+ Posten</button>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-block="checkliste" data-schalter data-box="t-checks">
       <legend>Planungs-Checkliste</legend>
       <div id="t-checks"></div>
       <button type="button" class="ghost" id="t-add-check">+ Punkt</button>
     </fieldset>
+
+    <fieldset data-block="weitere">
+      <legend>Weitere Blöcke</legend>
+      <p class="hint" style="margin:0 0 6px">Haben in der Vorlage keinen Inhalt. Hier legst du fest, ob
+        Veranstaltungen aus dieser Vorlage sie zeigen.</p>
+      <label class="check"><input type="checkbox" id="t-b-entscheidungen" checked>
+        <span>Entscheidungen</span></label>
+      <label class="check"><input type="checkbox" id="t-b-spenden" checked>
+        <span>Spenden</span></label>
+    </fieldset>
+
+    <div id="t-aus" class="bloecke-aus hidden">
+      <p class="hint">In dieser Vorlage nicht genutzt. Schalter antippen, um einen Block wieder
+        einzuschalten. Veranstaltungen aus der Vorlage übernehmen das.</p>
+    </div>
 
     <div class="sticky">
       <div id="tpl-msg" class="msg hidden" style="width:100%;margin:0 0 10px"></div>
@@ -1335,8 +1380,171 @@ const db = {
    Ansichten
    ============================================================ */
 let dirty = false;
-const markDirty = () => { dirty = true; };
+const markDirty = () => { dirty = true; bloeckeAbgleichen(); };
 function clearDirty(){ dirty = false; }
+
+/* ---------- Bausteine: ein- und ausschalten, auf- und zuklappen ----------
+   Jedes fieldset mit data-block lässt sich zuklappen; das merkt sich das Gerät.
+   Mit data-schalter kann der Block für diese Veranstaltung bzw. Vorlage aus sein
+   (events.blocks, templates.blocks; ab migration-31.sql). Aus ist nur ein leerer Block:
+   Wer einen Block mit Inhalt ausschaltet, leert ihn vorher. So wirkt nichts Verstecktes
+   auf der Anmeldeseite. Ausgeschaltete Blöcke stehen schmal unten im Editor. */
+const ZU_SPEICHER = "kita-orga-zu";
+const zuGemerkt = () => { try{ return JSON.parse(localStorage.getItem(ZU_SPEICHER) || "[]"); }catch(e){ return []; } };
+function zuMerken(schluessel, zu){
+  try{
+    const liste = zuGemerkt().filter(k => k !== schluessel);
+    if(zu) liste.push(schluessel);
+    localStorage.setItem(ZU_SPEICHER, JSON.stringify(liste));
+  }catch(e){}
+}
+const blockAnsicht = fs => fs.closest("#view-template") ? "t" : "e";
+const blockTitel = fs => fs.querySelector(".klapp").textContent.trim();
+const blockFelder = ansicht => [...document.querySelectorAll(
+  (ansicht === "t" ? "#view-template" : "#view-edit") + " fieldset[data-schalter]")];
+const zeileGefuellt = el => [...el.querySelectorAll('input[type=text], input:not([type]), textarea')]
+  .some(i => i.value.trim());
+
+function blockHatInhalt(fs){
+  if(fs.dataset.block === "kosten") return zeileGefuellt(fs);
+  const box = $(fs.dataset.box);
+  if(box && [...box.children].some(zeileGefuellt)) return true;
+  return fs.dataset.block === "einkauf" && blockAnsicht(fs) === "e" && belege.length > 0;
+}
+
+// Was gegen das Leeren spricht: Daten der Eltern oder Belege hängen daran
+function blockHindernis(fs){
+  if(blockAnsicht(fs) !== "e" || !current || !current.id) return "";
+  const zusagen = signups.filter(x => x.status !== "absage");
+  switch(fs.dataset.block){
+    case "kosten": return zusagen.length
+      ? "Es gibt schon Anmeldungen, die mit diesen Preisen gerechnet sind. Kosten bitte nur einzeln ändern." : "";
+    case "mitbringsel": return zusagen.some(x => (x.items || []).length)
+      ? "Eltern haben schon Mitbringsel eingetragen. Kategorien bitte einzeln entfernen." : "";
+    case "aufgaben": return [...$("tasks").children].some(d => d.querySelector("img") ||
+        zusagen.some(x => (x.tasks || []).includes(d.dataset.id)))
+      ? "Für Aufgaben gibt es schon Zusagen oder Fotos. Bitte einzeln entfernen oder verschieben." : "";
+    case "fragen": return zusagen.some(x => Object.keys(x.fields || {}).length)
+      ? "Es gibt schon Antworten auf die Fragen. Fragen bitte einzeln entfernen." : "";
+    case "einkauf": return belege.length
+      ? "Es gibt Belege zu dieser Veranstaltung. Solange sie da sind, bleibt die Einkaufsliste an." : "";
+  }
+  return "";
+}
+
+function blockLeeren(fs){
+  if(fs.dataset.block === "kosten"){
+    fs.querySelectorAll('input[type=text], textarea').forEach(i => { i.value = ""; });
+    return;
+  }
+  const box = $(fs.dataset.box);
+  if(!box) return;
+  box.innerHTML = "";
+  refreshTools(box);
+  if(blockAnsicht(fs) === "e"){
+    if(box.id === "cats") renderReview();
+    if(box.id === "einkauf"){ renderKaufSumme(); belegPosten(); }
+    if(box.id === "spenden") renderSpendenSumme();
+  }
+}
+
+function ausListeZeigen(ansicht){
+  const liste = $(ansicht + "-aus");
+  liste.classList.toggle("hidden", ![...liste.querySelectorAll("fieldset")]
+    .some(fs => !fs.classList.contains("hidden")));
+}
+
+function blockSetzen(fs, an){
+  fs.classList.toggle("aus", !an);
+  const schalter = fs.querySelector(".schalter input");
+  schalter.checked = an;
+  schalter.setAttribute("aria-label", blockTitel(fs) + (an ? ": genutzt" : ": nicht genutzt"));
+  fs.querySelector(".schalter span").textContent = an ? "genutzt" : "nicht genutzt";
+  fs.querySelector(".klapp").setAttribute("aria-expanded", String(an && !fs.classList.contains("zu")));
+  const ansicht = blockAnsicht(fs);
+  if(an){
+    if(fs.parentNode !== fs._platz.parentNode || fs.previousSibling !== fs._platz) fs._platz.after(fs);
+  } else {
+    const liste = $(ansicht + "-aus");
+    // In der ursprünglichen Reihenfolge einsortieren
+    const danach = [...liste.querySelectorAll("fieldset")].find(x =>
+      fs._platz.compareDocumentPosition(x._platz) & Node.DOCUMENT_POSITION_FOLLOWING);
+    liste.insertBefore(fs, danach || null);
+  }
+  ausListeZeigen(ansicht);
+}
+
+function blockSchalten(fs, an){
+  if(!an && blockHatInhalt(fs)){
+    const grund = blockHindernis(fs);
+    const meldung = $(blockAnsicht(fs) === "t" ? "tpl-msg" : "edit-msg");
+    if(grund){ blockSetzen(fs, true); msg(meldung, "„" + blockTitel(fs) + "“: " + grund, true); return; }
+    if(!confirm("„" + blockTitel(fs) + "“ hat noch Einträge. Beim Ausschalten werden sie entfernt, " +
+      "gespeichert erst mit Speichern. Weiter?")){ blockSetzen(fs, true); return; }
+    blockLeeren(fs);
+  }
+  blockSetzen(fs, an);
+  dirty = true;
+}
+
+// Was gefüllt ist, ist an; etwa wenn eine gemeldete Aufgabe übernommen wurde
+function bloeckeAbgleichen(){
+  ["e", "t"].forEach(a => blockFelder(a).forEach(fs => {
+    if(fs.classList.contains("aus") && blockHatInhalt(fs)) blockSetzen(fs, true);
+  }));
+}
+
+function bloeckeFuellen(ansicht, blocks){
+  const b = blocks || {};
+  blockFelder(ansicht).forEach(fs => blockSetzen(fs, b[fs.dataset.block] !== false || blockHatInhalt(fs)));
+  if(ansicht === "t"){
+    $("t-b-entscheidungen").checked = b.entscheidungen !== false;
+    $("t-b-spenden").checked = b.spenden !== false;
+  }
+}
+function bloeckeLesen(ansicht){
+  const b = {};
+  blockFelder(ansicht).forEach(fs => { if(fs.classList.contains("aus")) b[fs.dataset.block] = false; });
+  if(ansicht === "t"){
+    if(!$("t-b-entscheidungen").checked) b.entscheidungen = false;
+    if(!$("t-b-spenden").checked) b.spenden = false;
+  }
+  return b;
+}
+
+// Ein Sprung aus den To-dos landet immer in einem offenen Block
+function blockOeffnen(el){
+  const fs = el && el.closest && el.closest("fieldset[data-block]");
+  if(!fs) return;
+  if(fs.classList.contains("aus")){ blockSetzen(fs, true); dirty = true; }
+  if(fs.classList.contains("zu")) fs.querySelector(".klapp").click();
+}
+
+document.querySelectorAll("#view-edit fieldset[data-block], #view-template fieldset[data-block]").forEach(fs => {
+  const legend = fs.querySelector("legend");
+  const schluessel = blockAnsicht(fs) + ":" + fs.dataset.block;
+  const knopf = document.createElement("button");
+  knopf.type = "button";
+  knopf.className = "klapp";
+  while(legend.firstChild) knopf.appendChild(legend.firstChild);
+  legend.appendChild(knopf);
+  if(zuGemerkt().includes(schluessel)) fs.classList.add("zu");
+  knopf.setAttribute("aria-expanded", String(!fs.classList.contains("zu")));
+  knopf.onclick = () => {
+    if(fs.classList.contains("aus")) return;
+    const zu = fs.classList.toggle("zu");
+    knopf.setAttribute("aria-expanded", String(!zu));
+    zuMerken(schluessel, zu);
+  };
+  if(!("schalter" in fs.dataset)) return;
+  fs._platz = document.createComment(" Platz: " + fs.dataset.block + " ");
+  fs.before(fs._platz);
+  const label = document.createElement("label");
+  label.className = "schalter";
+  label.innerHTML = '<span>genutzt</span><input type="checkbox" role="switch" checked>';
+  legend.appendChild(label);
+  label.querySelector("input").onchange = ev => blockSchalten(fs, ev.target.checked);
+});
 function leaveOk(){
   return !dirty || confirm("Ungespeicherte Änderungen gehen verloren. Trotzdem zurück?");
 }
@@ -1438,8 +1646,8 @@ const vorbei = e => !!(e.event_on && e.event_on < heute());
    Verhindert, dass ein Speichern still fehlschlaegt. */
 const NEEDED = {
   events: ["people","visibility","event_on","template_id","signup_from","signup_released",
-           "retention_days","mandatory","payment","checkin"],
-  templates: ["people","checklist","payment"],
+           "retention_days","mandatory","payment","checkin","blocks"],
+  templates: ["people","checklist","payment","blocks"],
   signups: ["fields","status"],
   proposals: ["status","image"],
   planning: ["shopping"],
@@ -1721,6 +1929,7 @@ async function springeZu(ev, ziel){
   if(ziel.typ === "rueckblick"){
     const feld = $("review-cats").closest("fieldset");
     if(feld){
+      blockOeffnen(feld);
       feld.classList.add("blitz");
       setTimeout(()=>feld.classList.remove("blitz"), 2600);
       anDenAnfang(feld);
@@ -1739,6 +1948,7 @@ async function springeZu(ev, ziel){
     ziel_el = $("einkauf").closest("fieldset") || ziel_el;
   }
 
+  blockOeffnen(ziel_el);
   if(treffer && treffer._auf) treffer._auf(true);
   ziel_el.classList.add("blitz");
   setTimeout(()=>ziel_el.classList.remove("blitz"), 2600);
@@ -1965,7 +2175,8 @@ async function handleTemplate(act, id){
       archived:true, signup_released:false, template_id:t.id,
       categories:JSON.parse(JSON.stringify(t.categories||[])),
       tasks:JSON.parse(JSON.stringify(t.tasks||[])),
-      fields:JSON.parse(JSON.stringify(t.fields||[]))
+      fields:JSON.parse(JSON.stringify(t.fields||[])),
+      blocks:JSON.parse(JSON.stringify(t.blocks||{}))
     }, {fresh:true, checklist:[], shopping:[], nachtrag:true});
   }
   if(act==="use"){
@@ -1979,7 +2190,8 @@ async function handleTemplate(act, id){
       archived:false, template_id:t.id,
       categories:JSON.parse(JSON.stringify(t.categories||[])),
       tasks:JSON.parse(JSON.stringify(t.tasks||[])),
-      fields:JSON.parse(JSON.stringify(t.fields||[]))
+      fields:JSON.parse(JSON.stringify(t.fields||[])),
+      blocks:JSON.parse(JSON.stringify(t.blocks||{}))
     }, {fresh:true, checklist:JSON.parse(JSON.stringify(t.checklist||[])),
         shopping:JSON.parse(JSON.stringify(t.shopping||[]))});
   }
@@ -2663,6 +2875,7 @@ let belege = [];
 async function ladeBelege(){
   belege = current && current.id ? await db.receipts(current.id).catch(()=>[]) : [];
   renderBelege();
+  bloeckeAbgleichen();
 }
 // Auswahl nur, wenn die Einkaufsliste Posten hat; sonst stünde dort allein "—"
 function belegPosten(){
@@ -2831,6 +3044,7 @@ function checkRow(c, imTpl){
   labelFeld.addEventListener("input", pruefeSprung);
   sprung.querySelector("button").onclick = () => {
     const box = $("einkauf").closest("fieldset");
+    blockOeffnen(box);
     anDenAnfang(box);
     box.classList.add("blitz");
     setTimeout(()=>box.classList.remove("blitz"), 2600);
@@ -2969,6 +3183,7 @@ function openTemplate(t){
   $("t-fields").innerHTML = ""; (currentTpl.fields||[]).forEach(f=>$("t-fields").appendChild(fieldRow(f))); refreshTools($("t-fields"));
   $("t-checks").innerHTML = ""; (currentTpl.checklist||[]).forEach(c=>$("t-checks").appendChild(checkRow(c, true))); refreshTools($("t-checks"));
   $("t-einkauf").innerHTML = ""; (currentTpl.shopping||[]).forEach(p=>$("t-einkauf").appendChild(kaufRow(p))); refreshTools($("t-einkauf"));
+  bloeckeFuellen("t", currentTpl.blocks);
   msg($("tpl-msg"),"");
   clearDirty();
   show("template");
@@ -2986,7 +3201,8 @@ $("t-save").onclick = async () => {
     name, description:$("t-desc").value.trim(), people:readGroups("t"), payment:readPayment("t"),
     categories:readCats($("t-cats")), tasks:readTasks($("t-tasks")),
     fields:readFields($("t-fields")), checklist:readChecks($("t-checks")),
-    shopping:readKauf($("t-einkauf"))
+    shopping:readKauf($("t-einkauf")),
+    blocks:bloeckeLesen("t")
   };
   $("t-save").disabled = true;
   try{
@@ -3124,6 +3340,7 @@ function internAnzeigen(){
   const intern = $("e-intern").checked;
   document.querySelectorAll("#view-edit .oeffentlich").forEach(el=>el.classList.toggle("hidden", intern));
   document.querySelectorAll("#view-edit .nur-intern").forEach(el=>el.classList.toggle("hidden", !intern));
+  ausListeZeigen("e");
   $("edit-title").textContent = intern
     ? (current && current.id ? "Projekt bearbeiten" : "Neues Projekt")
     : (current && current.id ? "Veranstaltung bearbeiten" : "Neue Veranstaltung");
@@ -3238,6 +3455,7 @@ async function openEditor(ev, opts){
   msg($("edit-msg"), ""); msg($("beleg-msg"), "");
   belege = []; renderBelege(); ladeBelege(); ladeKasse();
   belegFoto = null; $("b-foto").value = "";
+  bloeckeFuellen("e", current.blocks);
   clearDirty();
   show("edit");
   renderHistory(current);
@@ -3705,7 +3923,8 @@ function collectEvent(){
     ask_people:$("e-g1-on").checked || $("e-g2-on").checked,
     archived:$("e-archived").checked,
     template_id:current.template_id || null,
-    categories:readCats($("cats")), tasks:readTasks($("tasks")), fields:readFields($("fields"))
+    categories:readCats($("cats")), tasks:readTasks($("tasks")), fields:readFields($("fields")),
+    blocks:bloeckeLesen("e")
   };
 }
 

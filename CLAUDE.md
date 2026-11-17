@@ -105,7 +105,7 @@ Felder je Veranstaltung unterscheiden.
 | `orga_keys` | Orga-Passwort | niemand über die API |
 
 JSON-Strukturen: `categories`, `tasks`, `fields`, `checklist`, `shopping`, `review`,
-`people`, `visibility`, `payment` — Felder siehe Kommentare in `sql/` und der Code in `orga.html`.
+`people`, `visibility`, `payment`, `blocks` — Felder siehe Kommentare in `sql/` und der Code in `orga.html`.
 `planning.review.entscheidungen` hält `[{ id, thema, ergebnis, warum, datum }]`; die Historie
 („Aus den letzten Malen“) zeigt sie beim nächsten Mal aus derselben Vorlage.
 
@@ -113,6 +113,12 @@ Zeitfenster: Eine Aufgabe in Schichten ist eine Reihe eigener Einträge in `task
 `label`, eigener `id` und `when` und gemeinsamem `group` (Kennung der ursprünglichen Aufgabe).
 Zählen, Zusagen, Aufräumen und Rückblick laufen dadurch je Fenster ohne Sonderfall. In Listen
 heißen sie über `aufgabeName(t)` aus `common.js` „Grillen (10–11 Uhr)“.
+
+Blöcke (ab `migration-31.sql`): `events.blocks` und `templates.blocks` halten
+`{ kosten:false, … }` für Blöcke im Editor, die nicht genutzt werden; fehlt ein Schlüssel, ist er
+an. Reine Ansicht in `orga.html`, die Elternseiten lesen es nicht. Aus ist nur ein leerer Block
+(Ausschalten leert oder wird verweigert, Inhalt schaltet wieder ein). Zuklappen merkt sich das
+Gerät unter `localStorage` `kita-orga-zu`.
 
 Kosten (ab `migration-22.sql`): `events.payment` und `templates.payment` halten
 `{ adults, kids, note, link }` — Preis je Person der beiden Gruppen, Zahlungshinweis und

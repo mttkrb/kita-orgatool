@@ -80,7 +80,7 @@ Schnittstelle an. Es gibt vierzehn Tabellen:
 Die SQL-Dateien im Ordner `sql/`:
 
 - `schema.sql`: der erste Stand der Datenbank
-- `migration-2.sql` bis `migration-30.sql`: alle späteren Änderungen, in dieser
+- `migration-2.sql` bis `migration-31.sql`: alle späteren Änderungen, in dieser
   Reihenfolge. Oben in jeder Datei steht, was sie ändert.
 
 Für eine Neuinstallation werden sie nicht einzeln ausgeführt, sondern
